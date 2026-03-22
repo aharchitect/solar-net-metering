@@ -5,11 +5,7 @@ const repoRoot = path.resolve(__dirname, "..");
 const distRoot = path.join(repoRoot, "dist");
 const releaseRoot = path.join(distRoot, "release");
 
-const filesToCopy = [
-    "ControlFeedInFlow.json",
-    "README.md",
-    "LICENSE"
-];
+const filesToCopy = ["ControlFeedInFlow.json", "README.md", "LICENSE"];
 
 const directoriesToCopy = [];
 
