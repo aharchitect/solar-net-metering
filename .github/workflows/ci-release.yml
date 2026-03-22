@@ -1,0 +1,83 @@
+name: CI And Release
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+    release:
+        types:
+            - published
+
+jobs:
+    build:
+        name: Lint Build Package
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Lint sources
+              run: npm run lint
+
+            - name: Check formatting
+              run: npm run format:check
+
+            - name: Rebuild function nodes into flow export
+              run: npm run functions:build
+
+            - name: Verify flow sync
+              run: npm run functions:check
+
+            - name: Ensure generated files are committed
+              run: git diff --exit-code -- ControlFeedInFlow.json function-nodes scripts
+
+            - name: Prepare release payload
+              run: npm run release:prepare
+
+            - name: Create release archive
+              run: |
+                  cd dist
+                  cp release/ControlFeedInFlow.json solar-net-metering-flow.json
+                  zip -r solar-net-metering-release.zip release
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: solar-net-metering-release-artifacts
+                  path: |
+                      dist/solar-net-metering-flow.json
+                      dist/solar-net-metering-release.zip
+                  if-no-files-found: error
+
+    release:
+        name: Publish Release Assets
+        if: github.event_name == 'release'
+        needs: build
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        steps:
+            - name: Download build artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: solar-net-metering-release-artifacts
+                  path: dist
+
+            - name: Attach assets to GitHub release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: |
+                      dist/solar-net-metering-flow.json
+                      dist/solar-net-metering-release.zip

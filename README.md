@@ -17,6 +17,7 @@ node scripts/sync-function-nodes.js extract
 node scripts/sync-function-nodes.js build
 node scripts/sync-function-nodes.js validate
 node scripts/sync-function-nodes.js check
+npm run release:prepare
 ```
 
 `extract` writes the current function node code from `ControlFeedInFlow.json` into the mapped `.js` files.
@@ -32,5 +33,21 @@ npm run lint
 npm run lint:fix
 npm run format
 npm run format:check
+npm run release:prepare
 npm run check
 ```
+
+## GitHub Actions
+
+The workflow at [.github/workflows/ci-release.yml](/home/andreas/git/solar-net-metering/.github/workflows/ci-release.yml) runs:
+
+1. `npm run lint`
+2. `npm run format:check`
+3. `npm run functions:build`
+4. `npm run functions:check`
+5. `npm run release:prepare`
+
+On a published GitHub release, the workflow uploads these generated assets to the release:
+
+- `solar-net-metering-flow.json`
+- `solar-net-metering-release.zip`

@@ -13,6 +13,7 @@
         "functions:build": "node scripts/sync-function-nodes.js build",
         "functions:validate": "node scripts/sync-function-nodes.js validate",
         "functions:check": "node scripts/sync-function-nodes.js check",
+        "release:prepare": "node scripts/create-release-artifacts.js",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier . --write",
