@@ -1,0 +1,2179 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Control of Zero Feed.In",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "5cf6489d8647b69b",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "name": "Zero Feed.In V1.1 07/2024",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "5739c3f29a1ea937",
+            "2a0d4e251064647e",
+            "43543a987662b3e9",
+            "fad7c9c2783c3c71",
+            "26d3c5306d0fef5a",
+            "a26c4f5925b4b643",
+            "ad417c320b10bec2",
+            "f04101965e727af7",
+            "a66ee53700d3b369",
+            "d6b25c71f48ed382",
+            "57723b0bd889f0a7",
+            "c30d48f36fd7725f",
+            "8e132e8321cb3baa",
+            "025246c4ded22275",
+            "4477233b9b0acab6",
+            "6dd893d2c26e82bd",
+            "d0526407edeba38b",
+            "7836c941e5c1049e",
+            "f88f79c827a2930a",
+            "370a81d4e6bb9016",
+            "0fcfe0261c10f67b",
+            "9c9fac4913b642f3",
+            "3330defc0a6502b1",
+            "bd9e831b5e194fa6",
+            "7302e299b9d0bee3"
+        ],
+        "x": 8,
+        "y": -1,
+        "w": 3844,
+        "h": 1428
+    },
+    {
+        "id": "fad7c9c2783c3c71",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "HOAS helper variables",
+        "style": {
+            "label": true,
+            "stroke": "#ffcf3f"
+        },
+        "nodes": [
+            "32b1de89d46895e9",
+            "aefb0da329db14a4",
+            "e1d732b9ed882ed0",
+            "19be0c6bf86240de",
+            "ba1bdf21e0e554c0",
+            "c446955a546e1dfe",
+            "63dba39c9a6e7814",
+            "18357dd483a9022e",
+            "bac4db0a48f5dcc4"
+        ],
+        "x": 594,
+        "y": 999,
+        "w": 432,
+        "h": 402
+    },
+    {
+        "id": "0fcfe0261c10f67b",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Power Usage - Smart Meter",
+        "style": {
+            "label": true,
+            "stroke": "#ff3f3f"
+        },
+        "nodes": [
+            "3ce80d6582b527a8"
+        ],
+        "x": 594,
+        "y": 559,
+        "w": 272,
+        "h": 82
+    },
+    {
+        "id": "f88f79c827a2930a",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Home Assistant battery values",
+        "style": {
+            "label": true,
+            "stroke": "#92d04f"
+        },
+        "nodes": [
+            "7bc91d8fa3f7b22e",
+            "7d09c04d0ae3557a",
+            "3adf992cd1a77c7b",
+            "8cffd73792e6988c",
+            "3424ebdff0877cab",
+            "6df3e17230aa0dac",
+            "7344dd86ae0ec96d",
+            "10aa056d4c3b4125",
+            "254dd4b54dd38a84",
+            "5e231f0d4bb9cd25"
+        ],
+        "x": 594,
+        "y": 79,
+        "w": 392,
+        "h": 442
+    },
+    {
+        "id": "26d3c5306d0fef5a",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Trigger",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "5ce3ae4f23192d41",
+            "eed002ece4224a0a"
+        ],
+        "x": 34,
+        "y": 139,
+        "w": 352,
+        "h": 82
+    },
+    {
+        "id": "c30d48f36fd7725f",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Output Control HM-600",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "73a77c3a1b8dcd3b",
+            "eaca7ff6ffe255c2",
+            "d6a84d3510a6591c",
+            "869eb6e1e644148a",
+            "d19f162282674090",
+            "794b544f9a7bccb9",
+            "15249236be519140",
+            "deaadefc156e85aa",
+            "d5e55fc7c6210855"
+        ],
+        "x": 2854,
+        "y": 40.99999237060547,
+        "w": 473.0001220703125,
+        "h": 360.00000762939453
+    },
+    {
+        "id": "8e132e8321cb3baa",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Calculation",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "da4a6644ae945f11",
+            "619d1bef4f2cbbc8",
+            "e05954adb9bf01d7",
+            "3fabccf01b3b555c",
+            "0a034832d14da14a",
+            "364bf3699ddc4f52",
+            "1116d0dd49f60cd9",
+            "d5e960fc9b8cf1ad"
+        ],
+        "x": 1294,
+        "y": 139,
+        "w": 1432,
+        "h": 322
+    },
+    {
+        "id": "6dd893d2c26e82bd",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Log File",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "7c727b9349a66777",
+            "efb0f1e0854ccaea",
+            "9ff941bd037f63ee",
+            "aa395729d6395a93",
+            "2f2b36091f58c9f7",
+            "6f5efb4c79c63240"
+        ],
+        "x": 2864,
+        "y": 859,
+        "w": 582,
+        "h": 182
+    },
+    {
+        "id": "7836c941e5c1049e",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Battery Control SolarFlow-800",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "b094fabcbf3e8c7f",
+            "b14c7e69a805d54c",
+            "8bc3b54e912aa26c",
+            "5651ee699e1cb8be",
+            "bf98ff9809a2eaec",
+            "780b2c3d6bf9a365",
+            "b450208bc5596972",
+            "fa807744ac5a446b"
+        ],
+        "x": 2854,
+        "y": 419,
+        "w": 972,
+        "h": 282
+    },
+    {
+        "id": "3330defc0a6502b1",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Inverter Hoymiles HM-600",
+        "style": {
+            "stroke": "#ffff00",
+            "label": true
+        },
+        "nodes": [
+            "78fd2c7b96fe5927",
+            "0c751d1f7106fbac",
+            "a40310948a72c042",
+            "76ebd024cdeebcd2"
+        ],
+        "x": 594,
+        "y": 659,
+        "w": 332,
+        "h": 202
+    },
+    {
+        "id": "bd9e831b5e194fa6",
+        "type": "group",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Inverter Hoymiles HMS-800",
+        "style": {
+            "stroke": "#ffff00",
+            "label": true
+        },
+        "nodes": [
+            "21024f00fc41c0a8"
+        ],
+        "x": 594,
+        "y": 879,
+        "w": 332,
+        "h": 82
+    },
+    {
+        "id": "5739c3f29a1ea937",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Trigger Inverter Restart",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "00 00 * * *",
+        "once": false,
+        "onceDelay": "6",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 2070,
+        "y": 80,
+        "wires": [
+            [
+                "deaadefc156e85aa"
+            ]
+        ]
+    },
+    {
+        "id": "2a0d4e251064647e",
+        "type": "link in",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Trigger",
+        "links": [
+            "43543a987662b3e9"
+        ],
+        "x": 515,
+        "y": 180,
+        "wires": [
+            [
+                "7d09c04d0ae3557a",
+                "7bc91d8fa3f7b22e",
+                "3adf992cd1a77c7b",
+                "8cffd73792e6988c",
+                "3424ebdff0877cab",
+                "6df3e17230aa0dac",
+                "7344dd86ae0ec96d",
+                "10aa056d4c3b4125",
+                "254dd4b54dd38a84",
+                "5e231f0d4bb9cd25"
+            ]
+        ]
+    },
+    {
+        "id": "43543a987662b3e9",
+        "type": "link out",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Trigger",
+        "mode": "link",
+        "links": [
+            "2a0d4e251064647e",
+            "ad417c320b10bec2",
+            "a26c4f5925b4b643",
+            "9c9fac4913b642f3"
+        ],
+        "x": 425,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "32b1de89d46895e9",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Minimum Power Zero Feed.In Inverter",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_number.minimale_leistung_nulleinspeisung_wechselrichter",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 810,
+        "y": 1240,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "aefb0da329db14a4",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Shutdown Threshold Inverter",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_number.ausschaltschwelle_wechselrichter",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 740,
+        "y": 1040,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "e1d732b9ed882ed0",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Startup Threshold Inverter",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_number.einschaltschwelle_wechselrichter",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 730,
+        "y": 1080,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "19be0c6bf86240de",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Maximum Output Power Inverter ",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_number.maximale_ausgangsleistung_wechselrichter",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 770,
+        "y": 1280,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "ba1bdf21e0e554c0",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Maximum Power Zero Feed.In Inverter",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_number.maximale_leistung_nulleinspeisung_wechselrichter",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 810,
+        "y": 1200,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "c446955a546e1dfe",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Maximum Power when SoC 100%",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_number.maximale_ausgangsleistung_bei_soc_100",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 770,
+        "y": 1160,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "63dba39c9a6e7814",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Status Zero Feed.In",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_boolean.status_nulleinspeisung",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 720,
+        "y": 1120,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "18357dd483a9022e",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Static Power Inverter",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "input_number.statische_ausgangsleistung_wechselrichter",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 1320,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "3ce80d6582b527a8",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "0fcfe0261c10f67b",
+        "name": "Power Usage (net in W)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.smartmeter_keller_sml_watt_summe",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 730,
+        "y": 600,
+        "wires": [
+            [
+                "d6b25c71f48ed382"
+            ]
+        ]
+    },
+    {
+        "id": "78fd2c7b96fe5927",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "3330defc0a6502b1",
+        "name": "Creating Solar Power HM-600",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.hoymiles600_power",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 750,
+        "y": 700,
+        "wires": [
+            [
+                "7302e299b9d0bee3"
+            ]
+        ]
+    },
+    {
+        "id": "0c751d1f7106fbac",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "3330defc0a6502b1",
+        "name": "Status openDTU HM-600",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "binary_sensor.opendtu_b69d10_status",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 730,
+        "y": 740,
+        "wires": [
+            [
+                "7302e299b9d0bee3"
+            ]
+        ]
+    },
+    {
+        "id": "7bc91d8fa3f7b22e",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Electric Charge State (in %)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.solarflow_800_pro_electric_level",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 160,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "76ebd024cdeebcd2",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "3330defc0a6502b1",
+        "name": "Status Inverter HM-600 Reachable",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "binary_sensor.hoymiles600_reachable",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 820,
+        "wires": [
+            [
+                "7302e299b9d0bee3"
+            ]
+        ]
+    },
+    {
+        "id": "a40310948a72c042",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "3330defc0a6502b1",
+        "name": "Status Inverter HM-600 Producing",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "binary_sensor.hoymiles600_producing",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 780,
+        "wires": [
+            [
+                "7302e299b9d0bee3"
+            ]
+        ]
+    },
+    {
+        "id": "5ce3ae4f23192d41",
+        "type": "server-state-changed",
+        "z": "f6f2187d.f17ca8",
+        "g": "26d3c5306d0fef5a",
+        "name": "Event Trigger",
+        "server": "bf41ee605731eea3",
+        "version": 6,
+        "outputs": 1,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "input_number.trigger_nulleinspeisung"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "outputInitially": true,
+        "stateType": "num",
+        "ifState": "",
+        "ifStateType": "str",
+        "ifStateOperator": "is",
+        "outputOnlyOnStateChange": true,
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "ignorePrevStateNull": false,
+        "ignorePrevStateUnknown": false,
+        "ignorePrevStateUnavailable": false,
+        "ignoreCurrentStateUnknown": false,
+        "ignoreCurrentStateUnavailable": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "eventData"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "x": 130,
+        "y": 180,
+        "wires": [
+            [
+                "eed002ece4224a0a"
+            ]
+        ]
+    },
+    {
+        "id": "eed002ece4224a0a",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "g": "26d3c5306d0fef5a",
+        "name": "Trigger Timer",
+        "func": "let triggerTime = parseFloat(msg.payload); // Zeit in Sekunden aus dem input\nlet timerId = flow.get('timerId') || null; // Holen des Timer-IDs aus dem Flow-Kontext\nlet endTime = flow.get('endTime') || Date.now() + triggerTime * 1000; // Endzeit aus Flow-Kontext oder neu berechnen\n\n// Bestehenden Timer löschen, falls vorhanden\nif (timerId) {\n    clearInterval(timerId);\n}\n\n// Funktion zur Aktualisierung des Node-Status\nfunction updateCountdown() {\n    let remainingTime = Math.ceil((endTime - Date.now()) / 1000);\n    if (remainingTime > 0) {\n        node.status({fill:\"red\", shape:\"ring\", text:`Trigger in ${remainingTime}s`});\n    } else {\n        node.status({fill:\"green\", shape:\"dot\", text:\"Triggered\"});\n        endTime = Date.now() + triggerTime * 1000; // Neu berechnen des Endzeitpunkts für kontinuierliche Wiederholungen\n        node.send({payload: true}); // Sende 'true' bei Ablauf des Timers\n    }\n}\n\n// Setzen des Intervall-Timers\ntimerId = setInterval(() => {\n    updateCountdown();\n}, 1000); // Jede Sekunde aktualisieren\n\n// Speichern des Timer-IDs und des Endzeitpunkts im Flow-Kontext\nflow.set('timerId', timerId);\nflow.set('endTime', endTime);\n\n// Initialer Aufruf zur Statusaktualisierung\nupdateCountdown();\n\nreturn null; // Keine direkte Nachrichtenausgabe\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 180,
+        "wires": [
+            [
+                "43543a987662b3e9"
+            ]
+        ]
+    },
+    {
+        "id": "a26c4f5925b4b643",
+        "type": "link in",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Trigger",
+        "links": [
+            "43543a987662b3e9"
+        ],
+        "x": 515,
+        "y": 600,
+        "wires": [
+            [
+                "3ce80d6582b527a8"
+            ]
+        ]
+    },
+    {
+        "id": "ad417c320b10bec2",
+        "type": "link in",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Trigger",
+        "links": [
+            "43543a987662b3e9"
+        ],
+        "x": 515,
+        "y": 1160,
+        "wires": [
+            [
+                "aefb0da329db14a4",
+                "e1d732b9ed882ed0",
+                "63dba39c9a6e7814",
+                "c446955a546e1dfe",
+                "ba1bdf21e0e554c0",
+                "32b1de89d46895e9",
+                "19be0c6bf86240de",
+                "18357dd483a9022e",
+                "bac4db0a48f5dcc4"
+            ]
+        ]
+    },
+    {
+        "id": "f04101965e727af7",
+        "type": "link out",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Data",
+        "mode": "link",
+        "links": [
+            "a66ee53700d3b369"
+        ],
+        "x": 1125,
+        "y": 1220,
+        "wires": []
+    },
+    {
+        "id": "a66ee53700d3b369",
+        "type": "link in",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Data",
+        "links": [
+            "f04101965e727af7",
+            "d6b25c71f48ed382",
+            "57723b0bd889f0a7",
+            "7302e299b9d0bee3"
+        ],
+        "x": 1225,
+        "y": 300,
+        "wires": [
+            [
+                "da4a6644ae945f11"
+            ]
+        ]
+    },
+    {
+        "id": "d6b25c71f48ed382",
+        "type": "link out",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Data",
+        "mode": "link",
+        "links": [
+            "a66ee53700d3b369"
+        ],
+        "x": 1125,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "57723b0bd889f0a7",
+        "type": "link out",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Data",
+        "mode": "link",
+        "links": [
+            "a66ee53700d3b369"
+        ],
+        "x": 1125,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "73a77c3a1b8dcd3b",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "WR Limit",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 3220,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "eaca7ff6ffe255c2",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "Inverter HM-600 ON",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "button.press",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "button.hoymiles600_turn_inverter_on"
+        ],
+        "labelId": [],
+        "data": "{}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": false,
+        "domain": "button",
+        "service": "press",
+        "x": 2980,
+        "y": 300,
+        "wires": [
+            [
+                "869eb6e1e644148a"
+            ]
+        ]
+    },
+    {
+        "id": "d6a84d3510a6591c",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "Inverter HM-600 OFF",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "button.press",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "button.hoymiles600_turn_inverter_off"
+        ],
+        "labelId": [],
+        "data": "{}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": false,
+        "domain": "button",
+        "service": "press",
+        "x": 2980,
+        "y": 360,
+        "wires": [
+            [
+                "d19f162282674090"
+            ]
+        ]
+    },
+    {
+        "id": "869eb6e1e644148a",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "WR ON",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 3220,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "d19f162282674090",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "WR OFF",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 3220,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "794b544f9a7bccb9",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "Inverter HM-600 Limit (%)",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "number.set_value",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "number.hoymiles600_limit_nonpersistent_relative"
+        ],
+        "labelId": [],
+        "data": "{\"value\":\"{{payload}}\"}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": false,
+        "domain": "number",
+        "service": "set_value",
+        "x": 2990,
+        "y": 240,
+        "wires": [
+            [
+                "73a77c3a1b8dcd3b"
+            ]
+        ]
+    },
+    {
+        "id": "15249236be519140",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "WR RST",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 3221.0001220703125,
+        "y": 81.99999237060547,
+        "wires": []
+    },
+    {
+        "id": "deaadefc156e85aa",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "Inverter Restart Action",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "button.press",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "button.hoymiles600_restart_inverter"
+        ],
+        "labelId": [],
+        "data": "{}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "Neustart Wechselrichter",
+                "valueType": "str"
+            }
+        ],
+        "queue": "none",
+        "blockInputOverrides": false,
+        "domain": "button",
+        "service": "press",
+        "x": 2981.0001220703125,
+        "y": 81.99999237060547,
+        "wires": [
+            [
+                "15249236be519140"
+            ]
+        ]
+    },
+    {
+        "id": "3fabccf01b3b555c",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "Battery Decision",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2600,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "d0526407edeba38b",
+        "type": "link out",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "logFileMsg",
+        "mode": "link",
+        "links": [
+            "6f5efb4c79c63240"
+        ],
+        "x": 2835,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "d5e55fc7c6210855",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "g": "c30d48f36fd7725f",
+        "name": "Limit setzen mit \"nonpersistent_relative\"",
+        "info": "",
+        "x": 3030,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "da4a6644ae945f11",
+        "type": "join",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "join all HOAS calls",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": true,
+        "accumulate": false,
+        "timeout": "4",
+        "count": "25",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "num",
+        "reduceFixup": "",
+        "x": 1420,
+        "y": 300,
+        "wires": [
+            [
+                "e05954adb9bf01d7"
+            ]
+        ]
+    },
+    {
+        "id": "619d1bef4f2cbbc8",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "Adjusting join for data formating necessary",
+        "info": "Due to the separate, \nparallel retrieval via Home Assistant\nit is necessary to wait here until all\ngroups are done and sent data.",
+        "x": 1480,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "e05954adb9bf01d7",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "Data formating",
+        "func": "// ENTITY_IDS: All entity names queried from Home Assistant are listed here.\n// Change the values of the keys if the entity names in your Home Assistant configuration are different.\nconst ENTITY_IDS = {\n    DTU_STATUS: \"binary_sensor.opendtu_b69d10_status\",\n    POWER_SECOND_SOURCE: \"sensor.hoymiles600_power\", // replace by empty string (POWER_SECOND_SOURCE: \"\") if no other generation plant is available.\n    POWER_PRIMARY_SOURCE: \"sensor.wechselrichter_ac_leistung\", // replace by empty string (POWER_PRIMARY_SOURCE: \"\") if no other generation plant is available.\n    POWER_CONSUMPTION: \"sensor.smartmeter_keller_sml_watt_summe\",\n    SOLARFLOW_ELECTRIC_LEVEL: \"sensor.solarflow_800_pro_electric_level\",\n    SOLARFLOW_BATTERY_FILL: \"sensor.solarflow_800_pro_available_kwh\",\n    SOLARFLOW_BATTERY_LIMIT_OUTPUT: \"number.solarflow_800_pro_output_limit\",\n    SOLARFLOW_BATTERY_LIMIT_INFLOW: \"number.solarflow_800_pro_input_limit\",\n    SOLARFLOW_BATTERY_SOC_MIN_LEVEL: \"number.solarflow_800_pro_min_soc\",\n    SOLARFLOW_BATTERY_SOC_MAX_LEVEL: \"number.solarflow_800_pro_soc_set\",\n    SOLARFLOW_BATTERY_MAX_OUTPUT: \"sensor.solarflow_800_pro_inverse_max_power\",\n    INVERTER_PRODUCING: \"binary_sensor.hoymiles600_producing\",\n    INVERTER_REACHABLE: \"binary_sensor.hoymiles600_reachable\",\n    INVERTER_OFF_THRESHOLD: \"input_number.ausschaltschwelle_wechselrichter\",\n    INVERTER_ON_THRESHOLD: \"input_number.einschaltschwelle_wechselrichter\",\n    INVERTER_MAX_OUTPUT_POWER: \"input_number.maximale_ausgangsleistung_wechselrichter\",\n    INVERTER_MAX_OUTPUT_AT_FULL_SOC: \"input_number.maximale_ausgangsleistung_bei_soc_100\",\n    INVERTER_MAX_ZERO_INJECTION: \"input_number.maximale_leistung_nulleinspeisung_wechselrichter\",\n    INVERTER_MIN_ZERO_INJECTION: \"input_number.minimale_leistung_nulleinspeisung_wechselrichter\",\n    STATUS_ZERO_INJECTION: \"input_boolean.status_nulleinspeisung\",\n    INVERTER_STATIC_OUTPUT_POWER: \"input_number.statische_ausgangsleistung_wechselrichter\",\n    TIME_SOLAR_USAGE: \"schedule.no_solar\",\n    SOLARFLOW_BATTERY_POWER_MODE: \"select.solarflow_800_pro_ac_mode\",\n    SOLARFLOW_BATTERY_CURRENT_OUTPUT: \"sensor.solarflow_800_pro_output_home_power\",\n    SOLARFLOW_BATTERY_CURRENT_INFLOW: \"sensor.solarflow_800_pro_grid_input_power\"\n};\n\n// nameMapping: Mapping of technical entity IDs to user-friendly key names for later usage in calculation.\nconst nameMapping = {\n    [ENTITY_IDS.DTU_STATUS]: \"dtuState\",\n    [ENTITY_IDS.POWER_PRIMARY_SOURCE]: \"pwrPrimarySource\",\n    [ENTITY_IDS.POWER_SECOND_SOURCE]: \"pwrSecondSource\",\n    [ENTITY_IDS.POWER_CONSUMPTION]: \"pwrConsumption\",\n    [ENTITY_IDS.SOLARFLOW_ELECTRIC_LEVEL]: \"socLevelBattery\",\n    [ENTITY_IDS.INVERTER_PRODUCING]: \"invStateProducing\",\n    [ENTITY_IDS.INVERTER_REACHABLE]: \"invStateReachable\",\n    [ENTITY_IDS.INVERTER_OFF_THRESHOLD]: \"offThresholdInv\",\n    [ENTITY_IDS.INVERTER_ON_THRESHOLD]: \"onThresholdInv\",\n    [ENTITY_IDS.INVERTER_MAX_OUTPUT_POWER]: \"maxOutputPowerInv\",\n    [ENTITY_IDS.INVERTER_MAX_OUTPUT_AT_FULL_SOC]: \"maxOutputAtFullSoc\",\n    [ENTITY_IDS.INVERTER_MAX_ZERO_INJECTION]: \"maxOutputZeroInjection\",\n    [ENTITY_IDS.INVERTER_MIN_ZERO_INJECTION]: \"minOutputZeroInjection\",\n    [ENTITY_IDS.STATUS_ZERO_INJECTION]: \"statusZeroInjection\",\n    [ENTITY_IDS.INVERTER_STATIC_OUTPUT_POWER]: \"staticInverterOutputPower\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_FILL]: \"batteryAvailableEnergy\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_LIMIT_OUTPUT]: \"batterySetLimitOutput\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_LIMIT_INFLOW]: \"batterySetLimitInflow\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_CURRENT_OUTPUT]: \"batteryCurrentOutput\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_CURRENT_INFLOW]: \"batteryCurrentInflow\",\n    [ENTITY_IDS.TIME_SOLAR_USAGE]: \"noSolarPowerPossible\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_SOC_MIN_LEVEL]: \"minSocLevelBattery\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_SOC_MAX_LEVEL]: \"maxSocLevelBattery\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_MAX_OUTPUT]: \"maxDischargingBattery\",\n    [ENTITY_IDS.SOLARFLOW_BATTERY_POWER_MODE]: \"batteryACPowerMode\"\n};\n\n// Input array of msg.payload\nlet dataArray = msg.payload;\n\nlet sortedData = {};\nlet missingDataWarnings = [];\n\n// Converting and sorting the input array\ndataArray.forEach(item => {\n    let entityId = item.entity_id;\n    if (nameMapping[entityId]) {\n        let key = nameMapping[entityId];\n        sortedData[key] = item.state;  // Here we extract only the ‘state’ from the item.\n    }\n});\n\n// Check whether all required keys are present and whether warnings are necessary\nObject.keys(ENTITY_IDS).forEach(key => {\n    let entityId = ENTITY_IDS[key];\n    let mappedKey = nameMapping[entityId];\n    if (!sortedData[mappedKey] && entityId) {\n        if (![\"POWER_SECOND_SOURCE\", \"POWER_PRIMARY_SOURCE\"].includes(key) || entityId !== \"\") {\n            missingDataWarnings.push(mappedKey || key);\n        }\n    }\n});\n\n// Set the default value for power sources if no relevant data is available. Here only the value ‘0’ is set = no generation.\nif (!sortedData[\"pwrSecondSource\"]) {\n    sortedData[\"pwrSecondSource\"] = \"0\";\n}\nif (!sortedData[\"pwrPrimarySource\"]) {\n    sortedData[\"pwrPrimarySource\"] = \"0\";\n}\n\n// Send warning messages if necessary\nif (missingDataWarnings.length > 0) {\n    node.warn(\"Fehlende Daten für: \" + missingDataWarnings.join(\", \"));\n    node.status({ fill: \"red\", shape: \"dot\", text: \"Missing Data!\" });\n} else {\n    // Set the node status to green to indicate that all data is valid and available.\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Data is valid!\" });\n    node.send({ payload: sortedData });\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1640,
+        "y": 300,
+        "wires": [
+            [
+                "0a034832d14da14a"
+            ]
+        ]
+    },
+    {
+        "id": "025246c4ded22275",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Inverter restart 1x/day",
+        "info": "",
+        "x": 2040,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "4477233b9b0acab6",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 280,
+        "y": 80,
+        "wires": [
+            [
+                "43543a987662b3e9"
+            ]
+        ]
+    },
+    {
+        "id": "7c727b9349a66777",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "g": "6dd893d2c26e82bd",
+        "name": "Reset Column Names",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "59 23 * * 0",
+        "once": false,
+        "onceDelay": "6",
+        "topic": "",
+        "payload": "time;dtuState;invStateProducing;invStateReachable;statusZeroInjection;pwrConsumption;pwrSecondSource;socLevelBattery;setPercentMsg;turnOnMsg;turnOffMsg;debugMsg",
+        "payloadType": "str",
+        "x": 3040,
+        "y": 1000,
+        "wires": [
+            [
+                "9ff941bd037f63ee"
+            ]
+        ]
+    },
+    {
+        "id": "efb0f1e0854ccaea",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "g": "6dd893d2c26e82bd",
+        "name": "Override Log File 1x/Week",
+        "info": "",
+        "x": 3080,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "9ff941bd037f63ee",
+        "type": "file",
+        "z": "f6f2187d.f17ca8",
+        "g": "6dd893d2c26e82bd",
+        "name": "logFileMsg_Nulleinspeisung.csv",
+        "filename": "/data/share/logFileMsg_Nulleinspeisung.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 3290,
+        "y": 1000,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "aa395729d6395a93",
+        "type": "csv",
+        "z": "f6f2187d.f17ca8",
+        "g": "6dd893d2c26e82bd",
+        "name": "",
+        "sep": ";",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "time,dtuState,invStateProducing,invStateReachable,statusZeroInjection,pwrConsumption,pwrSecondSource,socLevelBattery,setPercentMsg,turnOnMsg,turnOffMsg,debugMsg",
+        "skip": "0",
+        "strings": false,
+        "include_empty_strings": "",
+        "include_null_values": true,
+        "x": 2990,
+        "y": 900,
+        "wires": [
+            [
+                "2f2b36091f58c9f7"
+            ]
+        ]
+    },
+    {
+        "id": "2f2b36091f58c9f7",
+        "type": "file",
+        "z": "f6f2187d.f17ca8",
+        "g": "6dd893d2c26e82bd",
+        "name": "logFileMsg_Nulleinspeisung.csv",
+        "filename": "/data/share/logFileMsg_Nulleinspeisung.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 3290,
+        "y": 900,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6f5efb4c79c63240",
+        "type": "link in",
+        "z": "f6f2187d.f17ca8",
+        "g": "6dd893d2c26e82bd",
+        "name": "link in 23",
+        "links": [
+            "d0526407edeba38b"
+        ],
+        "x": 2905,
+        "y": 900,
+        "wires": [
+            [
+                "aa395729d6395a93"
+            ]
+        ]
+    },
+    {
+        "id": "7d09c04d0ae3557a",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Available Chargelevel in kWh",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.solarflow_800_pro_available_kwh",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 770,
+        "y": 120,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "3adf992cd1a77c7b",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Input Limit Setting (max. in W)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "number.solarflow_800_pro_input_limit",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 770,
+        "y": 200,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "8cffd73792e6988c",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Output Limit Setting (max. in W)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "number.solarflow_800_pro_output_limit",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 780,
+        "y": 240,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "21024f00fc41c0a8",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "bd9e831b5e194fa6",
+        "name": "Creating Solar Power HMS-800W",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.wechselrichter_ac_leistung",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 920,
+        "wires": [
+            [
+                "7302e299b9d0bee3"
+            ]
+        ]
+    },
+    {
+        "id": "3424ebdff0877cab",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Setting Min Charge Level (in %)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "number.solarflow_800_pro_min_soc",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 780,
+        "y": 280,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "6df3e17230aa0dac",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery SoC Setting Max Charge Level (in %)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "number.solarflow_800_pro_soc_set",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 790,
+        "y": 320,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "b094fabcbf3e8c7f",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Start Charging",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "number.set_value",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "number.solarflow_800_pro_input_limit"
+        ],
+        "labelId": [],
+        "data": "{\"value\":\"{{payload}}\"}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "number",
+        "service": "set_value",
+        "x": 2970,
+        "y": 520,
+        "wires": [
+            [
+                "5651ee699e1cb8be",
+                "bf98ff9809a2eaec"
+            ]
+        ]
+    },
+    {
+        "id": "b14c7e69a805d54c",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Battery start output",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "number.set_value",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "number.solarflow_800_pro_output_limit"
+        ],
+        "labelId": [],
+        "data": "{\"value\":\"{{payload}}\"}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "number",
+        "service": "set_value",
+        "x": 2990,
+        "y": 580,
+        "wires": [
+            [
+                "8bc3b54e912aa26c",
+                "780b2c3d6bf9a365"
+            ]
+        ]
+    },
+    {
+        "id": "8bc3b54e912aa26c",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Feed-in stop",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "number.set_value",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "number.solarflow_800_pro_input_limit"
+        ],
+        "labelId": [],
+        "data": "{\"value\":\"0\"}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "number",
+        "service": "set_value",
+        "x": 3260,
+        "y": 580,
+        "wires": [
+            [
+                "780b2c3d6bf9a365",
+                "fa807744ac5a446b"
+            ]
+        ]
+    },
+    {
+        "id": "5651ee699e1cb8be",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Battery output stop",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "number.set_value",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "number.solarflow_800_pro_output_limit"
+        ],
+        "labelId": [],
+        "data": "{\"value\":\"0\"}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "number",
+        "service": "set_value",
+        "x": 3270,
+        "y": 520,
+        "wires": [
+            [
+                "bf98ff9809a2eaec",
+                "b450208bc5596972"
+            ]
+        ]
+    },
+    {
+        "id": "bac4db0a48f5dcc4",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "fad7c9c2783c3c71",
+        "name": "Solar schedule for controlling",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "schedule.no_solar",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 740,
+        "y": 1360,
+        "wires": [
+            [
+                "f04101965e727af7"
+            ]
+        ]
+    },
+    {
+        "id": "0a034832d14da14a",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "Optimize Battery Based on Consumption & Sun",
+        "func": "// this function has 2 outputs (defined by returns):\n// 1. Power Consumption is fine (0 - 15W) -> return no adjustment required\n// 2. ELSE IF No Solar Power Possible == TRUE && trigger battery discharge exit\n// 3. ELSE trigger battery charging exit\n\n// Extracts HOAS data from formatted msg.payload\nconst pwrConsumption = Math.floor(parseFloat(msg.payload.pwrConsumption)); // Current Consumption in Watt\nlet noSolarPowerPossible = false;\nif (msg.payload.noSolarPowerPossible == \"on\") // Schedule defining, if no reasonable solar power could be expected\n{\n    noSolarPowerPossible = true;   \n}\n// Expected and supported return values for succeeding nodes\nlet adjustCharging = null;\nlet adjustDischarging = null;\nlet debugMsg = null;\n\nif (pwrConsumption >= 0 && pwrConsumption <= 15)\n{\n    debugMsg = { payload: `Power Consumption is fine, no adjustment required (value: ${pwrConsumption} )` };\n}\nelse if (noSolarPowerPossible) \n{\n    adjustDischarging = msg;\n    debugMsg = { payload: `Power Consumption is not in ideal state(value: ${pwrConsumption} ), but no solar power expected, battery discharging triggered` };\n}\nelse \n{\n    adjustCharging = msg;\n    debugMsg = { payload: `Power Consumption is not in ideal state(value: ${pwrConsumption} ), but solar power expected, battery charging triggered` };\n}\nreturn [adjustCharging, adjustDischarging, debugMsg];",
+        "outputs": 3,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1940,
+        "y": 300,
+        "wires": [
+            [
+                "1116d0dd49f60cd9"
+            ],
+            [
+                "364bf3699ddc4f52"
+            ],
+            [
+                "d5e960fc9b8cf1ad"
+            ]
+        ]
+    },
+    {
+        "id": "364bf3699ddc4f52",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "Adjust Battery Discharging",
+        "func": "// This node adjust the battery discharging process\n// 1. IF Power Consumption is negative -> reduce output of battery by value - 5W\n// 2. ELSE (Power Consumption is positive) -> increase output of batterie by value - 5W (limit max. 300W)\n\nfunction createLogFileMsg(pwrConsumption, dischargingPower, socLevelBattery, minSocLevelBattery, currentOutputBattery, currentBatteryRemainingPower, maxDischargingBattery) {\n    const now = new Date();\n    const formattedTime = now.toLocaleString('de-DE', { hour12: false }); // Formatiert Zeit als 'Tag.Monat.Jahr Stunden:Minuten:Sekunden'\n\n    // Converts floats to strings with german separator\n    const formattedPwrConsumption = pwrConsumption.toLocaleString('de-DE');\n    const formattedDischargePwr = dischargingPower.toLocaleString('de-DE');\n    const formattedCurrentOutputPwr = currentOutputBattery.toLocaleString('de-DE');\n    const formattedCurrentRemainingPwr = currentBatteryRemainingPower.toLocaleString('de-DE');\n\n    return {\n        payload: {\n            \"time\": formattedTime,\n            \"pwrConsumption\": formattedPwrConsumption,\n            \"socLevelBattery\": socLevelBattery,\n            \"minSocLevelBattery\": minSocLevelBattery,\n            \"currentOutputBattery\": formattedCurrentOutputPwr,\n            \"dischargingPower\": formattedDischargePwr,\n            \"maxDischargingBattery\": maxDischargingBattery,\n            \"currentBatteryRemainingPower\": formattedCurrentRemainingPwr\n        }\n    };\n}\n\n// Extracts HOAS data from formatted msg.payload\nconst pwrConsumption = Math.floor(parseFloat(msg.payload.pwrConsumption)); // Current Consumption in Watt\nconst socLevelBattery = parseFloat(msg.payload.socLevelBattery); // Current Charge level (SoC) of Battery in percent\nconst minSocLevelBattery = parseFloat(msg.payload.minSocLevelBattery); // minimal threshold the battery supports until stopping discharging\nlet currentOutputBattery = parseFloat(msg.payload.batteryCurrentOutput);\nconst currentBatteryRemainingPower = parseFloat(msg.payload.batteryAvailableEnergy);\nconst maxDischargingBattery = parseFloat(msg.payload.maxDischargingBattery);\n            \n// Expected and supported return values for succeeding nodes\nlet adjustSolarFlowDischarging = null;\nlet logFileMsg = null;\nlet debugMsg = null;\nif (isNaN(parseFloat(msg.payload.batteryCurrentOutput)))\n{\n    currentOutputBattery = 0;\n}\n// calculate the necessary adaption\nlet dischargingPower = pwrConsumption + currentOutputBattery - 5;\nif (isNaN(dischargingPower))\n{\n    dischargingPower = 0;\n}\nif(dischargingPower >= maxDischargingBattery)\n{\n    if(dischargingPower > pwrConsumption)\n    {\n        dischargingPower = pwrConsumption - 5;\n        debugMsg = { payload: `Discharging is not in ideal state (current: ${currentOutputBattery}, power consumption ${pwrConsumption} ), i.e. adjust discharging to level of ${dischargingPower}` };\n    }\n    else\n    {\n        // limit to max discharging power the battery supports\n        dischargingPower = maxDischargingBattery;\n        debugMsg = { payload: `Discharging is not in ideal state (value: ${currentOutputBattery} ), i.e. adjust discharging to max. level of ${dischargingPower}` };\n    }\n}\nif(dischargingPower < 0) {\n    dischargingPower = 0;\n}\n// check if battery is already at limit, stop discharging\nif(socLevelBattery - 3 < minSocLevelBattery)\n{\n    dischargingPower = 0;\n    debugMsg = { payload: `Battery is empty, i.e. adjust discharging to ${dischargingPower}` };\n}\nif(dischargingPower != currentOutputBattery)\n{\n    // inform battery to adjust discharging accordingly because a new value is calculated\n    adjustSolarFlowDischarging = { payload: dischargingPower };\n    debugMsg = { payload: `Discharging is not in ideal state (value: ${currentOutputBattery} ), i.e. adjust discharging to ${dischargingPower}` };\n}\nlogFileMsg = createLogFileMsg(pwrConsumption, dischargingPower, socLevelBattery, minSocLevelBattery, currentOutputBattery, currentBatteryRemainingPower, maxDischargingBattery);\n\nreturn [adjustSolarFlowDischarging, debugMsg, logFileMsg];",
+        "outputs": 3,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2300,
+        "y": 340,
+        "wires": [
+            [
+                "b14c7e69a805d54c"
+            ],
+            [
+                "3fabccf01b3b555c"
+            ],
+            [
+                "d0526407edeba38b"
+            ]
+        ]
+    },
+    {
+        "id": "1116d0dd49f60cd9",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "Adjust Battery Charging",
+        "func": "// This node adjust the battery charging process\n// 1. IF Power Consumption is negative -> increase input load of battery by value - 5W\n// 2. ELSE (Current Input && Power Consumption is positive) -> decrease input load of batterie by value - 5W (limit max. 300W)\n\nfunction createLogFileMsg(pwrConsumption, chargingPower, socLevelBattery, maxSocLevelBattery, currentOutputBattery, currentBatteryRemainingPower, maxChargingBattery) {\n    const now = new Date();\n    const formattedTime = now.toLocaleString('de-DE', { hour12: false }); // Formatiert Zeit als 'Tag.Monat.Jahr Stunden:Minuten:Sekunden'\n\n    // Converts floats to strings with german separator\n    const formattedPwrConsumption = pwrConsumption.toLocaleString('de-DE');\n    const formattedChargePwr = chargingPower.toLocaleString('de-DE');\n    const formattedCurrentOutputPwr = currentOutputBattery.toLocaleString('de-DE');\n    const formattedCurrentRemainingPwr = currentBatteryRemainingPower.toLocaleString('de-DE');\n\n    return {\n        payload: {\n            \"time\": formattedTime,\n            \"pwrConsumption\": formattedPwrConsumption,\n            \"socLevelBattery\": socLevelBattery,\n            \"maxSocLevelBattery\": maxSocLevelBattery,\n            \"currentOutputBattery\": formattedCurrentOutputPwr,\n            \"chargingPower\": formattedChargePwr,\n            \"maxChargingBattery\": maxChargingBattery,\n            \"currentBatteryRemainingPower\": formattedCurrentRemainingPwr\n        }\n    };\n}\n\n// Extracts HOAS data from formatted msg.payload\nconst pwrConsumption = Math.floor(parseFloat(msg.payload.pwrConsumption)); // Current Consumption in Watt\nconst socLevelBattery = parseFloat(msg.payload.socLevelBattery); // Current Charge level (SoC) of Battery in percent\nconst maxSocLevelBattery = parseFloat(msg.payload.maxSocLevelBattery); // maximal threshold the battery supports until stopping charging\nconst minSocLevelBattery = parseFloat(msg.payload.minSocLevelBattery); // minimal threshold to keep the battery during solar on this SoC level\nconst currentInflowBattery = parseFloat(msg.payload.batteryCurrentInflow);\nconst currentBatteryRemainingPower = parseFloat(msg.payload.batteryAvailableEnergy);\nlet currentProductInverter1 = parseFloat(msg.payload.pwrPrimarySource);\nlet currentProductInverter2 = parseFloat(msg.payload.pwrSecondSource);\n// norm not available DTU values\nif(isNaN(currentProductInverter1))\n{\n    currentProductInverter1 = 0;\n}\nif(isNaN(currentProductInverter2))\n{\n    currentProductInverter2 = 0;\n}\nconst producedPower = currentProductInverter1 + currentProductInverter2;\nconst maxChargingBattery = parseFloat(msg.payload.maxChargingBattery);\nconst setLimitInflowBattery  = parseFloat(msg.payload.batterySetLimitInflow);\n\n// Expected and supported return values for succeeding nodes\nlet adjustSolarFlowCharging = null;\nlet logFileMsg = null;\nlet debugMsg = null;\n\n// calculate the necessary adaption\n// the power is: -200W\n// setLimitInflowBattery = 200W\n// currentInflowBattery = 100W\n// => chargingPower = 100 - -200W = 300W\n\n// the power is: 200W\n// setLimitInflowBattery = 200W\n// currentInflowBattery = 100W\n// => chargingPower = 100 - 200W = -100W = 0W // set to min value of \"0\"\nlet chargingPower = currentInflowBattery - pwrConsumption;\nif (chargingPower < 0)\n{\n    chargingPower = 0;\n    debugMsg = { payload: `Currently too much usage. Stop charging (value: ${currentInflowBattery} ), would set ${chargingPower}W for charging.` };\n}\nelse \n{\n    debugMsg = { payload: `Currently too less power, or too much usage. No charging is possible (value: ${currentInflowBattery} ), i.e. adjust charging to max. level of ${chargingPower}` };\n}\n\n// check if the battery requires a loading because solar power is generated\nif (socLevelBattery <= minSocLevelBattery && producedPower >= 150)\n{\n    if(chargingPower < producedPower) // only reset charging if not already charging is calculated\n    {\n        // set charging power to half of the solar power to charge until min level is reached\n        chargingPower = producedPower / 2;\n    }\n}\n\nif (chargingPower >= maxChargingBattery) {\n    // limit to max discharging power the battery supports\n    chargingPower = maxChargingBattery;\n    debugMsg = { payload: `Charging is not ideal (value: ${currentInflowBattery} ), would set ${chargingPower}W for charging.` };\n}\n// check if battery is already at max. limit, stop charging\nif (socLevelBattery + 1 >= maxSocLevelBattery) {\n    chargingPower = 0;\n    debugMsg = { payload: `Battery is full, i.e. adjust charging to ${chargingPower}` };\n}\nif (chargingPower != currentInflowBattery) {\n    // inform battery to adjust discharging accordingly because a new value is calculated\n    adjustSolarFlowCharging = { payload: chargingPower };\n    debugMsg = { payload: `Charging is not as required (value: ${currentInflowBattery} ), i.e. adjust charging to ${chargingPower}` };\n}\nlogFileMsg = createLogFileMsg(pwrConsumption, chargingPower, socLevelBattery, maxSocLevelBattery, currentInflowBattery, currentBatteryRemainingPower, maxChargingBattery);\n\nreturn [adjustSolarFlowCharging, debugMsg, logFileMsg];",
+        "outputs": 3,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2290,
+        "y": 260,
+        "wires": [
+            [
+                "b094fabcbf3e8c7f"
+            ],
+            [
+                "3fabccf01b3b555c"
+            ],
+            [
+                "d0526407edeba38b"
+            ]
+        ]
+    },
+    {
+        "id": "d5e960fc9b8cf1ad",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "8e132e8321cb3baa",
+        "name": "Debug SOLAR Schedule check",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2310,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "bf98ff9809a2eaec",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Start Charging",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 3470,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "780b2c3d6bf9a365",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Battery discharge start",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 3470,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "370a81d4e6bb9016",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "manuel test to charge",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "50",
+        "payloadType": "jsonata",
+        "x": 2260,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7344dd86ae0ec96d",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Discharging State",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "select.solarflow_800_pro_ac_mode",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 730,
+        "y": 360,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "b450208bc5596972",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Set AC PowerMode to Charge Battery",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "select.select_option",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "select.solarflow_800_pro_ac_mode"
+        ],
+        "labelId": [],
+        "data": "{\"option\":\"input\",\"entity_id\":\"select.solarflow_800_pro_ac_mode\"}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "select",
+        "service": "select_option",
+        "x": 3630,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fa807744ac5a446b",
+        "type": "api-call-service",
+        "z": "f6f2187d.f17ca8",
+        "g": "7836c941e5c1049e",
+        "name": "Set AC PowerMode to Discharge Battery",
+        "server": "bf41ee605731eea3",
+        "version": 7,
+        "debugenabled": false,
+        "action": "select.select_option",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "select.solarflow_800_pro_ac_mode"
+        ],
+        "labelId": [],
+        "data": "{\"option\":\"output\",\"entity_id\":\"select.solarflow_800_pro_ac_mode\"}",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "select",
+        "service": "select_option",
+        "x": 3640,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "10aa056d4c3b4125",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery max Discharging Power",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.solarflow_800_pro_inverse_max_power",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 750,
+        "y": 400,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "9c9fac4913b642f3",
+        "type": "link in",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "link in 2",
+        "links": [
+            "43543a987662b3e9"
+        ],
+        "x": 515,
+        "y": 800,
+        "wires": [
+            [
+                "21024f00fc41c0a8",
+                "76ebd024cdeebcd2",
+                "a40310948a72c042",
+                "0c751d1f7106fbac",
+                "78fd2c7b96fe5927"
+            ]
+        ]
+    },
+    {
+        "id": "254dd4b54dd38a84",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Current Output Power (in W)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.solarflow_800_pro_output_home_power",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 770,
+        "y": 440,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "5e231f0d4bb9cd25",
+        "type": "ha-get-entities",
+        "z": "f6f2187d.f17ca8",
+        "g": "f88f79c827a2930a",
+        "name": "Battery Current Input Power (in W)",
+        "server": "bf41ee605731eea3",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "includes",
+                "value": "sensor.solarflow_800_pro_grid_input_power",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "split",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 480,
+        "wires": [
+            [
+                "57723b0bd889f0a7"
+            ]
+        ]
+    },
+    {
+        "id": "7302e299b9d0bee3",
+        "type": "link out",
+        "z": "f6f2187d.f17ca8",
+        "g": "5cf6489d8647b69b",
+        "name": "Event Data",
+        "mode": "link",
+        "links": [
+            "a66ee53700d3b369"
+        ],
+        "x": 1125,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "bf41ee605731eea3",
+        "type": "server",
+        "name": "Home Assistant",
+        "version": 5,
+        "addon": false,
+        "rejectUnauthorizedCerts": true,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true,
+        "cacheJson": true,
+        "heartbeat": true,
+        "heartbeatInterval": "10",
+        "areaSelector": "friendlyName",
+        "deviceSelector": "friendlyName",
+        "entitySelector": "friendlyName",
+        "statusSeparator": ": ",
+        "statusYear": "hidden",
+        "statusMonth": "short",
+        "statusDay": "numeric",
+        "statusHourCycle": "default",
+        "statusTimeFormat": "h:m",
+        "enableGlobalContextStore": true
+    },
+    {
+        "id": "8826fc2941b5b4b8",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-home-assistant-websocket": "0.77.2"
+        }
+    }
+]
