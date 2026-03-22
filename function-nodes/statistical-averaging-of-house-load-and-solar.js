@@ -16,6 +16,20 @@ const batIn = parseFloat(map["sensor.solarflow_800_pro_grid_input_power"]?.state
 const currentDemand = grid + batOut + solarIn1 + solarIn2 - batIn;
 const currentSolarPower = solarIn1 + solarIn2;
 
+function calculateAverage(values) {
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function calculateStdDev(values, average) {
+    if (values.length <= 1) {
+        return 0;
+    }
+
+    const variance =
+        values.reduce((sum, value) => sum + Math.pow(value - average, 2), 0) / values.length;
+    return Math.sqrt(variance);
+}
+
 // 2. Manage 5-minute history based on the configured trigger interval
 const historyWindowSeconds = 5 * 60;
 const triggerIntervalSeconds =
@@ -33,7 +47,23 @@ while (solarHistory.length > historySamples) solarHistory.shift();
 context.set("solarHistory", solarHistory);
 
 // 3. Calculate Average
-const averageSolar = solarHistory.reduce((c, d) => c + d, 0) / solarHistory.length;
+const averageDemand = calculateAverage(history);
+const averageSolar = calculateAverage(solarHistory);
+const demandStdDev = calculateStdDev(history, averageDemand);
+const solarStdDev = calculateStdDev(solarHistory, averageSolar);
+
+const demandStdDevThreshold = 60;
+const solarStdDevThreshold = 80;
+const demandStable = demandStdDev <= demandStdDevThreshold;
+const solarStable = solarStdDev <= solarStdDevThreshold;
+const stabilityMode = solarStable
+    ? demandStable
+        ? "stable_stable"
+        : "demand_unstable"
+    : demandStable
+      ? "solar_unstable"
+      : "unstable_unstable";
+
 // 4. Calculate Median (P50)
 // We create a copy so we don't mess up the chronological history
 const sorted = [...history].sort((a, b) => a - b);
@@ -59,9 +89,10 @@ const flowBias = proactiveSolar > 50 ? 20 : 0;
 node.status({
     fill: "blue",
     shape: "dot",
-    text: `Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W, n=${historySamples}`
+    text: `Mode: ${stabilityMode} | Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W`
 });
-
+msg.adjustment.medianDemand = Math.round(medianDemand);
+msg.adjustment.netPowerConcumption = Math.round(currentDemand);
 msg.adjustment.defensiveTarget = Math.round(defensiveTarget - flowBias);
 msg.adjustment.solarPower = Math.round(proactiveSolar);
 msg.adjustment.solarAveragePower = Math.round(averageSolar);
@@ -70,5 +101,20 @@ msg.meta.history = {
     triggerIntervalSeconds: triggerIntervalSeconds,
     triggerIntervalMs: triggerIntervalSeconds * 1000,
     samples: historySamples
+};
+msg.meta.stability = {
+    mode: stabilityMode,
+    demand: demandStable ? "stable" : "unstable",
+    solar: solarStable ? "stable" : "unstable",
+    thresholds: {
+        demandStdDev: demandStdDevThreshold,
+        solarStdDev: solarStdDevThreshold
+    },
+    stats: {
+        demandAverage: Math.round(averageDemand),
+        demandStdDev: Math.round(demandStdDev),
+        solarAverage: Math.round(averageSolar),
+        solarStdDev: Math.round(solarStdDev)
+    }
 };
 return msg;

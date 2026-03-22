@@ -6,6 +6,9 @@ const batteryInflow = parseFloat(ha["sensor.solarflow_800_pro_grid_input_power"]
 const calculatedDemand = msg.adjustment.defensiveTarget;
 const liveSolarPower = msg.adjustment.solarPower;
 const stableSolarPower = msg.adjustment.solarAveragePower ?? liveSolarPower;
+const stability = msg.meta?.stability || {};
+const stabilityMode = stability.mode || "unstable_unstable";
+const isHappyPath = stabilityMode === "stable_stable";
 const solarLiveBlend = 0.35; // Pull part of the live solar into the stable value on cloudy days
 const effectiveSolarPower = Math.max(
     stableSolarPower,
@@ -25,6 +28,10 @@ const maxInverterPower = 1200; // the Inverter limit
 const minSustain = 50; // Keep charging circuit active
 const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
 const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting
+const happyPathBuffer = 20; // Smaller reserve when solar and demand are both calm
+const happyPathDeadband = 15; // Ignore tiny setpoint changes during calm periods
+const happyPathRampUpAlpha = 0.35; // Raise charging gently on the happy path
+const happyPathRampDownAlpha = 0.15; // Drop charging even more gently on the happy path
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -38,18 +45,43 @@ let clampReason = "None";
 let ruleApplied = "None";
 const isExporting = gridPower < -exportTolerance;
 
-// 3. THE CALCULATION (Grid-Anchor)
 const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
-let targetCharge = Math.max(0, theoreticalSurplus + targetBuffer);
 
-// If we are exporting, add an explicit anti-export correction on top of the
-// stable surplus target so slight leaks are not ignored.
-if (isExporting) {
-    const exportIntensity = Math.abs(gridPower);
-    const exportBoost = Math.round(exportIntensity * exportBoostFactor);
-    targetCharge = Math.max(targetCharge, currentSetInflow + exportBoost);
-    ruleApplied = "Anti-Export";
+function calculateHappyPathCharge() {
+    let nextTargetCharge = Math.max(0, theoreticalSurplus + happyPathBuffer);
+    let nextRuleApplied = "Happy Path";
+
+    if (isExporting) {
+        const exportIntensity = Math.abs(gridPower);
+        const exportBoost = Math.round(exportIntensity * Math.max(1, exportBoostFactor * 0.7));
+        nextTargetCharge = Math.max(nextTargetCharge, currentSetInflow + exportBoost);
+        nextRuleApplied = "Anti-Export";
+    } else if (theoreticalSurplus <= 0) {
+        nextTargetCharge = 0;
+        nextRuleApplied = "Happy Path Idle";
+    }
+
+    return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };
 }
+
+function calculateDefaultCharge() {
+    let nextTargetCharge = Math.max(0, theoreticalSurplus + targetBuffer);
+    let nextRuleApplied = "None";
+
+    if (isExporting) {
+        const exportIntensity = Math.abs(gridPower);
+        const exportBoost = Math.round(exportIntensity * exportBoostFactor);
+        nextTargetCharge = Math.max(nextTargetCharge, currentSetInflow + exportBoost);
+        nextRuleApplied = "Anti-Export";
+    }
+
+    return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };
+}
+
+// 3. THE CALCULATION (Grid-Anchor)
+const calculation = isHappyPath ? calculateHappyPathCharge() : calculateDefaultCharge();
+let targetCharge = calculation.targetCharge;
+ruleApplied = calculation.ruleApplied;
 
 // 4. SANITY CHECKS & SUSTAIN
 // If solar production is > 150W, we keep the charging circuit 'warm' at 50W,
@@ -94,6 +126,10 @@ let finalAlpha;
 if (isExporting) {
     // CRITICAL: If we are exporting, we jump to the target IMMEDIATELY
     finalAlpha = 1.0;
+} else if (isHappyPath && targetCharge > lastCommand) {
+    finalAlpha = happyPathRampUpAlpha;
+} else if (isHappyPath) {
+    finalAlpha = happyPathRampDownAlpha;
 } else if (targetCharge > lastCommand) {
     // If we are increasing charge (but not leaking), move fast
     finalAlpha = 0.9;
@@ -130,7 +166,7 @@ if (smoothedCommand < 0) {
 // 7. CYCLE GUARD (Deadband)
 // If we are stable and not exporting, don't update if change is tiny
 const delta = Math.abs(smoothedCommand - lastCommand);
-if (delta < 5 && gridPower >= 0 && batteryInflow === 0) {
+if (delta < (isHappyPath ? happyPathDeadband : 5) && gridPower >= 0 && batteryInflow === 0) {
     node.status({ fill: "green", shape: "ring", text: `Stable @ ${Math.round(smoothedCommand)}W` });
     return null;
 }
@@ -152,7 +188,12 @@ const insights = {
             targetCharge: Math.round(targetCharge),
             finalCommand: roundedCommand
         },
-        constraints: { clamp: clampReason, rule: ruleApplied, delta: Math.round(delta) },
+        constraints: {
+            clamp: clampReason,
+            rule: ruleApplied,
+            delta: Math.round(delta),
+            mode: stabilityMode
+        },
         sensors: {
             solarLive: liveSolarPower,
             solarStable: stableSolarPower,
@@ -168,7 +209,7 @@ const insights = {
 node.status({
     fill: isExporting ? "red" : "green",
     shape: "dot",
-    text: `Cmd: ${roundedCommand}W | Clamp: ${clampReason} | Export: ${Math.round(gridPower)}W`
+    text: `Cmd: ${roundedCommand}W | ${stabilityMode} | Export: ${Math.round(gridPower)}W`
 });
 
 return [msg, insights];
