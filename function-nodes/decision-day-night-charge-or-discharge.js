@@ -25,9 +25,10 @@ const soc = parseFloat(map["sensor.solarflow_800_pro_electric_level"]?.state) ||
 const minimalCharge = parseFloat(map["number.solarflow_800_pro_min_soc"]?.state) || 0;
 
 // 2. FORECAST LOGIC (Total Energy Remaining)
-// Wh remaining today 
-const totalSolarRemaining = getWh("sensor.energy_production_today_remaining") +
-                            getWh("sensor.energy_production_today_remaining_2");
+// Wh remaining today
+const totalSolarRemaining =
+    getWh("sensor.energy_production_today_remaining") +
+    getWh("sensor.energy_production_today_remaining_2");
 
 // 3. THE DECISION (The "Intelligent" Branch)
 let toCharge = null;
@@ -39,18 +40,29 @@ let toDischarge = null;
  * - Sun is down OR the total remaining forecast is negligible (< 50Wh)
  * - AND we aren't in a "Low Battery" state where we should strictly wait for sun.
  */
-const isSolarDayOver = !sunAbove || (totalSolarRemaining < 50);
+const isSolarDayOver = !sunAbove || totalSolarRemaining < 50;
 const batteryHasReserve = soc > minimalCharge; // Don't start discharging if battery is nearly empty
 
 if (isSolarDayOver && batteryHasReserve) {
     toDischarge = msg;
-    node.status({ fill: "blue", shape: "dot", text: `Discharge - Night, remaing solar ${totalSolarRemaining}Wh, Solar Day is Over: ${isSolarDayOver}, battery has res: ${batteryHasReserve}` });
+    node.status({
+        fill: "blue",
+        shape: "dot",
+        text: `Discharge - Night, remaing solar ${totalSolarRemaining}Wh, Solar Day is Over: ${isSolarDayOver}, battery has res: ${batteryHasReserve}`
+    });
 } else if (adj.solarPower > 0) {
     toCharge = msg;
-    node.status({ fill: "yellow", shape: "dot", text: `Charge - Day/Solar: remaing solar ${totalSolarRemaining}Wh` });
+    node.status({
+        fill: "yellow",
+        shape: "dot",
+        text: `Charge - Day/Solar: remaing solar ${totalSolarRemaining}Wh`
+    });
 } else {
-    node.status({ fill: "red", shape: "dot", text: `Empty Battery, no solar power: ${adj.solarPower}W, solar forecast ${totalSolarRemaining}Wh, battery soc: ${soc}` });
+    node.status({
+        fill: "red",
+        shape: "dot",
+        text: `Empty Battery, no solar power: ${adj.solarPower}W, solar forecast ${totalSolarRemaining}Wh, battery soc: ${soc}`
+    });
 }
-
 
 return [toCharge, toDischarge];

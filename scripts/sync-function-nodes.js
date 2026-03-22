@@ -102,6 +102,40 @@ function validate() {
     console.log(`validated ${functionNodes.length} function nodes`);
 }
 
+function check() {
+    const manifest = loadManifest();
+    const flow = loadFlow();
+    let mismatches = 0;
+
+    for (const node of getFunctionNodes(flow)) {
+        const entry = manifest.get(node.id);
+        if (!entry) {
+            throw new Error(`Missing manifest entry for function node ${node.id} (${node.name})`);
+        }
+
+        const sourcePath = path.join(repoRoot, entry.path);
+        if (!fs.existsSync(sourcePath)) {
+            throw new Error(`Missing source file for ${node.id}: ${entry.path}`);
+        }
+
+        const source = normalizeFunctionSource(fs.readFileSync(sourcePath, "utf8"));
+        const current = normalizeFunctionSource(node.func || "");
+
+        if (source !== current) {
+            mismatches += 1;
+            console.error(`mismatch ${entry.path} <-> ${node.name}`);
+        }
+    }
+
+    if (mismatches > 0) {
+        throw new Error(
+            `Found ${mismatches} out-of-sync function nodes. Run: npm run functions:build`
+        );
+    }
+
+    console.log("flow export is in sync with function-node sources");
+}
+
 const command = process.argv[2];
 
 if (command === "extract") {
@@ -110,7 +144,9 @@ if (command === "extract") {
     build();
 } else if (command === "validate") {
     validate();
+} else if (command === "check") {
+    check();
 } else {
-    console.error("Usage: node scripts/sync-function-nodes.js <extract|build|validate>");
+    console.error("Usage: node scripts/sync-function-nodes.js <extract|build|validate|check>");
     process.exit(1);
 }

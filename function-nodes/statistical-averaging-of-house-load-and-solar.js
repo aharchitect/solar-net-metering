@@ -14,19 +14,16 @@ const currentDemand = grid + batOut + solarIn1 + solarIn2 - batIn;
 const currentSolarPower = solarIn1 + solarIn2;
 
 // 2. Manage 5-minute history (15 samples @ 20s interval)
-let history = context.get('demandHistory') || [];
+let history = context.get("demandHistory") || [];
 history.push(currentDemand);
-if (history.length > 15) 
-    history.shift();
-context.set('demandHistory', history);
-let solarHistory = context.get('solarHistory') || [];
+if (history.length > 15) history.shift();
+context.set("demandHistory", history);
+let solarHistory = context.get("solarHistory") || [];
 solarHistory.push(currentSolarPower);
-if (solarHistory.length > 15) 
-    solarHistory.shift();
-context.set('solarHistory', solarHistory);
+if (solarHistory.length > 15) solarHistory.shift();
+context.set("solarHistory", solarHistory);
 
 // 3. Calculate Average
-const averageDemand = history.reduce((a, b) => a + b, 0) / history.length;
 const averageSolar = solarHistory.reduce((c, d) => c + d, 0) / solarHistory.length;
 // 4. Calculate Median (P50)
 // We create a copy so we don't mess up the chronological history
@@ -34,10 +31,6 @@ const sorted = [...history].sort((a, b) => a - b);
 const lowMiddle = Math.floor((sorted.length - 1) / 2);
 const highMiddle = Math.ceil((sorted.length - 1) / 2);
 const medianDemand = (sorted[lowMiddle] + sorted[highMiddle]) / 2;
-const sortedSolar = [...solarHistory].sort((a, b) => a - b);
-const lowMiddleSol = Math.floor((sortedSolar.length - 1) / 2);
-const highMiddleSol = Math.ceil((sortedSolar.length - 1) / 2);
-const medianSolar = (sortedSolar[lowMiddleSol] + sortedSolar[highMiddleSol]) / 2;
 
 // 5. ASYMMETRIC LOGIC
 // Demand: Use the Median/Defensive approach (STAY SLOW)
@@ -49,14 +42,14 @@ const defensiveTarget = Math.min(medianDemand, currentDemand);
 const proactiveSolar = currentSolarPower;
 
 // 6. THE "CONTINUOUS FLOW" BIAS
-// If there is any solar production (>50W), we artificially lower the 
-// defensive demand slightly to ensure the calculation always results 
+// If there is any solar production (>50W), we artificially lower the
+// defensive demand slightly to ensure the calculation always results
 // in a small positive "surplus" for the battery.
-const flowBias = (proactiveSolar > 50) ? 20 : 0; 
+const flowBias = proactiveSolar > 50 ? 20 : 0;
 
 node.status({
-    fill: "blue", 
-    shape: "dot", 
+    fill: "blue",
+    shape: "dot",
     text: `Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W, (median): ${Math.round(medianDemand)}W`
 });
 

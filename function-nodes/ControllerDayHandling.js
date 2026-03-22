@@ -6,24 +6,25 @@ const batteryInflow = parseFloat(ha["sensor.solarflow_800_pro_grid_input_power"]
 const calculatedDemand = msg.adjustment.defensiveTarget;
 const liveSolarPower = msg.adjustment.solarPower;
 const stableSolarPower = msg.adjustment.solarAveragePower ?? liveSolarPower;
-const solarLiveBlend = 0.35;      // Pull part of the live solar into the stable value on cloudy days
+const solarLiveBlend = 0.35; // Pull part of the live solar into the stable value on cloudy days
 const effectiveSolarPower = Math.max(
     stableSolarPower,
-    (liveSolarPower * solarLiveBlend) + (stableSolarPower * (1 - solarLiveBlend))
+    liveSolarPower * solarLiveBlend + stableSolarPower * (1 - solarLiveBlend)
 );
 const soc = parseFloat(ha["sensor.solarflow_800_pro_electric_level"]?.state) || 0;
 const minSoc = parseFloat(ha["number.solarflow_800_pro_min_soc"]?.state) || 15;
 const currentSetInflow = parseFloat(ha["number.solarflow_800_pro_input_limit"]?.state) || 0;
-const totalProduced = (parseFloat(ha["sensor.hoymiles600_power"]?.state) || 0) + (parseFloat(ha["sensor.wechselrichter_ac_leistung"]?.state) || 0);
+const totalProduced =
+    (parseFloat(ha["sensor.hoymiles600_power"]?.state) || 0) +
+    (parseFloat(ha["sensor.wechselrichter_ac_leistung"]?.state) || 0);
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
-const targetBuffer = 30;          // Aim for 30W import
-const deadband = 50;              // Stability zone ignore fluctuations smaller than 50W
-const maxInverterPower = 1200;    // the Inverter limit
-const minSustain = 50;            // Keep charging circuit active
-const exportTolerance = 5;        // Ignore tiny meter jitter, react to real export quickly
-const exportBoostFactor = 1.25;   // Compensate for meter/inverter latency when exporting
+const targetBuffer = 30; // Aim for 30W import
+const maxInverterPower = 1200; // the Inverter limit
+const minSustain = 50; // Keep charging circuit active
+const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
+const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -69,11 +70,11 @@ if (totalProduced > productionThreshold && targetCharge < minSustain) {
 // Keep the Solar Ceiling safety
 const solarCeiling = theoreticalSurplus + 100;
 if (targetCharge > solarCeiling && !isExporting) {
-    // But we don't want to charge from the grid! 
-    // If targetCharge is Sustain(50) but theoreticalSurplus is -58, 
+    // But we don't want to charge from the grid!
+    // If targetCharge is Sustain(50) but theoreticalSurplus is -58,
     // we need to decide if we 'waste' 50W of grid power to keep the battery warm.
     // Let's allow it ONLY if the deficit isn't massive.
-    if (theoreticalSurplus < -200) { 
+    if (theoreticalSurplus < -200) {
         targetCharge = 0; // House is too hungry, give up on sustain.
     }
 }
@@ -87,12 +88,12 @@ if (theoreticalSurplus > 10 && targetCharge < minSustain) {
 if (targetCharge < 0) targetCharge = 0;
 
 // 5. DYNAMIC SMOOTHING (Slew Rate)
-let lastCommand = context.get('lastCommand') || 0;
+let lastCommand = context.get("lastCommand") || 0;
 // Instead of a fixed Alpha, we use a "Fast-Up, Slow-Down" approach.
 let finalAlpha;
 if (isExporting) {
     // CRITICAL: If we are exporting, we jump to the target IMMEDIATELY
-    finalAlpha = 1.0; 
+    finalAlpha = 1.0;
 } else if (targetCharge > lastCommand) {
     // If we are increasing charge (but not leaking), move fast
     finalAlpha = 0.9;
@@ -100,7 +101,7 @@ if (isExporting) {
     // If we are decreasing charge, move slowly to stay "warm"
     finalAlpha = 0.2;
 }
-let smoothedCommand = (targetCharge * finalAlpha) + (lastCommand * (1 - finalAlpha));
+let smoothedCommand = targetCharge * finalAlpha + lastCommand * (1 - finalAlpha);
 
 // Rule: Minimum SoC Recovery
 if (soc <= minSoc && totalProduced >= 150) {
@@ -140,15 +141,26 @@ const roundedCommand = Math.round(smoothedCommand);
 // Store the results in their own property, keeping the map safe
 msg.adjustment.command = roundedCommand;
 msg.adjustment.grid = gridPower;
-context.set('lastCommand', smoothedCommand);
+context.set("lastCommand", smoothedCommand);
 
 const insights = {
     payload: {
         timestamp: new Date().toISOString(),
         efficiency: { gridExport: gridPower < 0 ? Math.abs(gridPower) : 0, isLeaking: isExporting },
-        calculation: { theoreticalSurplus: Math.round(theoreticalSurplus), targetCharge: Math.round(targetCharge), finalCommand: roundedCommand },
+        calculation: {
+            theoreticalSurplus: Math.round(theoreticalSurplus),
+            targetCharge: Math.round(targetCharge),
+            finalCommand: roundedCommand
+        },
         constraints: { clamp: clampReason, rule: ruleApplied, delta: Math.round(delta) },
-        sensors: { solarLive: liveSolarPower, solarStable: stableSolarPower, solarEffective: Math.round(effectiveSolarPower), demand: calculatedDemand, grid: gridPower, soc: soc }
+        sensors: {
+            solarLive: liveSolarPower,
+            solarStable: stableSolarPower,
+            solarEffective: Math.round(effectiveSolarPower),
+            demand: calculatedDemand,
+            grid: gridPower,
+            soc: soc
+        }
     }
 };
 

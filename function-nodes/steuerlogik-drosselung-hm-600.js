@@ -1,27 +1,38 @@
-
 // Definier Funktion zur Erstellung der Log-Nachricht
-function createLogFileMsg(dtuState, invStateProducing, invStateReachable, statusZeroInjection, pwrConsumption, pwrSecondSource, socLevelBattery, setPercentMsg, turnOnMsg, turnOffMsg, debugMsg) {
+function createLogFileMsg(
+    dtuState,
+    invStateProducing,
+    invStateReachable,
+    statusZeroInjection,
+    pwrConsumption,
+    pwrSecondSource,
+    socLevelBattery,
+    setPercentMsg,
+    turnOnMsg,
+    turnOffMsg,
+    debugMsg
+) {
     const now = new Date();
-    const formattedTime = now.toLocaleString('de-DE', { hour12: false }); // Formatiert Zeit als 'Tag.Monat.Jahr Stunden:Minuten:Sekunden'
+    const formattedTime = now.toLocaleString("de-DE", { hour12: false }); // Formatiert Zeit als 'Tag.Monat.Jahr Stunden:Minuten:Sekunden'
 
     // Konvertiert Zahlenwerte zu Strings mit Komma als Dezimaltrennzeichen
-    const formattedPwrConsumption = pwrConsumption.toLocaleString('de-DE');
-    const formattedPwrSecondSource = pwrSecondSource.toLocaleString('de-DE');
-    
+    const formattedPwrConsumption = pwrConsumption.toLocaleString("de-DE");
+    const formattedPwrSecondSource = pwrSecondSource.toLocaleString("de-DE");
+
     return {
         payload: {
-            "time": formattedTime,
-            "dtuState": dtuState,
-            "invStateProducing": invStateProducing,
-            "invStateReachable": invStateReachable,
-            "statusZeroInjection": statusZeroInjection,
-            "pwrConsumption": formattedPwrConsumption,
-            "pwrSecondSource": formattedPwrSecondSource,
-            "socLevelBattery": socLevelBattery,
-            "setPercentMsg": setPercentMsg ? setPercentMsg.payload : null,
-            "turnOnMsg": turnOnMsg ? turnOnMsg.payload : null,
-            "turnOffMsg": turnOffMsg ? turnOffMsg.payload : null,
-            "debugMsg": debugMsg.payload
+            time: formattedTime,
+            dtuState: dtuState,
+            invStateProducing: invStateProducing,
+            invStateReachable: invStateReachable,
+            statusZeroInjection: statusZeroInjection,
+            pwrConsumption: formattedPwrConsumption,
+            pwrSecondSource: formattedPwrSecondSource,
+            socLevelBattery: socLevelBattery,
+            setPercentMsg: setPercentMsg ? setPercentMsg.payload : null,
+            turnOnMsg: turnOnMsg ? turnOnMsg.payload : null,
+            turnOffMsg: turnOffMsg ? turnOffMsg.payload : null,
+            debugMsg: debugMsg.payload
         }
     };
 }
@@ -62,7 +73,19 @@ if (statusZeroInjection !== "on") {
     } else {
         debugMsg = { payload: "Nulleinspeisung deaktiviert, Wechselrichter aus" };
     }
-    const logFileMsg = createLogFileMsg(dtuState, invStateProducing, invStateReachable, statusZeroInjection, pwrConsumption, pwrSecondSource, socLevelBattery, setPercentMsg, turnOnMsg, turnOffMsg, debugMsg);
+    const logFileMsg = createLogFileMsg(
+        dtuState,
+        invStateProducing,
+        invStateReachable,
+        statusZeroInjection,
+        pwrConsumption,
+        pwrSecondSource,
+        socLevelBattery,
+        setPercentMsg,
+        turnOnMsg,
+        turnOffMsg,
+        debugMsg
+    );
     return [setPercentMsg, turnOnMsg, turnOffMsg, debugMsg, logFileMsg];
 } else {
     debugMsg = { payload: "Nulleinspeisung aktiviert" };
@@ -71,7 +94,19 @@ if (statusZeroInjection !== "on") {
 // Überprüft die Erreichbarkeit und Betriebsbereitschaft der Systemkomponenten
 if (dtuState !== "on" || invStateReachable !== "on") {
     debugMsg = { payload: `DTU offline oder Wechselrichter nicht erreichbar` };
-    const logFileMsg = createLogFileMsg(dtuState, invStateProducing, invStateReachable, statusZeroInjection, pwrConsumption, pwrSecondSource, socLevelBattery, setPercentMsg, turnOnMsg, turnOffMsg, debugMsg);
+    const logFileMsg = createLogFileMsg(
+        dtuState,
+        invStateProducing,
+        invStateReachable,
+        statusZeroInjection,
+        pwrConsumption,
+        pwrSecondSource,
+        socLevelBattery,
+        setPercentMsg,
+        turnOnMsg,
+        turnOffMsg,
+        debugMsg
+    );
     return [null, null, null, debugMsg, logFileMsg];
 } else {
     debugMsg = { payload: `DTU und Wechselrichter sind online` };
@@ -83,7 +118,19 @@ let powerDifference = pwrConsumption - pwrSecondSource;
 // Steuerung des Wechselrichters basierend auf dem Batterie-SoC und der Differenzleistung
 if (socLevelBattery <= offThresholdInv && invStateProducing === "on") {
     turnOffMsg = { payload: "OFF" };
-    const logFileMsg = createLogFileMsg(dtuState, invStateProducing, invStateReachable, statusZeroInjection, pwrConsumption, pwrSecondSource, socLevelBattery, setPercentMsg, turnOnMsg, turnOffMsg, debugMsg);
+    const logFileMsg = createLogFileMsg(
+        dtuState,
+        invStateProducing,
+        invStateReachable,
+        statusZeroInjection,
+        pwrConsumption,
+        pwrSecondSource,
+        socLevelBattery,
+        setPercentMsg,
+        turnOnMsg,
+        turnOffMsg,
+        debugMsg
+    );
     return [setPercentMsg, turnOnMsg, turnOffMsg, debugMsg, logFileMsg];
 } else {
     // Zuerst wird überprüft, ob der Wechselrichter Strom produziert
@@ -94,23 +141,45 @@ if (socLevelBattery <= offThresholdInv && invStateProducing === "on") {
         } else {
             // Berechnet den erforderlichen Leistungsprozentsatz, wenn keine Ausschaltanforderung vorliegt
             let requiredPercent = Math.floor(powerDifference / pwrSteps);
-            let effectiveMaxOutput = socLevelBattery === 100 ? maxOutputAtFullSoc : maxOutputZeroInjection;
-            requiredPercent = Math.max(minOutputZeroInjection, Math.min(requiredPercent, effectiveMaxOutput));
+            let effectiveMaxOutput =
+                socLevelBattery === 100 ? maxOutputAtFullSoc : maxOutputZeroInjection;
+            requiredPercent = Math.max(
+                minOutputZeroInjection,
+                Math.min(requiredPercent, effectiveMaxOutput)
+            );
             setPercentMsg = { payload: requiredPercent };
         }
     } else if (socLevelBattery >= onThresholdInv && powerDifference >= minPowerInverter) {
         // Überprüft, ob der Batterie-SoC oberhalb des Schwellenwertes liegt und die Differenzleistung ausreichend ist
         let requiredPercent = Math.floor(powerDifference / pwrSteps);
-        let effectiveMaxOutput = socLevelBattery === 100 ? maxOutputAtFullSoc : maxOutputZeroInjection;
-        requiredPercent = Math.max(minOutputZeroInjection, Math.min(requiredPercent, effectiveMaxOutput));
+        let effectiveMaxOutput =
+            socLevelBattery === 100 ? maxOutputAtFullSoc : maxOutputZeroInjection;
+        requiredPercent = Math.max(
+            minOutputZeroInjection,
+            Math.min(requiredPercent, effectiveMaxOutput)
+        );
         setPercentMsg = { payload: requiredPercent };
         turnOnMsg = { payload: "ON" };
     } else {
         // Keine Aktion erforderlich, da der Wechselrichter aus ist und die Bedingungen zum Einschalten nicht erfüllt sind
-        debugMsg = { payload: "Wechselrichter bleibt aus - Bedingungen zum Einschalten nicht erfüllt" };
+        debugMsg = {
+            payload: "Wechselrichter bleibt aus - Bedingungen zum Einschalten nicht erfüllt"
+        };
     }
 }
 
-const logFileMsg = createLogFileMsg(dtuState, invStateProducing, invStateReachable, statusZeroInjection, pwrConsumption, pwrSecondSource, socLevelBattery, setPercentMsg, turnOnMsg, turnOffMsg, debugMsg);
+const logFileMsg = createLogFileMsg(
+    dtuState,
+    invStateProducing,
+    invStateReachable,
+    statusZeroInjection,
+    pwrConsumption,
+    pwrSecondSource,
+    socLevelBattery,
+    setPercentMsg,
+    turnOnMsg,
+    turnOffMsg,
+    debugMsg
+);
 // Rückgabe der Steuerbefehle
 return [setPercentMsg, turnOnMsg, turnOffMsg, debugMsg, logFileMsg];

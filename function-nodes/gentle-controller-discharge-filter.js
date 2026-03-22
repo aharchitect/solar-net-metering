@@ -1,13 +1,9 @@
 // 1. DATA RETRIEVAL (Using the Map in the input message)
 const ha = msg.payload;
-const adj = msg.adjustment;
-
 
 // Get numeric values from Home Assistant collection (handling "unavailable" with || 0)
-const gridPower = parseFloat(ha["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0; 
+const gridPower = parseFloat(ha["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0;
 const currentBatteryOut = parseFloat(ha["sensor.solarflow_800_pro_output_home_power"]?.state) || 0;
-const maxChargePower = parseFloat(ha["sensor.solarflow_800_pro_charge_max_limit"]?.state) || 800;
-const batteryInflow = parseFloat(ha["sensor.solarflow_800_pro_grid_input_power"]?.state) || 0;
 const calculatedDemand = msg.adjustment.defensiveTarget;
 const smoothedSolarPower = msg.adjustment.solarPower;
 const forcedDischarge = msg.adjustment.forcedRate;
@@ -18,47 +14,52 @@ const forcedDischarge = msg.adjustment.forcedRate;
 //                                   It stops the battery from chasing the "ghosts" of small appliances.
 //                                   If your fridge compressor flickers, the battery ignores it.
 //
-//   2. The Safety Buffer(-30): By aiming for a 30W import, you create a "cushion." 
+//   2. The Safety Buffer(-30): By aiming for a 30W import, you create a "cushion."
 //                              When a cloud disappears and solar spikes, you have 30W of "room" before
 //                              starting to feed-in into public grid.
 //
 //   3. The EMA(alpha = 0.9): This solves the 50s latency of smart meter and battery.
 //                            Instead of jumping to a new value every 20s (init trigger) and
-//                            overshooting, the battery "slides" toward the new value. This reduces the 
+//                            overshooting, the battery "slides" toward the new value. This reduces the
 //                            chemical stress on the LiFePO4 cells.
 
-const targetBuffer = -50;         // Aim for 50W import to prevent feed-in
-const deadband = 50;              // Ignore fluctuations smaller than 50W
-const alpha = 0.3;                // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
+const targetBuffer = -50; // Aim for 50W import to prevent feed-in
+const deadband = 50; // Ignore fluctuations smaller than 50W
+const alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
 
 // 3. CALCULATION
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
-// default expects, that there is more solar power than demand, 
+// default expects, that there is more solar power than demand,
 // e.g. 10W (solar) - 300W (demand) - (-30) = -260W to discharge
 //       0W (solar) - 50W (demand) - (-30) = -20W to discharge
 //     100W (solar) - 200W (demand) - (-30) = -70W to discharge
 //       0W (solar) - 200W (demand) - (-30) = -170W to discharge
 //       1W (solar) - 201W (demand) - (-30) = -170W to discharge
 //       0W (solar) - (-50)W (demand) - (-30) = 80W to adjust or even stop discharging (discharging is at least 50W)
-let requiredChange = (smoothedSolarPower - calculatedDemand) - targetBuffer;
+let requiredChange = smoothedSolarPower - calculatedDemand - targetBuffer;
 
 // 4. THE CYCLE GUARD (Dynamic Deadband)
 // If the requiredChange is small AND we aren't "exporting", stay still to save battery cycles
 if (Math.abs(requiredChange) < deadband && gridPower > 0 && currentBatteryOut == 0) {
-    node.status({ fill: "green", shape: "dot", text: `Done (deadband) - Stable power - finish (calculated change is ${Math.round(requiredChange)}W, grid power: ${Math.round(gridPower)}W)` });
+    node.status({
+        fill: "green",
+        shape: "dot",
+        text: `Done (deadband) - Stable power - finish (calculated change is ${Math.round(requiredChange)}W, grid power: ${Math.round(gridPower)}W)`
+    });
     return null; // Stop the message here; no command sent to inverter
 }
 
 // 5. EMA SMOOTHING (The "Lag Compensator")
-let lastCommand = context.get('lastCommand') || 0;
+let lastCommand = context.get("lastCommand") || 0;
 let rawCommand = requiredChange * -1; // invert to represent the power gap required from battery
 
-if (rawCommand < 0 && currentBatteryOut > 0) { // demand is larger than solar power but still solar power available
+if (rawCommand < 0 && currentBatteryOut > 0) {
+    // demand is larger than solar power but still solar power available
     rawCommand = (requiredChange - targetBuffer - currentBatteryOut) * -1; // 80W - 30 - 60 = -10 -> reduce discharging before stopping
 }
 
 // Apply Exponential Moving Average
-let smoothedCommand = (rawCommand * alpha) + (lastCommand * (1 - alpha));
+let smoothedCommand = rawCommand * alpha + lastCommand * (1 - alpha);
 
 // 5. THE ZERO-EXPORT DEFENSE (The "No-Penalty" Guard)
 // --> EMERGENCY BRAKE
@@ -71,12 +72,15 @@ smoothedCommand = Math.min(smoothedCommand, forcedDischarge * 2.5);
 // Only output if the command actually changed significantly (e.g., > 5W)
 if (Math.abs(smoothedCommand - lastCommand) < 5 && gridPower > 0 && currentBatteryOut == 0) {
     node.status({
-        fill: "green", shape: "dot", text: `Idle (deadband) - Hardly changed power - finish: ${Math.round(smoothedCommand)}W, grid Power ${gridPower}W` });
+        fill: "green",
+        shape: "dot",
+        text: `Idle (deadband) - Hardly changed power - finish: ${Math.round(smoothedCommand)}W, grid Power ${gridPower}W`
+    });
     return null;
 }
 
 // 6. FINAL OUTPUT & PERSISTENCE
-context.set('lastCommand', smoothedCommand);
+context.set("lastCommand", smoothedCommand);
 
 // Store the results in their own property, keeping the map safe
 msg.adjustment = {
@@ -86,7 +90,11 @@ msg.adjustment = {
     grid: gridPower
 };
 
-// Now msg.payload still contains 31 entities, 
+// Now msg.payload still contains 31 entities,
 // and msg.adjustment contains this logic results.
-node.status({ fill: "green", shape: "dot", text: `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W` });
+node.status({
+    fill: "green",
+    shape: "dot",
+    text: `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
+});
 return msg;

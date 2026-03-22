@@ -1,9 +1,7 @@
 const map = msg.payload;
 
 // 1. DATA EXTRACTION
-const soc = parseFloat(map["sensor.solarflow_800_pro_electric_level"]?.state) || 0;
 const availableWh = (parseFloat(map["sensor.solarflow_800_pro_available_kwh"]?.state) || 0) * 1000;
-const totalCapacity = 1980; // Wh (Adjust to your actual battery size, Zendure does not expose values)
 
 // 2. NEXT HOUR FORECAST (Wh expected in the next 60 mins)
 const nextH1 = parseFloat(map["sensor.energy_next_hour"]?.state) || 0;
@@ -17,7 +15,7 @@ const sunrise = new Date(map["sun.sun"]?.attributes?.next_rising).getTime();
 // 4. DYNAMIC WINDOW ADJUSTMENT
 let hoursToUsableSolar = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));
 
-// If the Next Hour forecast is already > 50Wh, the sun is effectively "up" 
+// If the Next Hour forecast is already > 50Wh, the sun is effectively "up"
 // for the battery logic, even if the clock says it's early.
 if (totalNextHourWh > 100) {
     // Sun is strong! Shorten the window to 1 hour to empty the battery faster.
