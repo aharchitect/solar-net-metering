@@ -37,9 +37,11 @@ if (
         "data.solar.totalPower",
         "derived.demand.defensiveTarget",
         "derived.demand.trend",
+        "derived.demand.trendChanges",
         "derived.solar.livePower",
         "derived.solar.averagePower",
         "derived.solar.trend",
+        "derived.solar.trendChanges",
         "meta.stability.mode"
     ])
 ) {
@@ -55,9 +57,11 @@ const maxChargePower = data.battery.chargeMaxPower;
 const batteryInflow = data.battery.chargePower;
 const calculatedDemand = derived.demand.defensiveTarget;
 const demandTrend = derived.demand.trend;
+const demandTrendChanges = derived.demand.trendChanges;
 const liveSolarPower = derived.solar.livePower;
 const stableSolarPower = derived.solar.averagePower;
 const solarTrend = derived.solar.trend;
+const solarTrendChanges = derived.solar.trendChanges;
 const stability = msg.meta.stability;
 const stabilityMode = stability.mode;
 const isHappyPath = stabilityMode === "stable_stable";
@@ -94,6 +98,11 @@ const solarTrendBoostFactor = 0.4; // Reinforce pre-charge when the 5-minute tre
 const demandTrendPenaltyFactor = 0.25; // Rising demand reduces predicted surplus
 const demandTrendPenaltyCap = 30; // Keep trend correction bounded
 const softReductionFloorFraction = 0.75; // Lower charge only gradually when evidence is weak
+const solarTrendChangeBufferStep = 12; // Add confidence buffer when solar direction changes often
+const demandTrendChangeBufferStep = 8; // Add confidence buffer when demand direction changes often
+const maxTrendChangeBufferBoost = 40; // Keep trend-change contribution bounded
+const solarTrendChangeRampStep = 8; // Extra pre-charge for chaotic solar ramps
+const maxTrendChangeRampBoost = 30; // Bound extra ramp boost from trend changes
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -126,18 +135,36 @@ const baseImportBuffer = isHappyPath
       : stabilityMode === "demand_unstable"
         ? 50
         : 70;
+const solarTrendChangeBufferBoost = Math.min(
+    maxTrendChangeBufferBoost,
+    solarTrendChanges * solarTrendChangeBufferStep
+);
+const demandTrendChangeBufferBoost = Math.min(
+    maxTrendChangeBufferBoost,
+    demandTrendChanges * demandTrendChangeBufferStep
+);
 const positiveDemandTrendPenalty = Math.min(
     demandTrendPenaltyCap,
     Math.round(Math.max(0, demandTrend) * demandTrendPenaltyFactor)
 );
 const solarRamp = Math.max(0, liveSolarPower - stableSolarPower);
 const solarRampBoost = Math.min(
-    120,
-    Math.round(solarRamp * solarRampBoostFactor + Math.max(0, solarTrend) * solarTrendBoostFactor)
+    120 + maxTrendChangeRampBoost,
+    Math.round(
+        solarRamp * solarRampBoostFactor +
+            Math.max(0, solarTrend) * solarTrendBoostFactor +
+            Math.min(maxTrendChangeRampBoost, solarTrendChanges * solarTrendChangeRampStep)
+    )
 );
 const dynamicImportBuffer = Math.min(
     maxDynamicImportBuffer,
-    Math.round(baseImportBuffer + exportMemoryBias + positiveDemandTrendPenalty)
+    Math.round(
+        baseImportBuffer +
+            exportMemoryBias +
+            positiveDemandTrendPenalty +
+            solarTrendChangeBufferBoost +
+            demandTrendChangeBufferBoost
+    )
 );
 const predictiveDemand = calculatedDemand + positiveDemandTrendPenalty;
 const predictiveSolarPower = effectiveSolarPower + solarRampBoost;
@@ -180,8 +207,12 @@ function applyReductionGuard(nextTargetCharge, nextRuleApplied) {
         return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };
     }
 
-    const enoughReleaseHistory = noExportCycles >= releaseCyclesRequired;
-    const sustainedDeficit = deficitCycles >= sustainedDeficitCyclesRequired;
+    const dynamicReleaseCyclesRequired =
+        releaseCyclesRequired + Math.min(2, Math.max(solarTrendChanges, demandTrendChanges));
+    const dynamicDeficitCyclesRequired =
+        sustainedDeficitCyclesRequired + Math.min(2, demandTrendChanges);
+    const enoughReleaseHistory = noExportCycles >= dynamicReleaseCyclesRequired;
+    const sustainedDeficit = deficitCycles >= dynamicDeficitCyclesRequired;
 
     if (!enoughReleaseHistory && !sustainedDeficit) {
         return {
@@ -191,7 +222,11 @@ function applyReductionGuard(nextTargetCharge, nextRuleApplied) {
         };
     }
 
-    const softReductionFloor = Math.round(lastCommand * softReductionFloorFraction);
+    const dynamicSoftReductionFloorFraction = Math.min(
+        0.9,
+        softReductionFloorFraction + Math.min(0.1, solarTrendChanges * 0.03)
+    );
+    const softReductionFloor = Math.round(lastCommand * dynamicSoftReductionFloorFraction);
     if (!sustainedDeficit && nextTargetCharge < softReductionFloor) {
         return {
             targetCharge: softReductionFloor,
@@ -428,7 +463,11 @@ const telemetry = {
         noExportCycles: noExportCycles,
         deficitCycles: deficitCycles,
         demandTrend: Math.round(demandTrend),
+        demandTrendChanges: demandTrendChanges,
         solarTrend: Math.round(solarTrend),
+        solarTrendChanges: solarTrendChanges,
+        solarTrendChangeBufferBoost: Math.round(solarTrendChangeBufferBoost),
+        demandTrendChangeBufferBoost: Math.round(demandTrendChangeBufferBoost),
         solarRampBoost: Math.round(solarRampBoost),
         isExporting: isExporting,
         historySamples: msg.meta?.history?.samples ?? null,
