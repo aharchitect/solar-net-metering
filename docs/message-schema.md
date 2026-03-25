@@ -125,16 +125,18 @@ Intermediate calculated values. These fields are reusable helper values, not dir
 
 #### `msg.derived.demand`
 
-| Path                                 | Type   | Unit  | Meaning                                                          | Producer                                           |
-| ------------------------------------ | ------ | ----- | ---------------------------------------------------------------- | -------------------------------------------------- |
-| `msg.derived.demand.current`         | number | W     | Current house demand used in 5-minute statistics                 | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.average`         | number | W     | Average demand over the 5-minute history                         | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.median`          | number | W     | Median demand over the 5-minute history                          | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.defensiveTarget` | number | W     | Conservative demand target used by controllers                   | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.stdDev`          | number | W     | Standard deviation of demand in the 5-minute window              | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.trend`           | number | W     | Rising or falling demand trend across the 5-minute window        | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.trendDirection`  | string | -     | Demand trend direction: `up`, `down`, or `flat`                  | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.trendChanges`    | number | count | Number of demand trend direction flips in the short trend window | `statistical-averaging-of-house-load-and-solar.js` |
+| Path                                 | Type   | Unit  | Meaning                                                                   | Producer                                           |
+| ------------------------------------ | ------ | ----- | ------------------------------------------------------------------------- | -------------------------------------------------- |
+| `msg.derived.demand.current`         | number | W     | Current house demand used in 5-minute statistics                          | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.average`         | number | W     | Average demand over the 5-minute history                                  | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.median`          | number | W     | Median demand over the 5-minute history                                   | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.lowerBound`      | number | W     | Lower baseline demand derived from the lower part of the 5-minute history | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.longTermMinimum` | number | W     | Learned lower demand floor refreshed over a 48-hour window                | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.defensiveTarget` | number | W     | Conservative demand target used by controllers                            | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.stdDev`          | number | W     | Standard deviation of demand in the 5-minute window                       | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.trend`           | number | W     | Rising or falling demand trend across the 5-minute window                 | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.trendDirection`  | string | -     | Demand trend direction: `up`, `down`, or `flat`                           | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.trendChanges`    | number | count | Number of demand trend direction flips in the short trend window          | `statistical-averaging-of-house-load-and-solar.js` |
 
 #### `msg.derived.solar`
 
@@ -187,15 +189,18 @@ Concrete control intentions and commands.
 
 #### `msg.action.battery.discharge`
 
-| Path                                           | Type    | Unit | Meaning                                                      | Producer                                    |
-| ---------------------------------------------- | ------- | ---- | ------------------------------------------------------------ | ------------------------------------------- |
-| `msg.action.battery.discharge.forcedRate`      | number  | W    | Maximum desired discharge rate based on budget until sunrise | `battery-budget.js`                         |
-| `msg.action.battery.discharge.commandPower`    | number  | W    | Final discharge command after smoothing and safety rules     | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.requiredChange`  | number  | W    | Raw discharge gap before smoothing                           | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.isStable`        | boolean | -    | Whether the current discharge situation is inside deadband   | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.gridPower`       | number  | W    | Grid power snapshot used by discharge controller             | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.stopRequested`   | boolean | -    | Explicit request to send a `0W` discharge command            | `decision-day-night-charge-or-discharge.js` |
-| `msg.action.battery.discharge.blockedByLowSoc` | boolean | -    | Indicates night discharge is blocked due to low SoC          | `decision-day-night-charge-or-discharge.js` |
+| Path                                               | Type    | Unit | Meaning                                                          | Producer                                    |
+| -------------------------------------------------- | ------- | ---- | ---------------------------------------------------------------- | ------------------------------------------- |
+| `msg.action.battery.discharge.forcedRate`          | number  | W    | Maximum desired discharge rate based on budget until sunrise     | `battery-budget.js`                         |
+| `msg.action.battery.discharge.commandPower`        | number  | W    | Final discharge command after smoothing and safety rules         | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.requiredChange`      | number  | W    | Raw discharge gap before smoothing                               | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.isStable`            | boolean | -    | Whether the current discharge situation is inside deadband       | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.gridPower`           | number  | W    | Grid power snapshot used by discharge controller                 | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.baselineDemandFloor` | number  | W    | Combined short/long-term demand floor used for discharge sustain | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.sustainFloor`        | number  | W    | Sustained minimum discharge floor while discharge stays active   | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.sustainActive`       | boolean | -    | Indicates that the discharge sustain floor is currently applied  | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.stopRequested`       | boolean | -    | Explicit request to send a `0W` discharge command                | `decision-day-night-charge-or-discharge.js` |
+| `msg.action.battery.discharge.blockedByLowSoc`     | boolean | -    | Indicates night discharge is blocked due to low SoC              | `decision-day-night-charge-or-discharge.js` |
 
 ### `msg.meta`
 
@@ -216,14 +221,15 @@ Technical metadata and classification.
 
 #### `msg.meta.history`
 
-| Path                                      | Type   | Unit  | Meaning                                                        | Producer                                           |
-| ----------------------------------------- | ------ | ----- | -------------------------------------------------------------- | -------------------------------------------------- |
-| `msg.meta.history.windowSeconds`          | number | s     | Statistical history window length                              | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.triggerIntervalSeconds` | number | s     | Trigger interval used to derive sample count                   | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.triggerIntervalMs`      | number | ms    | Trigger interval in milliseconds                               | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.samples`                | number | count | Number of samples retained for the 5-minute window             | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.trendWindowSeconds`     | number | s     | Short trend-history window used for direction-change checks    | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.trendSamples`           | number | count | Number of trend evaluations retained in the short trend window | `statistical-averaging-of-house-load-and-solar.js` |
+| Path                                           | Type   | Unit  | Meaning                                                        | Producer                                           |
+| ---------------------------------------------- | ------ | ----- | -------------------------------------------------------------- | -------------------------------------------------- |
+| `msg.meta.history.windowSeconds`               | number | s     | Statistical history window length                              | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.triggerIntervalSeconds`      | number | s     | Trigger interval used to derive sample count                   | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.triggerIntervalMs`           | number | ms    | Trigger interval in milliseconds                               | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.samples`                     | number | count | Number of samples retained for the 5-minute window             | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.longTermDemandWindowSeconds` | number | s     | Relearn window used for the learned long-term demand floor     | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.trendWindowSeconds`          | number | s     | Short trend-history window used for direction-change checks    | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.trendSamples`                | number | count | Number of trend evaluations retained in the short trend window | `statistical-averaging-of-house-load-and-solar.js` |
 
 #### `msg.meta.stability`
 
@@ -238,6 +244,8 @@ Technical metadata and classification.
 | `msg.meta.stability.thresholds.solarTrendDeadband`   | number | Solar trend deadband used to classify `up` or `down`                                                | `statistical-averaging-of-house-load-and-solar.js` |
 | `msg.meta.stability.thresholds.unstableTrendChanges` | number | Number of short-window trend flips required to mark the signal unstable                             | `statistical-averaging-of-house-load-and-solar.js` |
 | `msg.meta.stability.stats.demandAverage`             | number | 5-minute average demand snapshot                                                                    | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.demandLowerBound`          | number | Lower baseline demand snapshot                                                                      | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.demandLongTermMinimum`     | number | Learned long-term demand floor snapshot                                                             | `statistical-averaging-of-house-load-and-solar.js` |
 | `msg.meta.stability.stats.demandStdDev`              | number | 5-minute demand standard deviation snapshot                                                         | `statistical-averaging-of-house-load-and-solar.js` |
 | `msg.meta.stability.stats.demandTrend`               | number | 5-minute demand trend snapshot                                                                      | `statistical-averaging-of-house-load-and-solar.js` |
 | `msg.meta.stability.stats.demandTrendDirection`      | string | Current demand trend direction                                                                      | `statistical-averaging-of-house-load-and-solar.js` |

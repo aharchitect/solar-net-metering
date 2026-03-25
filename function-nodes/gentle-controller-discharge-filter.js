@@ -30,6 +30,8 @@ if (
         "data.grid.power",
         "data.battery.dischargePower",
         "derived.demand.defensiveTarget",
+        "derived.demand.lowerBound",
+        "derived.demand.longTermMinimum",
         "derived.solar.livePower",
         "action.battery.discharge.forcedRate"
     ])
@@ -44,6 +46,8 @@ const action = msg.action;
 const gridPower = data.grid.power;
 const currentBatteryOut = data.battery.dischargePower;
 const calculatedDemand = derived.demand.defensiveTarget;
+const demandLowerBound = derived.demand.lowerBound;
+const demandLongTermMinimum = derived.demand.longTermMinimum;
 const solarPower = derived.solar.livePower;
 const forcedDischarge = action.battery.discharge.forcedRate;
 const stopRequested = action.battery.discharge.stopRequested === true;
@@ -86,6 +90,7 @@ if (stopRequested || blockedByLowSoc) {
 const targetBuffer = -50; // Aim for 50W import to prevent feed-in
 const deadband = 50; // Ignore fluctuations smaller than 50W
 const alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
+const sustainTolerance = 30; // Treat demand near the lower bound as baseline night load
 
 // 3. CALCULATION
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
@@ -121,6 +126,27 @@ if (rawCommand < 0 && currentBatteryOut > 0) {
 // Apply Exponential Moving Average
 let smoothedCommand = rawCommand * alpha + lastCommand * (1 - alpha);
 
+const activeDischargeReference = Math.max(currentBatteryOut, lastCommand);
+const isDischargingActive = activeDischargeReference > 5;
+const baselineDemandFloor = Math.max(demandLowerBound, demandLongTermMinimum);
+const isAtDemandFloor = calculatedDemand <= baselineDemandFloor + sustainTolerance;
+const lowerBoundDischargeFloor = Math.max(0, baselineDemandFloor - solarPower);
+const dischargeSustainFloor = Math.min(
+    forcedDischarge,
+    activeDischargeReference,
+    lowerBoundDischargeFloor
+);
+const sustainDischargeActive =
+    isDischargingActive &&
+    forcedDischarge > 0 &&
+    gridPower > 0 &&
+    isAtDemandFloor &&
+    dischargeSustainFloor > 0;
+
+if (sustainDischargeActive && smoothedCommand < dischargeSustainFloor) {
+    smoothedCommand = dischargeSustainFloor;
+}
+
 // 5. THE ZERO-EXPORT DEFENSE (The "No-Penalty" Guard)
 // --> EMERGENCY BRAKE
 if (gridPower < 0) {
@@ -149,10 +175,15 @@ msg.action.battery.discharge.commandPower = Math.round(smoothedCommand);
 msg.action.battery.discharge.requiredChange = Math.round(requiredChange);
 msg.action.battery.discharge.isStable = Math.abs(requiredChange) < deadband;
 msg.action.battery.discharge.gridPower = Math.round(gridPower);
+msg.action.battery.discharge.baselineDemandFloor = Math.round(baselineDemandFloor);
+msg.action.battery.discharge.sustainFloor = Math.round(dischargeSustainFloor);
+msg.action.battery.discharge.sustainActive = sustainDischargeActive;
 
 node.status({
     fill: "green",
     shape: "dot",
-    text: `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
+    text: sustainDischargeActive
+        ? `Discharge sustain @ ${Math.round(smoothedCommand)}W`
+        : `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
 });
 return msg;

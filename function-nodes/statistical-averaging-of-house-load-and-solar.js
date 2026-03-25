@@ -71,6 +71,11 @@ function calculateTrend(values) {
     return calculateAverage(recentSegment) - calculateAverage(earlierSegment);
 }
 
+function calculateLowerBound(sortedValues) {
+    const segmentSize = Math.max(1, Math.ceil(sortedValues.length / 4));
+    return calculateAverage(sortedValues.slice(0, segmentSize));
+}
+
 function calculateTrendDirection(trendValue, deadband) {
     if (trendValue > deadband) {
         return "up";
@@ -100,6 +105,9 @@ function countTrendDirectionChanges(directions) {
 
 // 2. Manage 5-minute history based on the configured trigger interval
 const historyWindowSeconds = 5 * 60;
+const learnedDemandWindowSeconds = 48 * 60 * 60;
+const learnedDemandWindowMs = learnedDemandWindowSeconds * 1000;
+const learnedDemandUpwardAlpha = 0.02;
 const triggerIntervalSeconds =
     msg.meta?.trigger?.intervalSeconds || flow.get("triggerIntervalSeconds") || 20;
 const historySamples = Math.max(15, Math.ceil(historyWindowSeconds / triggerIntervalSeconds));
@@ -163,6 +171,32 @@ const sorted = [...history].sort((a, b) => a - b);
 const lowMiddle = Math.floor((sorted.length - 1) / 2);
 const highMiddle = Math.ceil((sorted.length - 1) / 2);
 const medianDemand = (sorted[lowMiddle] + sorted[highMiddle]) / 2;
+const lowerDemandBound = calculateLowerBound(sorted);
+const demandFloorCandidate = Math.min(currentDemand, lowerDemandBound);
+const now = Date.now();
+let longTermMinimumDemand = context.get("learnedDemandFloor");
+let learnedDemandFloorUpdatedAt = context.get("learnedDemandFloorUpdatedAt") || 0;
+
+if (!Number.isFinite(longTermMinimumDemand) || longTermMinimumDemand <= 0) {
+    longTermMinimumDemand = demandFloorCandidate;
+    learnedDemandFloorUpdatedAt = now;
+} else if (now - learnedDemandFloorUpdatedAt > learnedDemandWindowMs) {
+    longTermMinimumDemand = demandFloorCandidate;
+    learnedDemandFloorUpdatedAt = now;
+} else if (demandFloorCandidate < longTermMinimumDemand) {
+    longTermMinimumDemand = demandFloorCandidate;
+    learnedDemandFloorUpdatedAt = now;
+} else {
+    const upwardAdjustment =
+        (demandFloorCandidate - longTermMinimumDemand) * learnedDemandUpwardAlpha;
+    longTermMinimumDemand = Math.min(
+        demandFloorCandidate,
+        longTermMinimumDemand + upwardAdjustment
+    );
+}
+
+context.set("learnedDemandFloor", longTermMinimumDemand);
+context.set("learnedDemandFloorUpdatedAt", learnedDemandFloorUpdatedAt);
 
 // 5. ASYMMETRIC LOGIC
 // Demand: Use the Median/Defensive approach (STAY SLOW)
@@ -189,6 +223,8 @@ msg.derived.demand = {
     current: Math.round(currentDemand),
     average: Math.round(averageDemand),
     median: Math.round(medianDemand),
+    lowerBound: Math.round(lowerDemandBound),
+    longTermMinimum: Math.round(longTermMinimumDemand),
     defensiveTarget: Math.round(defensiveTarget - flowBias),
     stdDev: Math.round(demandStdDev),
     trend: Math.round(demandTrend),
@@ -208,6 +244,7 @@ msg.meta.history = {
     triggerIntervalSeconds: triggerIntervalSeconds,
     triggerIntervalMs: triggerIntervalSeconds * 1000,
     samples: historySamples,
+    longTermDemandWindowSeconds: learnedDemandWindowSeconds,
     trendWindowSeconds: trendWindowSeconds,
     trendSamples: trendHistorySamples
 };
@@ -224,6 +261,8 @@ msg.meta.stability = {
     },
     stats: {
         demandAverage: Math.round(averageDemand),
+        demandLowerBound: Math.round(lowerDemandBound),
+        demandLongTermMinimum: Math.round(longTermMinimumDemand),
         demandStdDev: Math.round(demandStdDev),
         demandTrend: Math.round(demandTrend),
         demandTrendDirection: demandTrendDirection,
