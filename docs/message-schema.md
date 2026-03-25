@@ -125,22 +125,28 @@ Intermediate calculated values. These fields are reusable helper values, not dir
 
 #### `msg.derived.demand`
 
-| Path                                 | Type   | Unit | Meaning                                             | Producer                                           |
-| ------------------------------------ | ------ | ---- | --------------------------------------------------- | -------------------------------------------------- |
-| `msg.derived.demand.current`         | number | W    | Current house demand used in 5-minute statistics    | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.average`         | number | W    | Average demand over the 5-minute history            | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.median`          | number | W    | Median demand over the 5-minute history             | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.defensiveTarget` | number | W    | Conservative demand target used by controllers      | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.demand.stdDev`          | number | W    | Standard deviation of demand in the 5-minute window | `statistical-averaging-of-house-load-and-solar.js` |
+| Path                                 | Type   | Unit  | Meaning                                                          | Producer                                           |
+| ------------------------------------ | ------ | ----- | ---------------------------------------------------------------- | -------------------------------------------------- |
+| `msg.derived.demand.current`         | number | W     | Current house demand used in 5-minute statistics                 | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.average`         | number | W     | Average demand over the 5-minute history                         | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.median`          | number | W     | Median demand over the 5-minute history                          | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.defensiveTarget` | number | W     | Conservative demand target used by controllers                   | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.stdDev`          | number | W     | Standard deviation of demand in the 5-minute window              | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.trend`           | number | W     | Rising or falling demand trend across the 5-minute window        | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.trendDirection`  | string | -     | Demand trend direction: `up`, `down`, or `flat`                  | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.demand.trendChanges`    | number | count | Number of demand trend direction flips in the short trend window | `statistical-averaging-of-house-load-and-solar.js` |
 
 #### `msg.derived.solar`
 
-| Path                               | Type   | Unit | Meaning                                                               | Producer                                           |
-| ---------------------------------- | ------ | ---- | --------------------------------------------------------------------- | -------------------------------------------------- |
-| `msg.derived.solar.livePower`      | number | W    | Current solar power used for reactive control                         | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.solar.averagePower`   | number | W    | Average solar power over the 5-minute history                         | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.solar.stdDev`         | number | W    | Standard deviation of solar power in the 5-minute window              | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.derived.solar.effectivePower` | number | W    | Hybrid solar value combining stable and live solar for charge control | `ControllerDayHandling.js`                         |
+| Path                               | Type   | Unit  | Meaning                                                               | Producer                                           |
+| ---------------------------------- | ------ | ----- | --------------------------------------------------------------------- | -------------------------------------------------- |
+| `msg.derived.solar.livePower`      | number | W     | Current solar power used for reactive control                         | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.solar.averagePower`   | number | W     | Average solar power over the 5-minute history                         | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.solar.stdDev`         | number | W     | Standard deviation of solar power in the 5-minute window              | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.solar.trend`          | number | W     | Rising or falling solar trend across the 5-minute window              | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.solar.trendDirection` | string | -     | Solar trend direction: `up`, `down`, or `flat`                        | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.solar.trendChanges`   | number | count | Number of solar trend direction flips in the short trend window       | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.derived.solar.effectivePower` | number | W     | Hybrid solar value combining stable and live solar for charge control | `ControllerDayHandling.js`                         |
 
 #### `msg.derived.forecast`
 
@@ -152,9 +158,10 @@ Intermediate calculated values. These fields are reusable helper values, not dir
 
 #### `msg.derived.energy`
 
-| Path                                    | Type   | Unit | Meaning                                | Producer                   |
-| --------------------------------------- | ------ | ---- | -------------------------------------- | -------------------------- |
-| `msg.derived.energy.theoreticalSurplus` | number | W    | Effective solar minus defensive demand | `ControllerDayHandling.js` |
+| Path                                    | Type   | Unit | Meaning                                                   | Producer                   |
+| --------------------------------------- | ------ | ---- | --------------------------------------------------------- | -------------------------- |
+| `msg.derived.energy.theoreticalSurplus` | number | W    | Effective solar minus defensive demand                    | `ControllerDayHandling.js` |
+| `msg.derived.energy.predictiveSurplus`  | number | W    | Predictive surplus after trend and solar-ramp corrections | `ControllerDayHandling.js` |
 
 ### `msg.action`
 
@@ -205,26 +212,37 @@ Technical metadata and classification.
 
 #### `msg.meta.history`
 
-| Path                                      | Type   | Unit  | Meaning                                            | Producer                                           |
-| ----------------------------------------- | ------ | ----- | -------------------------------------------------- | -------------------------------------------------- |
-| `msg.meta.history.windowSeconds`          | number | s     | Statistical history window length                  | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.triggerIntervalSeconds` | number | s     | Trigger interval used to derive sample count       | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.triggerIntervalMs`      | number | ms    | Trigger interval in milliseconds                   | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.history.samples`                | number | count | Number of samples retained for the 5-minute window | `statistical-averaging-of-house-load-and-solar.js` |
+| Path                                      | Type   | Unit  | Meaning                                                        | Producer                                           |
+| ----------------------------------------- | ------ | ----- | -------------------------------------------------------------- | -------------------------------------------------- |
+| `msg.meta.history.windowSeconds`          | number | s     | Statistical history window length                              | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.triggerIntervalSeconds` | number | s     | Trigger interval used to derive sample count                   | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.triggerIntervalMs`      | number | ms    | Trigger interval in milliseconds                               | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.samples`                | number | count | Number of samples retained for the 5-minute window             | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.trendWindowSeconds`     | number | s     | Short trend-history window used for direction-change checks    | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.history.trendSamples`           | number | count | Number of trend evaluations retained in the short trend window | `statistical-averaging-of-house-load-and-solar.js` |
 
 #### `msg.meta.stability`
 
-| Path                                         | Type   | Meaning                                                                                             | Producer                                           |
-| -------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `msg.meta.stability.mode`                    | string | Stability classification: `stable_stable`, `solar_unstable`, `demand_unstable`, `unstable_unstable` | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.demand`                  | string | Demand stability state: `stable` or `unstable`                                                      | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.solar`                   | string | Solar stability state: `stable` or `unstable`                                                       | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.thresholds.demandStdDev` | number | Demand standard deviation threshold                                                                 | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.thresholds.solarStdDev`  | number | Solar standard deviation threshold                                                                  | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.stats.demandAverage`     | number | 5-minute average demand snapshot                                                                    | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.stats.demandStdDev`      | number | 5-minute demand standard deviation snapshot                                                         | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.stats.solarAverage`      | number | 5-minute average solar snapshot                                                                     | `statistical-averaging-of-house-load-and-solar.js` |
-| `msg.meta.stability.stats.solarStdDev`       | number | 5-minute solar standard deviation snapshot                                                          | `statistical-averaging-of-house-load-and-solar.js` |
+| Path                                                 | Type   | Meaning                                                                                             | Producer                                           |
+| ---------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `msg.meta.stability.mode`                            | string | Stability classification: `stable_stable`, `solar_unstable`, `demand_unstable`, `unstable_unstable` | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.demand`                          | string | Demand stability state: `stable` or `unstable`                                                      | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.solar`                           | string | Solar stability state: `stable` or `unstable`                                                       | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.thresholds.demandStdDev`         | number | Demand standard deviation threshold                                                                 | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.thresholds.solarStdDev`          | number | Solar standard deviation threshold                                                                  | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.thresholds.demandTrendDeadband`  | number | Demand trend deadband used to classify `up` or `down`                                               | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.thresholds.solarTrendDeadband`   | number | Solar trend deadband used to classify `up` or `down`                                                | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.thresholds.unstableTrendChanges` | number | Number of short-window trend flips required to mark the signal unstable                             | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.demandAverage`             | number | 5-minute average demand snapshot                                                                    | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.demandStdDev`              | number | 5-minute demand standard deviation snapshot                                                         | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.demandTrend`               | number | 5-minute demand trend snapshot                                                                      | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.demandTrendDirection`      | string | Current demand trend direction                                                                      | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.demandTrendChanges`        | number | Count of demand trend direction flips in the short trend window                                     | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.solarAverage`              | number | 5-minute average solar snapshot                                                                     | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.solarStdDev`               | number | 5-minute solar standard deviation snapshot                                                          | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.solarTrend`                | number | 5-minute solar trend snapshot                                                                       | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.solarTrendDirection`       | string | Current solar trend direction                                                                       | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.stability.stats.solarTrendChanges`         | number | Count of solar trend direction flips in the short trend window                                      | `statistical-averaging-of-house-load-and-solar.js` |
 
 ## Node Read/Write Overview
 

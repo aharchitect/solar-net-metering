@@ -36,8 +36,10 @@ if (
         "data.forecast.solarRemainingWh",
         "data.solar.totalPower",
         "derived.demand.defensiveTarget",
+        "derived.demand.trend",
         "derived.solar.livePower",
         "derived.solar.averagePower",
+        "derived.solar.trend",
         "meta.stability.mode"
     ])
 ) {
@@ -52,8 +54,10 @@ const gridPower = data.grid.power;
 const maxChargePower = data.battery.chargeMaxPower;
 const batteryInflow = data.battery.chargePower;
 const calculatedDemand = derived.demand.defensiveTarget;
+const demandTrend = derived.demand.trend;
 const liveSolarPower = derived.solar.livePower;
 const stableSolarPower = derived.solar.averagePower;
+const solarTrend = derived.solar.trend;
 const stability = msg.meta.stability;
 const stabilityMode = stability.mode;
 const isHappyPath = stabilityMode === "stable_stable";
@@ -70,7 +74,6 @@ const totalProduced = data.solar.totalPower;
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
-const targetBuffer = 30; // Aim for 30W import
 const maxInverterPower = 1200; // the Inverter limit
 const minSustain = 50; // Keep charging circuit active
 const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
@@ -80,6 +83,17 @@ const happyPathRampUpAlpha = 0.35; // Raise charging gently on the happy path
 const happyPathRampDownAlpha = 0.15; // Drop charging even more gently on the happy path
 const forecastHoldThresholdWh = 50; // Only keep charging warm if more solar is still expected
 const warmHoldSolarFraction = 0.5; // Hold at half of the current solar power to avoid charge on/off cycling
+const exportMemoryCap = 120; // Keep zero-export bias alive for several delayed cycles
+const exportMemoryDecayPerCycle = 20; // Roughly 1-2 minutes until the memory fades out
+const maxDynamicImportBuffer = 150; // Never aim for more than this import cushion
+const sustainedDeficitThreshold = -40; // Require a real deficit before we release charge quickly
+const releaseCyclesRequired = 3; // Several cycles without export before reducing aggressively
+const sustainedDeficitCyclesRequired = 3; // Several cycles of deficit before reducing aggressively
+const solarRampBoostFactor = 0.35; // Pre-charge when solar rises faster than the stable baseline
+const solarTrendBoostFactor = 0.4; // Reinforce pre-charge when the 5-minute trend is rising
+const demandTrendPenaltyFactor = 0.25; // Rising demand reduces predicted surplus
+const demandTrendPenaltyCap = 30; // Keep trend correction bounded
+const softReductionFloorFraction = 0.75; // Lower charge only gradually when evidence is weak
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -95,8 +109,52 @@ const isExporting = gridPower < -exportTolerance;
 const lastCommand = context.get("lastCommand") || 0;
 const isChargingActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 5;
 const hasMeaningfulSolarForecast = totalSolarRemaining > forecastHoldThresholdWh;
+let exportMemoryBias = context.get("exportMemoryBias") || 0;
+if (isExporting) {
+    exportMemoryBias = Math.min(
+        exportMemoryCap,
+        Math.max(exportMemoryBias * 0.7, Math.abs(gridPower) * exportBoostFactor + 40)
+    );
+} else {
+    exportMemoryBias = Math.max(0, exportMemoryBias - exportMemoryDecayPerCycle);
+}
 
+const baseImportBuffer = isHappyPath
+    ? 30
+    : stabilityMode === "solar_unstable"
+      ? 80
+      : stabilityMode === "demand_unstable"
+        ? 50
+        : 70;
+const positiveDemandTrendPenalty = Math.min(
+    demandTrendPenaltyCap,
+    Math.round(Math.max(0, demandTrend) * demandTrendPenaltyFactor)
+);
+const solarRamp = Math.max(0, liveSolarPower - stableSolarPower);
+const solarRampBoost = Math.min(
+    120,
+    Math.round(solarRamp * solarRampBoostFactor + Math.max(0, solarTrend) * solarTrendBoostFactor)
+);
+const dynamicImportBuffer = Math.min(
+    maxDynamicImportBuffer,
+    Math.round(baseImportBuffer + exportMemoryBias + positiveDemandTrendPenalty)
+);
+const predictiveDemand = calculatedDemand + positiveDemandTrendPenalty;
+const predictiveSolarPower = effectiveSolarPower + solarRampBoost;
 const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
+const predictiveSurplus = predictiveSolarPower - predictiveDemand;
+let noExportCycles = context.get("noExportCycles") || 0;
+noExportCycles = isExporting ? 0 : Math.min(12, noExportCycles + 1);
+let deficitCycles = context.get("deficitCycles") || 0;
+deficitCycles = predictiveSurplus < sustainedDeficitThreshold ? Math.min(12, deficitCycles + 1) : 0;
+
+function appendRule(baseRule, suffix) {
+    if (!baseRule || baseRule === "None") {
+        return suffix;
+    }
+
+    return baseRule.includes(suffix) ? baseRule : `${baseRule} + ${suffix}`;
+}
 
 function applyForecastWarmHold(nextTargetCharge, nextRuleApplied) {
     if (!isChargingActive || !hasMeaningfulSolarForecast || isExporting || totalProduced <= 0) {
@@ -110,26 +168,54 @@ function applyForecastWarmHold(nextTargetCharge, nextRuleApplied) {
 
     return {
         targetCharge: warmHoldPower,
-        ruleApplied:
-            nextTargetCharge <= 0 ? "Forecast Warm Hold" : `${nextRuleApplied} + Forecast Warm Hold`
+        ruleApplied: appendRule(
+            nextTargetCharge <= 0 ? "None" : nextRuleApplied,
+            "Forecast Warm Hold"
+        )
     };
+}
+
+function applyReductionGuard(nextTargetCharge, nextRuleApplied) {
+    if (nextTargetCharge >= lastCommand || isExporting || lastCommand <= 0) {
+        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };
+    }
+
+    const enoughReleaseHistory = noExportCycles >= releaseCyclesRequired;
+    const sustainedDeficit = deficitCycles >= sustainedDeficitCyclesRequired;
+
+    if (!enoughReleaseHistory && !sustainedDeficit) {
+        return {
+            targetCharge: Math.max(nextTargetCharge, Math.round(lastCommand)),
+            ruleApplied: appendRule(nextRuleApplied, "Reduction Hold"),
+            isActive: true
+        };
+    }
+
+    const softReductionFloor = Math.round(lastCommand * softReductionFloorFraction);
+    if (!sustainedDeficit && nextTargetCharge < softReductionFloor) {
+        return {
+            targetCharge: softReductionFloor,
+            ruleApplied: appendRule(nextRuleApplied, "Slow Reduction"),
+            isActive: true
+        };
+    }
+
+    return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };
 }
 
 // Specification:
 // Use the calm 5-minute surplus when both solar and demand are stable,
 // keep battery changes gentle, and only react quickly when export appears.
 function calculateHappyPathCharge() {
-    const happyPathBuffer = 20; // Smaller reserve when solar and demand are both calm
-
-    let nextTargetCharge = Math.max(0, theoreticalSurplus + happyPathBuffer);
-    let nextRuleApplied = "Happy Path";
+    let nextTargetCharge = Math.max(0, predictiveSurplus + dynamicImportBuffer);
+    let nextRuleApplied = solarRampBoost > 0 ? "Happy Path + Solar Ramp" : "Happy Path";
 
     if (isExporting) {
         const exportIntensity = Math.abs(gridPower);
         const exportBoost = Math.round(exportIntensity * Math.max(1, exportBoostFactor * 0.7));
         nextTargetCharge = Math.max(nextTargetCharge, currentSetInflow + exportBoost);
         nextRuleApplied = "Anti-Export";
-    } else if (theoreticalSurplus <= 0) {
+    } else if (predictiveSurplus <= 0) {
         nextTargetCharge = 0;
         nextRuleApplied = "Happy Path Idle";
     }
@@ -141,8 +227,8 @@ function calculateHappyPathCharge() {
 // Use the more defensive default controller for unstable situations,
 // with stronger grid-anchored anti-export correction.
 function calculateDefaultCharge() {
-    let nextTargetCharge = Math.max(0, theoreticalSurplus + targetBuffer);
-    let nextRuleApplied = "None";
+    let nextTargetCharge = Math.max(0, predictiveSurplus + dynamicImportBuffer);
+    let nextRuleApplied = solarRampBoost > 0 ? "Predictive + Solar Ramp" : "Predictive";
 
     if (isExporting) {
         const exportIntensity = Math.abs(gridPower);
@@ -161,6 +247,10 @@ ruleApplied = calculation.ruleApplied;
 const warmHoldAdjustment = applyForecastWarmHold(targetCharge, ruleApplied);
 targetCharge = warmHoldAdjustment.targetCharge;
 ruleApplied = warmHoldAdjustment.ruleApplied;
+const reductionGuard = applyReductionGuard(targetCharge, ruleApplied);
+targetCharge = reductionGuard.targetCharge;
+ruleApplied = reductionGuard.ruleApplied;
+const reductionGuardActive = reductionGuard.isActive;
 
 // 4. SANITY CHECKS & SUSTAIN
 // If solar production is > 150W, we keep the charging circuit 'warm' at 50W,
@@ -204,6 +294,8 @@ let finalAlpha;
 if (isExporting) {
     // CRITICAL: If we are exporting, we jump to the target IMMEDIATELY
     finalAlpha = 1.0;
+} else if (reductionGuardActive) {
+    finalAlpha = 0.1;
 } else if (isHappyPath && targetCharge > lastCommand) {
     finalAlpha = happyPathRampUpAlpha;
 } else if (isHappyPath) {
@@ -252,6 +344,9 @@ if (delta < (isHappyPath ? happyPathDeadband : 5) && gridPower >= 0 && batteryIn
 // 8. OUTPUTS & PERSISTENCE
 const roundedCommand = Math.round(smoothedCommand);
 
+context.set("exportMemoryBias", exportMemoryBias);
+context.set("noExportCycles", noExportCycles);
+context.set("deficitCycles", deficitCycles);
 context.set("lastCommand", smoothedCommand);
 
 msg.derived = derived;
@@ -259,6 +354,7 @@ msg.derived.solar = msg.derived.solar || {};
 msg.derived.solar.effectivePower = Math.round(effectiveSolarPower);
 msg.derived.energy = msg.derived.energy || {};
 msg.derived.energy.theoreticalSurplus = Math.round(theoreticalSurplus);
+msg.derived.energy.predictiveSurplus = Math.round(predictiveSurplus);
 
 msg.action = action;
 msg.action.charge = {
@@ -274,6 +370,7 @@ const insights = {
         efficiency: { gridExport: gridPower < 0 ? Math.abs(gridPower) : 0, isLeaking: isExporting },
         calculation: {
             theoreticalSurplus: Math.round(theoreticalSurplus),
+            predictiveSurplus: Math.round(predictiveSurplus),
             targetCharge: Math.round(targetCharge),
             finalCommand: roundedCommand
         },
@@ -287,7 +384,9 @@ const insights = {
             solarLive: liveSolarPower,
             solarStable: stableSolarPower,
             solarEffective: Math.round(effectiveSolarPower),
+            solarPredictive: Math.round(predictiveSolarPower),
             demand: calculatedDemand,
+            demandPredictive: Math.round(predictiveDemand),
             grid: gridPower,
             soc: soc
         }
@@ -311,7 +410,9 @@ const telemetry = {
         liveSolarPower: Math.round(liveSolarPower),
         stableSolarPower: Math.round(stableSolarPower),
         effectiveSolarPower: Math.round(effectiveSolarPower),
+        predictiveSolarPower: Math.round(predictiveSolarPower),
         theoreticalSurplus: Math.round(theoreticalSurplus),
+        predictiveSurplus: Math.round(predictiveSurplus),
         targetCharge: Math.round(targetCharge),
         finalCommand: roundedCommand,
         delta: Math.round(delta),
@@ -320,6 +421,15 @@ const telemetry = {
         totalProduced: Math.round(totalProduced),
         totalSolarRemaining: Math.round(totalSolarRemaining),
         forecastWarmHoldActive: isChargingActive && hasMeaningfulSolarForecast && !isExporting,
+        reductionGuardActive: reductionGuardActive,
+        dynamicImportBuffer: Math.round(dynamicImportBuffer),
+        baseImportBuffer: Math.round(baseImportBuffer),
+        exportMemoryBias: Math.round(exportMemoryBias),
+        noExportCycles: noExportCycles,
+        deficitCycles: deficitCycles,
+        demandTrend: Math.round(demandTrend),
+        solarTrend: Math.round(solarTrend),
+        solarRampBoost: Math.round(solarRampBoost),
         isExporting: isExporting,
         historySamples: msg.meta?.history?.samples ?? null,
         triggerIntervalSeconds: msg.meta?.history?.triggerIntervalSeconds ?? null,
