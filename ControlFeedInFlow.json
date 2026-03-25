@@ -1,47 +1,47 @@
 [
     {
-        "id": "f6f2187d.f17ca8",
+        "id": "85c036d935247d38",
         "type": "tab",
         "label": "Control of Zero Feed-In",
         "disabled": false,
         "info": ""
     },
     {
-        "id": "5cf6489d8647b69b",
+        "id": "835edd95be21e3cf",
         "type": "group",
-        "z": "f6f2187d.f17ca8",
+        "z": "85c036d935247d38",
         "name": "Zero Feed-In V1.0 02/2026",
         "style": {
             "label": true
         },
         "nodes": [
-            "5739c3f29a1ea937",
-            "43543a987662b3e9",
-            "26d3c5306d0fef5a",
-            "c30d48f36fd7725f",
-            "025246c4ded22275",
-            "4477233b9b0acab6",
-            "6dd893d2c26e82bd",
-            "d0526407edeba38b",
-            "370a81d4e6bb9016",
-            "2d61c17cef688f81",
-            "batch_fetch_all_sensors",
-            "9a65058b9117a00b",
-            "4374e190ff23b882",
-            "b6f8856e80eaefd8",
-            "56864570f77a0ebc",
-            "fd116e9ee3ed9cc1",
-            "03714ec373d22edb",
-            "843840f794e450d8",
-            "97362f3397ef644a",
-            "44b0e371ae1efb71",
-            "1ea042ca1244df90",
-            "61f92a59a8e89662",
-            "278ad0be7b0b1281",
-            "e431f5e11e9ac07a",
-            "0daa574874bc427e",
-            "3045b532e79bbe4a",
-            "17d57030078385b5"
+            "ad6875745e3173bb",
+            "451914fc191ebd33",
+            "920f7c101c64ab64",
+            "ca24e0eeeac4e3cd",
+            "81b00f2817ce1297",
+            "943f88cdb25ddd9d",
+            "9f3e1f58b6c00571",
+            "41e3d54423f06352",
+            "1a038d782e5c160a",
+            "b7850a919322bb49",
+            "866f8ab99b081b03",
+            "297d34f127067b86",
+            "8b6917b8760b7d01",
+            "01c28e62e8e71d26",
+            "d2cc6a95e01438a2",
+            "4a3323630f92ec23",
+            "91e8fbbd0a5f1a09",
+            "6fa7db7a576e6454",
+            "082c0a2899dcf071",
+            "d77667d76b9ada1f",
+            "2d93f991ad520364",
+            "c10ee6eae0230598",
+            "6858f88f272482de",
+            "ded2b5c390cb6d94",
+            "742044c9accd94c6",
+            "01c36d203d7d0d98",
+            "383d94bc825d7d01"
         ],
         "x": 8,
         "y": 39,
@@ -49,17 +49,17 @@
         "h": 1688
     },
     {
-        "id": "26d3c5306d0fef5a",
+        "id": "920f7c101c64ab64",
         "type": "group",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Trigger",
         "style": {
             "label": true
         },
         "nodes": [
-            "eed002ece4224a0a",
-            "c5333ded72b9a1d2"
+            "d8a1b8092fff858d",
+            "9cb872f8e6b8cabf"
         ],
         "x": 34,
         "y": 139,
@@ -67,25 +67,25 @@
         "h": 82
     },
     {
-        "id": "c30d48f36fd7725f",
+        "id": "ca24e0eeeac4e3cd",
         "type": "group",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Ausgabe Steuerung HM-600",
         "style": {
             "label": true
         },
         "nodes": [
-            "73a77c3a1b8dcd3b",
-            "eaca7ff6ffe255c2",
-            "d6a84d3510a6591c",
-            "869eb6e1e644148a",
-            "d19f162282674090",
-            "794b544f9a7bccb9",
-            "15249236be519140",
-            "deaadefc156e85aa",
-            "d5e55fc7c6210855",
-            "4e69b641146d3315"
+            "89bc3eaf85c08918",
+            "0941676c091a38ee",
+            "2b84037a2991a63d",
+            "74b22d3690714a08",
+            "b078e583db1939dd",
+            "dd4eba5a19a14b9f",
+            "42fecfca963d74d0",
+            "7705e1cd4a9e17ca",
+            "4c5ba640fdd351c3",
+            "76390ea1fd55bbf6"
         ],
         "x": 2674,
         "y": 1340.9999923706055,
@@ -93,42 +93,43 @@
         "h": 360.00000762939453
     },
     {
-        "id": "6dd893d2c26e82bd",
+        "id": "9f3e1f58b6c00571",
         "type": "group",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Log File",
         "style": {
             "label": true
         },
         "nodes": [
-            "7c727b9349a66777",
-            "efb0f1e0854ccaea",
-            "9ff941bd037f63ee",
-            "aa395729d6395a93",
-            "2f2b36091f58c9f7",
-            "6f5efb4c79c63240"
+            "c61a28a4f60bf640",
+            "b1ea6b62cc4bf982",
+            "4c42e97154f1e0b5",
+            "ea4a6b688299ae77",
+            "5bafcd4c7dabdde3",
+            "301dc238ee74b443",
+            "20475e1a88e49de9"
         ],
         "x": 1604,
-        "y": 1319,
-        "w": 582,
-        "h": 182
+        "y": 853,
+        "w": 1828,
+        "h": 648
     },
     {
-        "id": "2d61c17cef688f81",
+        "id": "b7850a919322bb49",
         "type": "group",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Controllable Loads (Demand Side Management)",
         "style": {
             "stroke": "#0070c0",
             "label": true
         },
         "nodes": [
-            "e4c2c33a9ab1a82a",
-            "14de311e0e4c59dd",
-            "cee1fc73cefb58bb",
-            "8bdea7aed89f9af8"
+            "72e478bd1e8b94ff",
+            "0b7476f6756c4d97",
+            "8ef14c616d251610",
+            "231bce569006ceb5"
         ],
         "x": 3014,
         "y": 379,
@@ -136,21 +137,21 @@
         "h": 122
     },
     {
-        "id": "97362f3397ef644a",
+        "id": "082c0a2899dcf071",
         "type": "group",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Charging the Battery",
         "style": {
             "label": true
         },
         "nodes": [
-            "479c52d0f115e025",
-            "47c149669603dfab",
-            "da4b2d9c53d57bb8",
-            "2b1b3c96923780ac",
-            "60a12328b3543b52",
-            "a535bc57c7cd255a"
+            "066b2465a96f4994",
+            "9c35230d039e3e55",
+            "92ef4860465decd6",
+            "7f0fbde0baafb258",
+            "05d15ea26546ad3e",
+            "f9a3ee273a364926"
         ],
         "x": 3014,
         "y": 119,
@@ -158,19 +159,19 @@
         "h": 242
     },
     {
-        "id": "61f92a59a8e89662",
+        "id": "c10ee6eae0230598",
         "type": "group",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Discharging the Battery",
         "style": {
             "label": true
         },
         "nodes": [
-            "34a4e171a3ede839",
-            "70d8fd62990a6dfe",
-            "639694e845e6cc35",
-            "a97c7cec63c69a9f"
+            "bcfcfa35e1d7693b",
+            "0d1ae717cd5d0c65",
+            "6842476da0e2d59d",
+            "c0f18b89d9bfb162"
         ],
         "x": 3014,
         "y": 579,
@@ -178,10 +179,35 @@
         "h": 222
     },
     {
-        "id": "5739c3f29a1ea937",
+        "id": "20475e1a88e49de9",
+        "type": "group",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "68e76bb7b33a0541",
+            "4021057d92fc0eb0",
+            "a4efc05b3bc93edb",
+            "1fff34807fca139f"
+        ],
+        "x": 2734,
+        "y": 879,
+        "w": 672,
+        "h": 182
+    },
+    {
+        "id": "ad6875745e3173bb",
         "type": "inject",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Trigger Inverter Restart",
         "props": [
             {
@@ -199,29 +225,29 @@
         "y": 1380,
         "wires": [
             [
-                "deaadefc156e85aa"
+                "7705e1cd4a9e17ca"
             ]
         ]
     },
     {
-        "id": "43543a987662b3e9",
+        "id": "451914fc191ebd33",
         "type": "link out",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Event Trigger",
         "mode": "link",
         "links": [
-            "278ad0be7b0b1281"
+            "6858f88f272482de"
         ],
         "x": 515,
         "y": 140,
         "wires": []
     },
     {
-        "id": "eed002ece4224a0a",
+        "id": "d8a1b8092fff858d",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "26d3c5306d0fef5a",
+        "z": "85c036d935247d38",
+        "g": "920f7c101c64ab64",
         "name": "Trigger Timer",
         "func": "let triggerTime = parseFloat(msg.payload); // Zeit in Sekunden aus dem input\nlet timerId = flow.get(\"timerId\") || null; // Holen des Timer-IDs aus dem Flow-Kontext\nlet endTime = flow.get(\"endTime\") || Date.now() + triggerTime * 1000; // Endzeit aus Flow-Kontext oder neu berechnen\nconst triggerIntervalSeconds = Math.max(1, triggerTime || 1);\n\nfunction buildTriggerMeta() {\n    return {\n        trigger: {\n            intervalSeconds: triggerIntervalSeconds,\n            intervalMs: triggerIntervalSeconds * 1000\n        }\n    };\n}\n\n// Bestehenden Timer löschen, falls vorhanden\nif (timerId) {\n    clearInterval(timerId);\n}\n\n// Funktion zur Aktualisierung des Node-Status\nfunction updateCountdown() {\n    let remainingTime = Math.ceil((endTime - Date.now()) / 1000);\n    if (remainingTime > 0) {\n        node.status({ fill: \"red\", shape: \"ring\", text: `Trigger in ${remainingTime}s` });\n    } else {\n        node.status({ fill: \"green\", shape: \"dot\", text: \"Triggered\" });\n        endTime = Date.now() + triggerIntervalSeconds * 1000; // Neu berechnen des Endzeitpunkts für kontinuierliche Wiederholungen\n        node.send({\n            payload: true,\n            meta: buildTriggerMeta()\n        }); // Sende 'true' bei Ablauf des Timers\n    }\n}\n\n// Setzen des Intervall-Timers\ntimerId = setInterval(() => {\n    updateCountdown();\n}, 1000); // Jede Sekunde aktualisieren\n\n// Speichern des Timer-IDs und des Endzeitpunkts im Flow-Kontext\nflow.set(\"timerId\", timerId);\nflow.set(\"endTime\", endTime);\nflow.set(\"triggerIntervalSeconds\", triggerIntervalSeconds);\n\n// Initialer Aufruf zur Statusaktualisierung\nupdateCountdown();\n\nreturn null; // Keine direkte Nachrichtenausgabe",
         "outputs": 1,
@@ -234,15 +260,15 @@
         "y": 180,
         "wires": [
             [
-                "43543a987662b3e9"
+                "451914fc191ebd33"
             ]
         ]
     },
     {
-        "id": "73a77c3a1b8dcd3b",
+        "id": "89bc3eaf85c08918",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "WR Limit",
         "active": true,
         "tosidebar": true,
@@ -257,10 +283,10 @@
         "wires": []
     },
     {
-        "id": "eaca7ff6ffe255c2",
+        "id": "0941676c091a38ee",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "Inverter HM-600 AN",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -286,15 +312,15 @@
         "y": 1600,
         "wires": [
             [
-                "869eb6e1e644148a"
+                "74b22d3690714a08"
             ]
         ]
     },
     {
-        "id": "d6a84d3510a6591c",
+        "id": "2b84037a2991a63d",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "Inverter HM-600 AUS",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -320,15 +346,15 @@
         "y": 1660,
         "wires": [
             [
-                "d19f162282674090"
+                "b078e583db1939dd"
             ]
         ]
     },
     {
-        "id": "869eb6e1e644148a",
+        "id": "74b22d3690714a08",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "WR AN",
         "active": true,
         "tosidebar": true,
@@ -343,10 +369,10 @@
         "wires": []
     },
     {
-        "id": "d19f162282674090",
+        "id": "b078e583db1939dd",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "WR AUS",
         "active": true,
         "tosidebar": true,
@@ -361,10 +387,10 @@
         "wires": []
     },
     {
-        "id": "794b544f9a7bccb9",
+        "id": "dd4eba5a19a14b9f",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "Inverter HM-600 Limit (%)",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -390,15 +416,15 @@
         "y": 1540,
         "wires": [
             [
-                "73a77c3a1b8dcd3b"
+                "89bc3eaf85c08918"
             ]
         ]
     },
     {
-        "id": "15249236be519140",
+        "id": "42fecfca963d74d0",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "WR RST",
         "active": true,
         "tosidebar": true,
@@ -413,10 +439,10 @@
         "wires": []
     },
     {
-        "id": "deaadefc156e85aa",
+        "id": "7705e1cd4a9e17ca",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "Inverter Restart Action",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -449,29 +475,29 @@
         "y": 1381.9999923706055,
         "wires": [
             [
-                "15249236be519140"
+                "42fecfca963d74d0"
             ]
         ]
     },
     {
-        "id": "d0526407edeba38b",
+        "id": "41e3d54423f06352",
         "type": "link out",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "logFileMsg",
         "mode": "link",
         "links": [
-            "6f5efb4c79c63240"
+            "301dc238ee74b443"
         ],
         "x": 1575,
         "y": 1360,
         "wires": []
     },
     {
-        "id": "d5e55fc7c6210855",
+        "id": "4c5ba640fdd351c3",
         "type": "comment",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "Limit setzen mit \"nonpersistent_relative\"",
         "info": "",
         "x": 3270,
@@ -479,10 +505,10 @@
         "wires": []
     },
     {
-        "id": "4e69b641146d3315",
+        "id": "76390ea1fd55bbf6",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "c30d48f36fd7725f",
+        "z": "85c036d935247d38",
+        "g": "ca24e0eeeac4e3cd",
         "name": "Steuerlogik Drosselung HM-600",
         "func": "// Definier Funktion zur Erstellung der Log-Nachricht\nfunction createLogFileMsg(\n    dtuState,\n    invStateProducing,\n    invStateReachable,\n    statusZeroInjection,\n    pwrConsumption,\n    pwrSecondSource,\n    socLevelBattery,\n    setPercentMsg,\n    turnOnMsg,\n    turnOffMsg,\n    debugMsg\n) {\n    const now = new Date();\n    const formattedTime = now.toLocaleString(\"de-DE\", { hour12: false }); // Formatiert Zeit als 'Tag.Monat.Jahr Stunden:Minuten:Sekunden'\n\n    // Konvertiert Zahlenwerte zu Strings mit Komma als Dezimaltrennzeichen\n    const formattedPwrConsumption = pwrConsumption.toLocaleString(\"de-DE\");\n    const formattedPwrSecondSource = pwrSecondSource.toLocaleString(\"de-DE\");\n\n    return {\n        payload: {\n            time: formattedTime,\n            dtuState: dtuState,\n            invStateProducing: invStateProducing,\n            invStateReachable: invStateReachable,\n            statusZeroInjection: statusZeroInjection,\n            pwrConsumption: formattedPwrConsumption,\n            pwrSecondSource: formattedPwrSecondSource,\n            socLevelBattery: socLevelBattery,\n            setPercentMsg: setPercentMsg ? setPercentMsg.payload : null,\n            turnOnMsg: turnOnMsg ? turnOnMsg.payload : null,\n            turnOffMsg: turnOffMsg ? turnOffMsg.payload : null,\n            debugMsg: debugMsg.payload\n        }\n    };\n}\n\n// Definiert min und max Prozentwerte für die DTU-Ausgangsleistung\nconst maxOutputPowerInv = parseFloat(msg.payload.maxOutputPowerInv); // Maximale Ausgangsleistung des Wechselrichters in Watt\nconst pwrSteps = maxOutputPowerInv / 100; // Berechnet die Leistung pro Prozent\nconst minOutputZeroInjection = parseFloat(msg.payload.minOutputZeroInjection); // Minimale Leistung in Prozent bei aktivierter Nulleinspeisung\nconst maxOutputZeroInjection = parseFloat(msg.payload.maxOutputZeroInjection); // Maximale Leistung in Prozent bei aktivierter Nulleinspeisung\nconst maxOutputAtFullSoc = parseFloat(msg.payload.maxOutputAtFullSoc); // Maximale Ausgangsleistung in Prozent bei vollem Batterie-SoC\nconst staticInverterOutputPower = parseFloat(msg.payload.staticInverterOutputPower); // Voreingestellte Ausgangsleistung, wenn Nulleinspeisung deaktiviert ist\nconst minPowerInverter = minOutputZeroInjection * pwrSteps; // Berechnet die minimale Leistung in Watt, basierend auf dem Prozentwert und den Leistungsschritten\n\n// Definiert Schwellenwerte für den Batterie-SoC\nconst offThresholdInv = parseFloat(msg.payload.offThresholdInv); // Batterie-SoC-Schwelle zum Ausschalten des Wechselrichters\nconst onThresholdInv = parseFloat(msg.payload.onThresholdInv); // Batterie-SoC-Schwelle zum Einschalten des Wechselrichters\n\n// Extrahiert Daten aus msg.payload für Steuerungsentscheidungen\nconst dtuState = msg.payload.dtuState; // Der aktuelle Betriebszustand der DTU (Datenübertragungseinheit)\nconst pwrSecondSource = parseFloat(msg.payload.pwrSecondSource); // Leistung der zweiten Energiequelle in Watt\nconst pwrConsumption = parseFloat(msg.payload.pwrConsumption); // Aktueller Gesamtstromverbrauch in Watt\nconst invStateProducing = msg.payload.invStateProducing; // Gibt an, ob der Wechselrichter aktuell Strom produziert\nconst invStateReachable = msg.payload.invStateReachable; // Verfügbarkeitsstatus des Wechselrichters\nconst socLevelBattery = parseFloat(msg.payload.socLevelBattery); // Der aktuelle Ladezustand der Batterie in Prozent\nconst statusZeroInjection = msg.payload.statusZeroInjection; // Aktueller Status der Nulleinspeisung ('on' oder 'off')\n\n// Entscheidungslogik für die Ausgabe der Befehle basierend auf dem Zustand und den Messdaten\nlet setPercentMsg = null;\nlet turnOnMsg = null;\nlet turnOffMsg = null;\nlet debugMsg = null;\n\n// Steuerung basierend auf dem Status der Nulleinspeisung\nif (statusZeroInjection !== \"on\") {\n    if (invStateProducing === \"on\") {\n        setPercentMsg = { payload: staticInverterOutputPower };\n        debugMsg = { payload: \"Nulleinspeisung deaktiviert, statische Leistung angewendet\" };\n    } else {\n        debugMsg = { payload: \"Nulleinspeisung deaktiviert, Wechselrichter aus\" };\n    }\n    const logFileMsg = createLogFileMsg(\n        dtuState,\n        invStateProducing,\n        invStateReachable,\n        statusZeroInjection,\n        pwrConsumption,\n        pwrSecondSource,\n        socLevelBattery,\n        setPercentMsg,\n        turnOnMsg,\n        turnOffMsg,\n        debugMsg\n    );\n    return [setPercentMsg, turnOnMsg, turnOffMsg, debugMsg, logFileMsg];\n} else {\n    debugMsg = { payload: \"Nulleinspeisung aktiviert\" };\n}\n\n// Überprüft die Erreichbarkeit und Betriebsbereitschaft der Systemkomponenten\nif (dtuState !== \"on\" || invStateReachable !== \"on\") {\n    debugMsg = { payload: `DTU offline oder Wechselrichter nicht erreichbar` };\n    const logFileMsg = createLogFileMsg(\n        dtuState,\n        invStateProducing,\n        invStateReachable,\n        statusZeroInjection,\n        pwrConsumption,\n        pwrSecondSource,\n        socLevelBattery,\n        setPercentMsg,\n        turnOnMsg,\n        turnOffMsg,\n        debugMsg\n    );\n    return [null, null, null, debugMsg, logFileMsg];\n} else {\n    debugMsg = { payload: `DTU und Wechselrichter sind online` };\n}\n\n// Berechnet die erforderliche Leistungskorrektur basierend auf dem aktuellen Verbrauch und der Zweitquelle\nlet powerDifference = pwrConsumption - pwrSecondSource;\n\n// Steuerung des Wechselrichters basierend auf dem Batterie-SoC und der Differenzleistung\nif (socLevelBattery <= offThresholdInv && invStateProducing === \"on\") {\n    turnOffMsg = { payload: \"OFF\" };\n    const logFileMsg = createLogFileMsg(\n        dtuState,\n        invStateProducing,\n        invStateReachable,\n        statusZeroInjection,\n        pwrConsumption,\n        pwrSecondSource,\n        socLevelBattery,\n        setPercentMsg,\n        turnOnMsg,\n        turnOffMsg,\n        debugMsg\n    );\n    return [setPercentMsg, turnOnMsg, turnOffMsg, debugMsg, logFileMsg];\n} else {\n    // Zuerst wird überprüft, ob der Wechselrichter Strom produziert\n    if (invStateProducing === \"on\") {\n        if (powerDifference < minPowerInverter) {\n            // Sendet ein Signal, um den Wechselrichter auszuschalten, falls die Differenzleistung unter dem Mindestniveau liegt\n            turnOffMsg = { payload: \"OFF\" };\n        } else {\n            // Berechnet den erforderlichen Leistungsprozentsatz, wenn keine Ausschaltanforderung vorliegt\n            let requiredPercent = Math.floor(powerDifference / pwrSteps);\n            let effectiveMaxOutput =\n                socLevelBattery === 100 ? maxOutputAtFullSoc : maxOutputZeroInjection;\n            requiredPercent = Math.max(\n                minOutputZeroInjection,\n                Math.min(requiredPercent, effectiveMaxOutput)\n            );\n            setPercentMsg = { payload: requiredPercent };\n        }\n    } else if (socLevelBattery >= onThresholdInv && powerDifference >= minPowerInverter) {\n        // Überprüft, ob der Batterie-SoC oberhalb des Schwellenwertes liegt und die Differenzleistung ausreichend ist\n        let requiredPercent = Math.floor(powerDifference / pwrSteps);\n        let effectiveMaxOutput =\n            socLevelBattery === 100 ? maxOutputAtFullSoc : maxOutputZeroInjection;\n        requiredPercent = Math.max(\n            minOutputZeroInjection,\n            Math.min(requiredPercent, effectiveMaxOutput)\n        );\n        setPercentMsg = { payload: requiredPercent };\n        turnOnMsg = { payload: \"ON\" };\n    } else {\n        // Keine Aktion erforderlich, da der Wechselrichter aus ist und die Bedingungen zum Einschalten nicht erfüllt sind\n        debugMsg = {\n            payload: \"Wechselrichter bleibt aus - Bedingungen zum Einschalten nicht erfüllt\"\n        };\n    }\n}\n\nconst logFileMsg = createLogFileMsg(\n    dtuState,\n    invStateProducing,\n    invStateReachable,\n    statusZeroInjection,\n    pwrConsumption,\n    pwrSecondSource,\n    socLevelBattery,\n    setPercentMsg,\n    turnOnMsg,\n    turnOffMsg,\n    debugMsg\n);\n// Rückgabe der Steuerbefehle\nreturn [setPercentMsg, turnOnMsg, turnOffMsg, debugMsg, logFileMsg];",
         "outputs": 5,
@@ -495,23 +521,23 @@
         "y": 1440,
         "wires": [
             [
-                "794b544f9a7bccb9"
+                "dd4eba5a19a14b9f"
             ],
             [
-                "eaca7ff6ffe255c2"
+                "0941676c091a38ee"
             ],
             [
-                "d6a84d3510a6591c"
+                "2b84037a2991a63d"
             ],
             [],
             []
         ]
     },
     {
-        "id": "025246c4ded22275",
+        "id": "81b00f2817ce1297",
         "type": "comment",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Inverterneustart 1x/Tag",
         "info": "",
         "x": 2520,
@@ -519,10 +545,10 @@
         "wires": []
     },
     {
-        "id": "4477233b9b0acab6",
+        "id": "943f88cdb25ddd9d",
         "type": "inject",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "",
         "props": [
             {
@@ -544,15 +570,15 @@
         "y": 80,
         "wires": [
             [
-                "43543a987662b3e9"
+                "451914fc191ebd33"
             ]
         ]
     },
     {
-        "id": "7c727b9349a66777",
+        "id": "c61a28a4f60bf640",
         "type": "inject",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
         "name": "Reset Spaltennamen",
         "props": [
             {
@@ -570,15 +596,15 @@
         "y": 1460,
         "wires": [
             [
-                "9ff941bd037f63ee"
+                "4c42e97154f1e0b5"
             ]
         ]
     },
     {
-        "id": "efb0f1e0854ccaea",
+        "id": "b1ea6b62cc4bf982",
         "type": "comment",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
         "name": "Überschreibe Log Datei 1x/Woche",
         "info": "",
         "x": 1820,
@@ -586,10 +612,10 @@
         "wires": []
     },
     {
-        "id": "9ff941bd037f63ee",
+        "id": "4c42e97154f1e0b5",
         "type": "file",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
         "name": "logFileMsg_Nulleinspeisung.csv",
         "filename": "/data/share/logFileMsg_Nulleinspeisung.csv",
         "filenameType": "str",
@@ -604,10 +630,10 @@
         ]
     },
     {
-        "id": "aa395729d6395a93",
+        "id": "ea4a6b688299ae77",
         "type": "csv",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
         "name": "",
         "sep": ";",
         "hdrin": true,
@@ -623,15 +649,15 @@
         "y": 1360,
         "wires": [
             [
-                "2f2b36091f58c9f7"
+                "5bafcd4c7dabdde3"
             ]
         ]
     },
     {
-        "id": "2f2b36091f58c9f7",
+        "id": "5bafcd4c7dabdde3",
         "type": "file",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
         "name": "logFileMsg_Nulleinspeisung.csv",
         "filename": "/data/share/logFileMsg_Nulleinspeisung.csv",
         "filenameType": "str",
@@ -646,27 +672,27 @@
         ]
     },
     {
-        "id": "6f5efb4c79c63240",
+        "id": "301dc238ee74b443",
         "type": "link in",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
         "name": "link in 23",
         "links": [
-            "d0526407edeba38b"
+            "41e3d54423f06352"
         ],
         "x": 1645,
         "y": 1360,
         "wires": [
             [
-                "aa395729d6395a93"
+                "ea4a6b688299ae77"
             ]
         ]
     },
     {
-        "id": "370a81d4e6bb9016",
+        "id": "1a038d782e5c160a",
         "type": "inject",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "manuel test to charge",
         "props": [
             {
@@ -687,10 +713,10 @@
         ]
     },
     {
-        "id": "a535bc57c7cd255a",
+        "id": "f9a3ee273a364926",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "97362f3397ef644a",
+        "z": "85c036d935247d38",
+        "g": "082c0a2899dcf071",
         "name": "Battery Status",
         "active": true,
         "tosidebar": true,
@@ -705,10 +731,10 @@
         "wires": []
     },
     {
-        "id": "batch_fetch_all_sensors",
+        "id": "866f8ab99b081b03",
         "type": "ha-get-entities",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Batch Get All Sensor Values",
         "server": "bf41ee605731eea3",
         "version": 1,
@@ -726,19 +752,19 @@
         "outputLocationType": "msg",
         "outputLocation": "payload",
         "outputResultsCount": 0,
-        "x": 800,
+        "x": 780,
         "y": 580,
         "wires": [
             [
-                "9a65058b9117a00b"
+                "297d34f127067b86"
             ]
         ]
     },
     {
-        "id": "c5333ded72b9a1d2",
+        "id": "9cb872f8e6b8cabf",
         "type": "trigger-state",
-        "z": "f6f2187d.f17ca8",
-        "g": "26d3c5306d0fef5a",
+        "z": "85c036d935247d38",
+        "g": "920f7c101c64ab64",
         "name": "Feed-In Trigger",
         "server": "bf41ee605731eea3",
         "version": 5,
@@ -762,16 +788,16 @@
         "y": 180,
         "wires": [
             [
-                "eed002ece4224a0a"
+                "d8a1b8092fff858d"
             ],
             []
         ]
     },
     {
-        "id": "9a65058b9117a00b",
+        "id": "297d34f127067b86",
         "type": "change",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "convert to map",
         "rules": [
             {
@@ -787,19 +813,19 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 1040,
+        "x": 1020,
         "y": 580,
         "wires": [
             [
-                "f7e6d5c4b3a29110"
+                "0314b00055719434"
             ]
         ]
     },
     {
-        "id": "4374e190ff23b882",
+        "id": "8b6917b8760b7d01",
         "type": "comment",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Adjusting data structure",
         "info": "This change node translates the \ncollected Home Assistant entities from\na linear array to a direct accessible\nlookup table (map).\n\nAccess the data by:\n`msg.payload[\"sensor.power\"]`\nwhere \"senor.power\" is the unique `entity_id`",
         "x": 1040,
@@ -807,10 +833,10 @@
         "wires": []
     },
     {
-        "id": "b6f8856e80eaefd8",
+        "id": "01c28e62e8e71d26",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Gentle Controller Day Handling Error & Filter",
         "func": "function hasMessageValue(root, path) {\n    let current = root;\n    for (const segment of path.split(\".\")) {\n        if (\n            current === null ||\n            current === undefined ||\n            !Object.prototype.hasOwnProperty.call(current, segment)\n        ) {\n            return false;\n        }\n        current = current[segment];\n    }\n    return current !== undefined;\n}\n\nfunction abortForMissing(requiredPaths) {\n    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));\n    if (missing.length === 0) {\n        return false;\n    }\n\n    const errorMessage = `Missing mandatory message fields: ${missing.join(\", \")}`;\n    node.status({ fill: \"red\", shape: \"ring\", text: `Missing data: ${missing.join(\", \")}` });\n    node.error(errorMessage, msg);\n    return true;\n}\n\nif (\n    abortForMissing([\n        \"data.grid.power\",\n        \"data.battery.chargeMaxPower\",\n        \"data.battery.chargePower\",\n        \"data.battery.soc\",\n        \"data.battery.minSoc\",\n        \"data.battery.chargeSetpoint\",\n        \"data.forecast.solarRemainingWh\",\n        \"data.solar.totalPower\",\n        \"derived.demand.defensiveTarget\",\n        \"derived.demand.trend\",\n        \"derived.demand.trendChanges\",\n        \"derived.solar.livePower\",\n        \"derived.solar.averagePower\",\n        \"derived.solar.trend\",\n        \"derived.solar.trendChanges\",\n        \"meta.stability.mode\"\n    ])\n) {\n    return null;\n}\n\n// 1. DATA RETRIEVAL (Using the normalized input message)\nconst data = msg.data;\nconst derived = msg.derived;\nconst action = msg.action || {};\nconst gridPower = data.grid.power;\nconst maxChargePower = data.battery.chargeMaxPower;\nconst batteryInflow = data.battery.chargePower;\nconst calculatedDemand = derived.demand.defensiveTarget;\nconst demandTrend = derived.demand.trend;\nconst demandTrendChanges = derived.demand.trendChanges;\nconst liveSolarPower = derived.solar.livePower;\nconst stableSolarPower = derived.solar.averagePower;\nconst solarTrend = derived.solar.trend;\nconst solarTrendChanges = derived.solar.trendChanges;\nconst stability = msg.meta.stability;\nconst stabilityMode = stability.mode;\nconst isHappyPath = stabilityMode === \"stable_stable\";\nconst solarLiveBlend = 0.35; // Pull part of the live solar into the stable value on cloudy days\nconst effectiveSolarPower = Math.max(\n    stableSolarPower,\n    liveSolarPower * solarLiveBlend + stableSolarPower * (1 - solarLiveBlend)\n);\nconst soc = data.battery.soc;\nconst minSoc = data.battery.minSoc;\nconst currentSetInflow = data.battery.chargeSetpoint;\nconst totalSolarRemaining = data.forecast.solarRemainingWh;\nconst totalProduced = data.solar.totalPower;\n\n// 2. CONFIGURATION (Based on safety buffer strategy)\n// this addresses the \"Moving Target\" problem with huge latencies of smart meter and battery chargine changes:\nconst maxInverterPower = 1200; // the Inverter limit\nconst minSustain = 50; // Keep charging circuit active\nconst exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly\nconst exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting\nconst happyPathDeadband = 15; // Ignore tiny setpoint changes during calm periods\nconst happyPathRampUpAlpha = 0.35; // Raise charging gently on the happy path\nconst happyPathRampDownAlpha = 0.15; // Drop charging even more gently on the happy path\nconst forecastHoldThresholdWh = 50; // Only keep charging warm if more solar is still expected\nconst warmHoldSolarFraction = 0.5; // Hold at half of the current solar power to avoid charge on/off cycling\nconst exportMemoryCap = 120; // Keep zero-export bias alive for several delayed cycles\nconst exportMemoryDecayPerCycle = 20; // Roughly 1-2 minutes until the memory fades out\nconst maxDynamicImportBuffer = 150; // Never aim for more than this import cushion\nconst sustainedDeficitThreshold = -40; // Require a real deficit before we release charge quickly\nconst releaseCyclesRequired = 3; // Several cycles without export before reducing aggressively\nconst sustainedDeficitCyclesRequired = 3; // Several cycles of deficit before reducing aggressively\nconst solarRampBoostFactor = 0.35; // Pre-charge when solar rises faster than the stable baseline\nconst solarTrendBoostFactor = 0.4; // Reinforce pre-charge when the 5-minute trend is rising\nconst demandTrendPenaltyFactor = 0.25; // Rising demand reduces predicted surplus\nconst demandTrendPenaltyCap = 30; // Keep trend correction bounded\nconst softReductionFloorFraction = 0.75; // Lower charge only gradually when evidence is weak\nconst solarTrendChangeBufferStep = 12; // Add confidence buffer when solar direction changes often\nconst demandTrendChangeBufferStep = 8; // Add confidence buffer when demand direction changes often\nconst maxTrendChangeBufferBoost = 40; // Keep trend-change contribution bounded\nconst solarTrendChangeRampStep = 8; // Extra pre-charge for chaotic solar ramps\nconst maxTrendChangeRampBoost = 30; // Bound extra ramp boost from trend changes\nconst unstableLowSolarThreshold = 100; // Objective 4: explicitly keep at least half of low unstable solar\nconst unstableLowSolarChargeFraction = 0.5; // Minimum charge share of generated solar in low unstable conditions\n\n// calculated Demand is the brutto demand of power, solar power the generated and usable power.\n// default expects that there is more solar power than demand,\n// e.g. 1000W (solar) - 300W (demand) + 30W buffer = 730W to charge\n//      300W (solar) - 350W (demand) + 30W buffer = -20W hardly necessary to charge\n//      200W (solar) - 200W (demand) + 30W buffer = 30W to charge\n//        0W (solar) - 200W (demand) + 30W buffer = -170W do not charge\n//        1W (solar) - 201W (demand) + 30W buffer = -170W stop charging\n//  --- SAFETY RULES & CLAMPING\nlet clampReason = \"None\";\nlet ruleApplied = \"None\";\nconst isExporting = gridPower < -exportTolerance;\nconst lastCommand = context.get(\"lastCommand\") || 0;\nconst isChargingActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 5;\nconst hasMeaningfulSolarForecast = totalSolarRemaining > forecastHoldThresholdWh;\nlet exportMemoryBias = context.get(\"exportMemoryBias\") || 0;\nif (isExporting) {\n    exportMemoryBias = Math.min(\n        exportMemoryCap,\n        Math.max(exportMemoryBias * 0.7, Math.abs(gridPower) * exportBoostFactor + 40)\n    );\n} else {\n    exportMemoryBias = Math.max(0, exportMemoryBias - exportMemoryDecayPerCycle);\n}\n\nconst baseImportBuffer = isHappyPath\n    ? 30\n    : stabilityMode === \"solar_unstable\"\n      ? 80\n      : stabilityMode === \"demand_unstable\"\n        ? 50\n        : 70;\nconst solarTrendChangeBufferBoost = Math.min(\n    maxTrendChangeBufferBoost,\n    solarTrendChanges * solarTrendChangeBufferStep\n);\nconst demandTrendChangeBufferBoost = Math.min(\n    maxTrendChangeBufferBoost,\n    demandTrendChanges * demandTrendChangeBufferStep\n);\nconst positiveDemandTrendPenalty = Math.min(\n    demandTrendPenaltyCap,\n    Math.round(Math.max(0, demandTrend) * demandTrendPenaltyFactor)\n);\nconst solarRamp = Math.max(0, liveSolarPower - stableSolarPower);\nconst solarRampBoost = Math.min(\n    120 + maxTrendChangeRampBoost,\n    Math.round(\n        solarRamp * solarRampBoostFactor +\n            Math.max(0, solarTrend) * solarTrendBoostFactor +\n            Math.min(maxTrendChangeRampBoost, solarTrendChanges * solarTrendChangeRampStep)\n    )\n);\nconst dynamicImportBuffer = Math.min(\n    maxDynamicImportBuffer,\n    Math.round(\n        baseImportBuffer +\n            exportMemoryBias +\n            positiveDemandTrendPenalty +\n            solarTrendChangeBufferBoost +\n            demandTrendChangeBufferBoost\n    )\n);\nconst predictiveDemand = calculatedDemand + positiveDemandTrendPenalty;\nconst predictiveSolarPower = effectiveSolarPower + solarRampBoost;\nconst theoreticalSurplus = effectiveSolarPower - calculatedDemand;\nconst predictiveSurplus = predictiveSolarPower - predictiveDemand;\nlet noExportCycles = context.get(\"noExportCycles\") || 0;\nnoExportCycles = isExporting ? 0 : Math.min(12, noExportCycles + 1);\nlet deficitCycles = context.get(\"deficitCycles\") || 0;\ndeficitCycles = predictiveSurplus < sustainedDeficitThreshold ? Math.min(12, deficitCycles + 1) : 0;\n\nfunction appendRule(baseRule, suffix) {\n    if (!baseRule || baseRule === \"None\") {\n        return suffix;\n    }\n\n    return baseRule.includes(suffix) ? baseRule : `${baseRule} + ${suffix}`;\n}\n\nfunction applyForecastWarmHold(nextTargetCharge, nextRuleApplied) {\n    if (!isChargingActive || !hasMeaningfulSolarForecast || isExporting || totalProduced <= 0) {\n        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };\n    }\n\n    const warmHoldPower = Math.max(minSustain, Math.round(totalProduced * warmHoldSolarFraction));\n    if (nextTargetCharge >= warmHoldPower) {\n        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };\n    }\n\n    return {\n        targetCharge: warmHoldPower,\n        ruleApplied: appendRule(\n            nextTargetCharge <= 0 ? \"None\" : nextRuleApplied,\n            \"Forecast Warm Hold\"\n        )\n    };\n}\n\nfunction applyUnstableLowSolarMinimum(nextTargetCharge, nextRuleApplied) {\n    const isSolarUnstable =\n        stability.solar === \"unstable\" ||\n        stabilityMode === \"solar_unstable\" ||\n        stabilityMode === \"unstable_unstable\";\n\n    if (!isSolarUnstable || totalProduced <= 0 || totalProduced >= unstableLowSolarThreshold) {\n        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };\n    }\n\n    const unstableLowSolarMinimum = Math.round(totalProduced * unstableLowSolarChargeFraction);\n    if (nextTargetCharge >= unstableLowSolarMinimum) {\n        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };\n    }\n\n    return {\n        targetCharge: unstableLowSolarMinimum,\n        ruleApplied: appendRule(nextRuleApplied, \"Unstable Low Solar Minimum\"),\n        isActive: true\n    };\n}\n\nfunction applyReductionGuard(nextTargetCharge, nextRuleApplied) {\n    if (nextTargetCharge >= lastCommand || isExporting || lastCommand <= 0) {\n        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };\n    }\n\n    const dynamicReleaseCyclesRequired =\n        releaseCyclesRequired + Math.min(2, Math.max(solarTrendChanges, demandTrendChanges));\n    const dynamicDeficitCyclesRequired =\n        sustainedDeficitCyclesRequired + Math.min(2, demandTrendChanges);\n    const enoughReleaseHistory = noExportCycles >= dynamicReleaseCyclesRequired;\n    const sustainedDeficit = deficitCycles >= dynamicDeficitCyclesRequired;\n\n    if (!enoughReleaseHistory && !sustainedDeficit) {\n        return {\n            targetCharge: Math.max(nextTargetCharge, Math.round(lastCommand)),\n            ruleApplied: appendRule(nextRuleApplied, \"Reduction Hold\"),\n            isActive: true\n        };\n    }\n\n    const dynamicSoftReductionFloorFraction = Math.min(\n        0.9,\n        softReductionFloorFraction + Math.min(0.1, solarTrendChanges * 0.03)\n    );\n    const softReductionFloor = Math.round(lastCommand * dynamicSoftReductionFloorFraction);\n    if (!sustainedDeficit && nextTargetCharge < softReductionFloor) {\n        return {\n            targetCharge: softReductionFloor,\n            ruleApplied: appendRule(nextRuleApplied, \"Slow Reduction\"),\n            isActive: true\n        };\n    }\n\n    return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };\n}\n\n// Specification:\n// Use the calm 5-minute surplus when both solar and demand are stable,\n// keep battery changes gentle, and only react quickly when export appears.\nfunction calculateHappyPathCharge() {\n    let nextTargetCharge = Math.max(0, predictiveSurplus + dynamicImportBuffer);\n    let nextRuleApplied = solarRampBoost > 0 ? \"Happy Path + Solar Ramp\" : \"Happy Path\";\n\n    if (isExporting) {\n        const exportIntensity = Math.abs(gridPower);\n        const exportBoost = Math.round(exportIntensity * Math.max(1, exportBoostFactor * 0.7));\n        nextTargetCharge = Math.max(nextTargetCharge, currentSetInflow + exportBoost);\n        nextRuleApplied = \"Anti-Export\";\n    } else if (predictiveSurplus <= 0) {\n        nextTargetCharge = 0;\n        nextRuleApplied = \"Happy Path Idle\";\n    }\n\n    return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };\n}\n\n// Specification:\n// Use the more defensive default controller for unstable situations,\n// with stronger grid-anchored anti-export correction.\nfunction calculateDefaultCharge() {\n    let nextTargetCharge = Math.max(0, predictiveSurplus + dynamicImportBuffer);\n    let nextRuleApplied = solarRampBoost > 0 ? \"Predictive + Solar Ramp\" : \"Predictive\";\n\n    if (isExporting) {\n        const exportIntensity = Math.abs(gridPower);\n        const exportBoost = Math.round(exportIntensity * exportBoostFactor);\n        nextTargetCharge = Math.max(nextTargetCharge, currentSetInflow + exportBoost);\n        nextRuleApplied = \"Anti-Export\";\n    }\n\n    return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };\n}\n\n// 3. THE CALCULATION (Grid-Anchor)\nconst calculation = isHappyPath ? calculateHappyPathCharge() : calculateDefaultCharge();\nlet targetCharge = calculation.targetCharge;\nruleApplied = calculation.ruleApplied;\nconst unstableLowSolarAdjustment = applyUnstableLowSolarMinimum(targetCharge, ruleApplied);\ntargetCharge = unstableLowSolarAdjustment.targetCharge;\nruleApplied = unstableLowSolarAdjustment.ruleApplied;\nconst unstableLowSolarActive = unstableLowSolarAdjustment.isActive;\nconst warmHoldAdjustment = applyForecastWarmHold(targetCharge, ruleApplied);\ntargetCharge = warmHoldAdjustment.targetCharge;\nruleApplied = warmHoldAdjustment.ruleApplied;\nconst reductionGuard = applyReductionGuard(targetCharge, ruleApplied);\ntargetCharge = reductionGuard.targetCharge;\nruleApplied = reductionGuard.ruleApplied;\nconst reductionGuardActive = reductionGuard.isActive;\n\n// 4. SANITY CHECKS & SUSTAIN\n// If solar production is > 150W, we keep the charging circuit 'warm' at 50W,\n// even if the house is currently importing from the grid.\nconst productionThreshold = 150; // Adjust this based on your 'sunny enough' preference\n\nif (totalProduced > productionThreshold && targetCharge < minSustain) {\n    targetCharge = minSustain;\n    ruleApplied = \"Sustain (Production)\";\n    // If we are sustained at 50W, but we are still exporting, nudge the charge\n    // above sustain to swallow the leak.\n    if (isExporting) {\n        targetCharge = Math.max(targetCharge, minSustain + Math.abs(gridPower));\n        ruleApplied = \"Sustain + Anti-Leak\";\n    }\n}\n\n// Keep the Solar Ceiling safety\nconst solarCeiling = theoreticalSurplus + 100;\nif (targetCharge > solarCeiling && !isExporting) {\n    // But we don't want to charge from the grid!\n    // If targetCharge is Sustain(50) but theoreticalSurplus is -58,\n    // we need to decide if we 'waste' 50W of grid power to keep the battery warm.\n    // Let's allow it ONLY if the deficit isn't massive.\n    if (theoreticalSurplus < -200) {\n        targetCharge = 0; // House is too hungry, give up on sustain.\n    }\n}\n\n// Minimum Sustain: If sun is out, stay at 50W even if demand is high\nif (theoreticalSurplus > 10 && targetCharge < minSustain) {\n    targetCharge = minSustain;\n}\n\n// Hard floor\nif (targetCharge < 0) targetCharge = 0;\n\n// 5. DYNAMIC SMOOTHING (Slew Rate)\n// Instead of a fixed Alpha, we use a \"Fast-Up, Slow-Down\" approach.\nlet finalAlpha;\nif (isExporting) {\n    // CRITICAL: If we are exporting, we jump to the target IMMEDIATELY\n    finalAlpha = 1.0;\n} else if (reductionGuardActive) {\n    finalAlpha = 0.1;\n} else if (isHappyPath && targetCharge > lastCommand) {\n    finalAlpha = happyPathRampUpAlpha;\n} else if (isHappyPath) {\n    finalAlpha = happyPathRampDownAlpha;\n} else if (targetCharge > lastCommand) {\n    // If we are increasing charge (but not leaking), move fast\n    finalAlpha = 0.9;\n} else {\n    // If we are decreasing charge, move slowly to stay \"warm\"\n    finalAlpha = 0.2;\n}\nlet smoothedCommand = targetCharge * finalAlpha + lastCommand * (1 - finalAlpha);\n\n// Rule: Minimum SoC Recovery\nif (soc <= minSoc && totalProduced >= 150) {\n    const recoveryCharge = totalProduced / 2;\n    if (smoothedCommand < recoveryCharge) {\n        smoothedCommand = recoveryCharge;\n        ruleApplied = \"SoC Recovery\";\n    }\n}\n\n// Clamp to Hardware Limits\nif (smoothedCommand > maxInverterPower) {\n    smoothedCommand = maxInverterPower;\n    clampReason = \"Inverter Max\";\n}\nif (smoothedCommand > maxChargePower) {\n    smoothedCommand = maxChargePower;\n    clampReason = \"Battery Max\";\n}\n// Rule: Hard Floor\nif (smoothedCommand < 0) {\n    smoothedCommand = 0;\n    ruleApplied = \"Floor (0W)\";\n}\n\n// 7. CYCLE GUARD (Deadband)\n// If we are stable and not exporting, don't update if change is tiny\nconst delta = Math.abs(smoothedCommand - lastCommand);\nif (delta < (isHappyPath ? happyPathDeadband : 5) && gridPower >= 0 && batteryInflow === 0) {\n    node.status({ fill: \"green\", shape: \"ring\", text: `Stable @ ${Math.round(smoothedCommand)}W` });\n    return null;\n}\n\n// 8. OUTPUTS & PERSISTENCE\nconst roundedCommand = Math.round(smoothedCommand);\n\ncontext.set(\"exportMemoryBias\", exportMemoryBias);\ncontext.set(\"noExportCycles\", noExportCycles);\ncontext.set(\"deficitCycles\", deficitCycles);\ncontext.set(\"lastCommand\", smoothedCommand);\n\nmsg.derived = derived;\nmsg.derived.solar = msg.derived.solar || {};\nmsg.derived.solar.effectivePower = Math.round(effectiveSolarPower);\nmsg.derived.energy = msg.derived.energy || {};\nmsg.derived.energy.theoreticalSurplus = Math.round(theoreticalSurplus);\nmsg.derived.energy.predictiveSurplus = Math.round(predictiveSurplus);\n\nmsg.action = action;\nmsg.action.charge = {\n    targetPower: Math.round(targetCharge),\n    commandPower: roundedCommand,\n    ruleApplied: ruleApplied,\n    clampReason: clampReason\n};\n\nconst insights = {\n    payload: {\n        timestamp: new Date().toISOString(),\n        efficiency: { gridExport: gridPower < 0 ? Math.abs(gridPower) : 0, isLeaking: isExporting },\n        calculation: {\n            theoreticalSurplus: Math.round(theoreticalSurplus),\n            predictiveSurplus: Math.round(predictiveSurplus),\n            targetCharge: Math.round(targetCharge),\n            finalCommand: roundedCommand\n        },\n        constraints: {\n            clamp: clampReason,\n            rule: ruleApplied,\n            delta: Math.round(delta),\n            mode: stabilityMode\n        },\n        sensors: {\n            solarLive: liveSolarPower,\n            solarStable: stableSolarPower,\n            solarEffective: Math.round(effectiveSolarPower),\n            solarPredictive: Math.round(predictiveSolarPower),\n            demand: calculatedDemand,\n            demandPredictive: Math.round(predictiveDemand),\n            grid: gridPower,\n            soc: soc\n        }\n    }\n};\n\nconst telemetry = {\n    payload: {\n        time: new Date().toISOString(),\n        source: \"controller_day_handling\",\n        mode: stabilityMode,\n        ruleApplied: ruleApplied,\n        clampReason: clampReason,\n        gridPower: Math.round(gridPower),\n        batteryInflow: Math.round(batteryInflow),\n        currentSetInflow: Math.round(currentSetInflow),\n        maxChargePower: Math.round(maxChargePower),\n        calculatedDemand: Math.round(calculatedDemand),\n        currentDemand: Math.round(msg.derived?.demand?.current ?? calculatedDemand),\n        medianDemand: Math.round(msg.derived?.demand?.median ?? calculatedDemand),\n        liveSolarPower: Math.round(liveSolarPower),\n        stableSolarPower: Math.round(stableSolarPower),\n        effectiveSolarPower: Math.round(effectiveSolarPower),\n        predictiveSolarPower: Math.round(predictiveSolarPower),\n        theoreticalSurplus: Math.round(theoreticalSurplus),\n        predictiveSurplus: Math.round(predictiveSurplus),\n        targetCharge: Math.round(targetCharge),\n        finalCommand: roundedCommand,\n        delta: Math.round(delta),\n        soc: Math.round(soc),\n        minSoc: Math.round(minSoc),\n        totalProduced: Math.round(totalProduced),\n        totalSolarRemaining: Math.round(totalSolarRemaining),\n        unstableLowSolarActive: unstableLowSolarActive,\n        forecastWarmHoldActive: isChargingActive && hasMeaningfulSolarForecast && !isExporting,\n        reductionGuardActive: reductionGuardActive,\n        dynamicImportBuffer: Math.round(dynamicImportBuffer),\n        baseImportBuffer: Math.round(baseImportBuffer),\n        exportMemoryBias: Math.round(exportMemoryBias),\n        noExportCycles: noExportCycles,\n        deficitCycles: deficitCycles,\n        demandTrend: Math.round(demandTrend),\n        demandTrendChanges: demandTrendChanges,\n        solarTrend: Math.round(solarTrend),\n        solarTrendChanges: solarTrendChanges,\n        solarTrendChangeBufferBoost: Math.round(solarTrendChangeBufferBoost),\n        demandTrendChangeBufferBoost: Math.round(demandTrendChangeBufferBoost),\n        solarRampBoost: Math.round(solarRampBoost),\n        isExporting: isExporting,\n        historySamples: msg.meta?.history?.samples ?? null,\n        triggerIntervalSeconds: msg.meta?.history?.triggerIntervalSeconds ?? null,\n        demandStdDev: msg.derived?.demand?.stdDev ?? null,\n        solarStdDev: msg.derived?.solar?.stdDev ?? null\n    },\n    insights: insights.payload\n};\n\n// Update node status to show the most important \"Why\"\nnode.status({\n    fill: isExporting ? \"red\" : \"green\",\n    shape: \"dot\",\n    text: `Cmd: ${roundedCommand}W | ${stabilityMode} | Export: ${Math.round(gridPower)}W`\n});\n\nreturn [msg, telemetry];",
         "outputs": 2,
@@ -823,11 +849,11 @@
         "y": 480,
         "wires": [
             [
-                "843840f794e450d8"
+                "6fa7db7a576e6454"
             ],
             [
-                "3045b532e79bbe4a",
-                "f1c0a1b2c3d4e501"
+                "01c36d203d7d0d98",
+                "68e76bb7b33a0541"
             ]
         ],
         "outputLabels": [
@@ -836,10 +862,10 @@
         ]
     },
     {
-        "id": "56864570f77a0ebc",
+        "id": "d2cc6a95e01438a2",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Decision: Day Night Charge or Discharge",
         "func": "function hasMessageValue(root, path) {\n    let current = root;\n    for (const segment of path.split(\".\")) {\n        if (\n            current === null ||\n            current === undefined ||\n            !Object.prototype.hasOwnProperty.call(current, segment)\n        ) {\n            return false;\n        }\n        current = current[segment];\n    }\n    return current !== undefined;\n}\n\nfunction abortForMissing(requiredPaths) {\n    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));\n    if (missing.length === 0) {\n        return false;\n    }\n\n    const errorMessage = `Missing mandatory message fields: ${missing.join(\", \")}`;\n    node.status({ fill: \"red\", shape: \"ring\", text: `Missing data: ${missing.join(\", \")}` });\n    node.error(errorMessage, msg);\n    return true;\n}\n\nif (\n    abortForMissing([\n        \"data.sun.aboveHorizon\",\n        \"data.battery.soc\",\n        \"data.battery.minSoc\",\n        \"data.forecast.solarRemainingWh\",\n        \"derived.solar.livePower\"\n    ])\n) {\n    return null;\n}\n\nconst data = msg.data;\nconst derived = msg.derived;\n\n// 1. DYNAMIC SUN LOGIC\n// Sun state: 'above_horizon' or 'below_horizon'\nconst sunAbove = data.sun.aboveHorizon;\n\n// 2. Soc of Battery in %\nconst soc = data.battery.soc;\nconst minimalCharge = data.battery.minSoc;\nconst dischargeRestartBufferPercent = 1;\nconst dischargeStopThreshold = minimalCharge + dischargeRestartBufferPercent;\n\n// 2. FORECAST LOGIC (Total Energy Remaining)\n// Wh remaining today\nconst totalSolarRemaining = data.forecast.solarRemainingWh;\n\n// 3. THE DECISION (The \"Intelligent\" Branch)\nlet toCharge = null;\nlet toDischarge = null;\n\n/**\n * DECISION LOGIC:\n * Switch to NIGHT/DISCHARGE mode only if:\n * - Sun is down OR the total remaining forecast is negligible (< 50Wh)\n * - AND we aren't in a \"Low Battery\" state where we should strictly wait for sun.\n */\nconst isSolarDayOver = !sunAbove || totalSolarRemaining < 50;\nlet nightLowSocBlock = context.get(\"nightLowSocBlock\") || false;\nif (!isSolarDayOver) {\n    nightLowSocBlock = false;\n}\nif (isSolarDayOver && soc <= dischargeStopThreshold) {\n    nightLowSocBlock = true;\n}\n\nconst batteryHasReserve = soc > dischargeStopThreshold && !nightLowSocBlock;\nmsg.action = msg.action || {};\nmsg.action.battery = msg.action.battery || {};\nmsg.action.battery.discharge = msg.action.battery.discharge || {};\nmsg.action.decision = {\n    isSolarDayOver,\n    batteryHasReserve,\n    nightLowSocBlock,\n    dischargeStopThreshold\n};\nconst solarPower = derived.solar.livePower;\ncontext.set(\"nightLowSocBlock\", nightLowSocBlock);\n\nif (isSolarDayOver && batteryHasReserve) {\n    toDischarge = msg;\n    node.status({\n        fill: \"blue\",\n        shape: \"dot\",\n        text: `Discharge - Night, remaining solar ${totalSolarRemaining}Wh, reserve above ${dischargeStopThreshold}%`\n    });\n} else if (isSolarDayOver && nightLowSocBlock) {\n    msg.action.battery.discharge.commandPower = 0;\n    msg.action.battery.discharge.stopRequested = true;\n    msg.action.battery.discharge.blockedByLowSoc = true;\n    toDischarge = msg;\n    node.status({\n        fill: \"red\",\n        shape: \"ring\",\n        text: `Night discharge blocked below ${dischargeStopThreshold}% SoC`\n    });\n} else if (solarPower > 0) {\n    toCharge = msg;\n    node.status({\n        fill: \"yellow\",\n        shape: \"dot\",\n        text: `Charge - Day/Solar: remaining solar ${totalSolarRemaining}Wh`\n    });\n} else {\n    node.status({\n        fill: \"red\",\n        shape: \"dot\",\n        text: `Empty Battery, no solar power: ${solarPower}W, solar forecast ${totalSolarRemaining}Wh, battery soc: ${soc}`\n    });\n}\n\nreturn [toCharge, toDischarge];",
         "outputs": 2,
@@ -852,18 +878,18 @@
         "y": 580,
         "wires": [
             [
-                "b6f8856e80eaefd8"
+                "01c28e62e8e71d26"
             ],
             [
-                "0daa574874bc427e"
+                "742044c9accd94c6"
             ]
         ]
     },
     {
-        "id": "fd116e9ee3ed9cc1",
+        "id": "4a3323630f92ec23",
         "type": "comment",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Charging Branch",
         "info": "# Actuator Branches\n\nBranch A (Day/Charging): \n\nLogic specifically tuned for the SolarFlow (e.g., setting the output_limit).",
         "x": 2160,
@@ -871,10 +897,10 @@
         "wires": []
     },
     {
-        "id": "03714ec373d22edb",
+        "id": "91e8fbbd0a5f1a09",
         "type": "comment",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Discharging Branch",
         "info": "# Actuator Branches\n\nBranch B (Night/Discharging):\n\nLogic specifically tuned for the Battery (e.g., setting the AC limit to cover base load).",
         "x": 2150,
@@ -882,10 +908,10 @@
         "wires": []
     },
     {
-        "id": "843840f794e450d8",
+        "id": "6fa7db7a576e6454",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Adjust Battery Charging",
         "func": "function hasMessageValue(root, path) {\n    let current = root;\n    for (const segment of path.split(\".\")) {\n        if (\n            current === null ||\n            current === undefined ||\n            !Object.prototype.hasOwnProperty.call(current, segment)\n        ) {\n            return false;\n        }\n        current = current[segment];\n    }\n    return current !== undefined;\n}\n\nfunction abortForMissing(requiredPaths) {\n    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));\n    if (missing.length === 0) {\n        return false;\n    }\n\n    const errorMessage = `Missing mandatory message fields: ${missing.join(\", \")}`;\n    node.status({ fill: \"red\", shape: \"ring\", text: `Missing data: ${missing.join(\", \")}` });\n    node.error(errorMessage, msg);\n    return true;\n}\n\nif (\n    abortForMissing([\n        \"data.battery.soc\",\n        \"data.battery.socLimit\",\n        \"data.battery.chargePower\",\n        \"data.battery.chargeSetpoint\",\n        \"data.battery.chargeHardwareMaxPower\",\n        \"data.grid.power\",\n        \"action.charge.commandPower\"\n    ])\n) {\n    return null;\n}\n\nconst data = msg.data;\nconst action = msg.action;\n\n// 1. DATA EXTRACTION\nconst soc = data.battery.soc;\nconst maxSoc = data.battery.socLimit;\nconst currentInflow = data.battery.chargePower;\nconst currentSetInflow = data.battery.chargeSetpoint;\nconst maxChargeHardware = data.battery.chargeHardwareMaxPower;\nconst gridPower = data.grid.power;\n\n// 2. CORE CALCULATION\nlet targetCharge = Math.abs(action.charge.commandPower);\n\n// Add a safety check: If Actual and Set are miles apart (e.g. communication error),\n// fallback to a more conservative average.\n// To INCREASE charging, we subtract the negative error (e.g., 100 - (-200) = 300)\nconst gap = Math.abs(currentSetInflow - currentInflow);\nif (gap > 100) {\n    // Something is wrong (communication lag or manual override)\n    // Fallback to Actual to be safe\n}\n\n// 3. APPLY RULES & SAFETY\nlet reason = \"Adjusting normally\";\n\n// Check: Battery Full\nif (soc + 1.1 > maxSoc) {\n    targetCharge = 0;\n    reason = \"BATTERY_FULL_OVERFLOW\";\n} else if (targetCharge > maxChargeHardware) {\n    reason = \"MAX_CHARGE_OVERFLOW\";\n}\n\n// Rule: Hardware Limits\ntargetCharge = Math.max(0, Math.min(maxChargeHardware, targetCharge));\n\n// 4. LOGGING & OUTPUT\nconst logMsg = {\n    payload: {\n        time: new Date().toLocaleString(\"de-DE\"),\n        grid: Math.round(gridPower),\n        soc: soc,\n        targetCharge: Math.round(targetCharge),\n        reason: reason\n    }\n};\n\n// Only trigger the hardware if the change is significant (> 10W)\nlet hardwareCmd = null;\nif (Math.abs(targetCharge - currentSetInflow) > 10) {\n    hardwareCmd = { payload: Math.round(targetCharge) };\n} else {\n    reason = \"No change - no need to adjust\";\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${Math.round(targetCharge)}W (${reason})` });\n\nreturn [hardwareCmd, { payload: reason }, logMsg];",
         "outputs": 3,
@@ -898,13 +924,13 @@
         "y": 440,
         "wires": [
             [
-                "2b1b3c96923780ac"
+                "7f0fbde0baafb258"
             ],
             [
-                "14de311e0e4c59dd"
+                "0b7476f6756c4d97"
             ],
             [
-                "17d57030078385b5"
+                "383d94bc825d7d01"
             ]
         ],
         "outputLabels": [
@@ -914,10 +940,10 @@
         ]
     },
     {
-        "id": "e4c2c33a9ab1a82a",
+        "id": "72e478bd1e8b94ff",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "2d61c17cef688f81",
+        "z": "85c036d935247d38",
+        "g": "b7850a919322bb49",
         "name": "Load Sequencer",
         "func": "// 1. DATA FROM PREVIOUS NODES\nconst action = msg.payload;\nconst exportPower = msg.gridExport || 0; // The extra W we can't store\nconst now = Date.now();\n\n// 2. STATE PERSISTENCE (Track status of loads)\nlet loads = context.get(\"loads\") || {\n    dryer: { active: false, lastChange: 0, power: 250, entity: \"switch.dryer\" },\n    dehumidifier: { active: false, lastChange: 0, power: 150, entity: \"switch.dehumidifier\" }\n};\n\n// 3. MINIMUM RUN TIME (Safety: 15 minutes)\nconst minRunTime = 15 * 60 * 1000;\n\n// 4. LOGIC: ADDING LOADS (Turn ON)\nif (action.includes(\"OVERFLOW\")) {\n    // Try to turn on the first available load in order of priority\n    if (!loads.dehumidifier.active && exportPower > loads.dehumidifier.power + 50) {\n        loads.dehumidifier.active = true;\n        loads.dehumidifier.lastChange = now;\n        node.send({ payload: \"ON\", topic: loads.dehumidifier.entity });\n    } else if (!loads.dryer.active && exportPower > loads.dryer.power + 100) {\n        loads.dryer.active = true;\n        loads.dryer.lastChange = now;\n        node.send({ payload: \"ON\", topic: loads.dryer.entity });\n    }\n}\n\n// 5. LOGIC: REMOVING LOADS (Turn OFF)\n// If we are back to NORMAL (importing or zero), check if we need to shed load\nif (action === \"NORMAL\" || exportPower < 20) {\n    // Turn off in reverse order, but only if they've run long enough\n    if (loads.dryer.active && now - loads.dryer.lastChange > minRunTime) {\n        loads.dryer.active = false;\n        node.send({ payload: \"OFF\", topic: loads.dryer.entity });\n    } else if (loads.dehumidifier.active && now - loads.dehumidifier.lastChange > minRunTime) {\n        loads.dehumidifier.active = false;\n        node.send({ payload: \"OFF\", topic: loads.dehumidifier.entity });\n    }\n}\n\ncontext.set(\"loads\", loads);\nnode.status({\n    fill: loads.dryer.active ? \"green\" : \"grey\",\n    shape: \"dot\",\n    text: `Dryer: ${loads.dryer.active} | Dehum: ${loads.dehumidifier.active}`\n});",
         "outputs": 1,
@@ -930,16 +956,16 @@
         "y": 420,
         "wires": [
             [
-                "cee1fc73cefb58bb",
-                "8bdea7aed89f9af8"
+                "8ef14c616d251610",
+                "231bce569006ceb5"
             ]
         ]
     },
     {
-        "id": "14de311e0e4c59dd",
+        "id": "0b7476f6756c4d97",
         "type": "switch",
-        "z": "f6f2187d.f17ca8",
-        "g": "2d61c17cef688f81",
+        "z": "85c036d935247d38",
+        "g": "b7850a919322bb49",
         "name": "Action Trigger",
         "property": "payload",
         "propertyType": "msg",
@@ -967,19 +993,19 @@
         "y": 440,
         "wires": [
             [
-                "e4c2c33a9ab1a82a"
+                "72e478bd1e8b94ff"
             ],
             [
-                "e4c2c33a9ab1a82a"
+                "72e478bd1e8b94ff"
             ],
             []
         ]
     },
     {
-        "id": "479c52d0f115e025",
+        "id": "066b2465a96f4994",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "97362f3397ef644a",
+        "z": "85c036d935247d38",
+        "g": "082c0a2899dcf071",
         "name": "Set Charging Value",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -1005,15 +1031,15 @@
         "y": 200,
         "wires": [
             [
-                "a535bc57c7cd255a"
+                "f9a3ee273a364926"
             ]
         ]
     },
     {
-        "id": "47c149669603dfab",
+        "id": "9c35230d039e3e55",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "97362f3397ef644a",
+        "z": "85c036d935247d38",
+        "g": "082c0a2899dcf071",
         "name": "Set PowerMode to Charge Battery",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -1042,10 +1068,10 @@
         ]
     },
     {
-        "id": "da4b2d9c53d57bb8",
+        "id": "92ef4860465decd6",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "97362f3397ef644a",
+        "z": "85c036d935247d38",
+        "g": "082c0a2899dcf071",
         "name": "Set Output to Zero",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -1074,43 +1100,43 @@
         ]
     },
     {
-        "id": "2b1b3c96923780ac",
+        "id": "7f0fbde0baafb258",
         "type": "link out",
-        "z": "f6f2187d.f17ca8",
-        "g": "97362f3397ef644a",
+        "z": "85c036d935247d38",
+        "g": "082c0a2899dcf071",
         "name": "link out 4",
         "mode": "link",
         "links": [
-            "60a12328b3543b52"
+            "05d15ea26546ad3e"
         ],
         "x": 3055,
         "y": 240,
         "wires": []
     },
     {
-        "id": "60a12328b3543b52",
+        "id": "05d15ea26546ad3e",
         "type": "link in",
-        "z": "f6f2187d.f17ca8",
-        "g": "97362f3397ef644a",
+        "z": "85c036d935247d38",
+        "g": "082c0a2899dcf071",
         "name": "link in 3",
         "links": [
-            "2b1b3c96923780ac"
+            "7f0fbde0baafb258"
         ],
         "x": 3115,
         "y": 240,
         "wires": [
             [
-                "479c52d0f115e025",
-                "47c149669603dfab",
-                "da4b2d9c53d57bb8"
+                "066b2465a96f4994",
+                "9c35230d039e3e55",
+                "92ef4860465decd6"
             ]
         ]
     },
     {
-        "id": "cee1fc73cefb58bb",
+        "id": "8ef14c616d251610",
         "type": "link call",
-        "z": "f6f2187d.f17ca8",
-        "g": "2d61c17cef688f81",
+        "z": "85c036d935247d38",
+        "g": "b7850a919322bb49",
         "name": "Starting Dehumidifier?",
         "links": [
             "4d3e295288b719a0"
@@ -1124,10 +1150,10 @@
         ]
     },
     {
-        "id": "44b0e371ae1efb71",
+        "id": "d77667d76b9ada1f",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Adjust Battery Discharging",
         "func": "function hasMessageValue(root, path) {\n    let current = root;\n    for (const segment of path.split(\".\")) {\n        if (\n            current === null ||\n            current === undefined ||\n            !Object.prototype.hasOwnProperty.call(current, segment)\n        ) {\n            return false;\n        }\n        current = current[segment];\n    }\n    return current !== undefined;\n}\n\nfunction abortForMissing(requiredPaths) {\n    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));\n    if (missing.length === 0) {\n        return false;\n    }\n\n    const errorMessage = `Missing mandatory message fields: ${missing.join(\", \")}`;\n    node.status({ fill: \"red\", shape: \"ring\", text: `Missing data: ${missing.join(\", \")}` });\n    node.error(errorMessage, msg);\n    return true;\n}\n\nif (\n    abortForMissing([\n        \"data.battery.dischargeSetpoint\",\n        \"data.forecast.nextHourWh\",\n        \"action.battery.discharge.commandPower\"\n    ])\n) {\n    return null;\n}\n\nconst data = msg.data;\nconst action = msg.action;\n\nconst currentSetLimit = data.battery.dischargeSetpoint;\n\n// 1. CHOOSE THE TARGET\n// We want to reach the 'forcedRate' (to empty the battery),\n// OR follow the 'defensiveTarget' (5-min average) if the house is active.\nlet targetDischarge = action.battery.discharge.commandPower;\nconst nextHourWh = data.forecast.nextHourWh;\n\n// 2. HARDWARE OUTPUT\nlet hardwareCmd = null;\nif (Math.abs(targetDischarge - currentSetLimit) > 5) {\n    hardwareCmd = { payload: Math.round(targetDischarge) };\n}\n\nnode.status({\n    fill: \"blue\",\n    shape: nextHourWh > 50 ? \"ring\" : \"dot\",\n    text: `target: ${Math.round(targetDischarge)}W`\n});\n\nreturn [hardwareCmd];",
         "outputs": 3,
@@ -1140,19 +1166,19 @@
         "y": 720,
         "wires": [
             [
-                "639694e845e6cc35",
-                "a97c7cec63c69a9f",
-                "34a4e171a3ede839"
+                "6842476da0e2d59d",
+                "c0f18b89d9bfb162",
+                "bcfcfa35e1d7693b"
             ],
             [],
             []
         ]
     },
     {
-        "id": "f7e6d5c4b3a29110",
+        "id": "0314b00055719434",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Normalize Home Assistant Data",
         "func": "// Specification:\n// Encapsulate Home Assistant entity ids in one place and expose a semantic,\n// reusable internal message structure for all subsequent controller nodes.\nconst ha = msg.payload || {};\n\nfunction getEntity(entityId) {\n    return ha[entityId];\n}\n\nfunction getNumber(entityId, fallback = 0) {\n    const value = parseFloat(getEntity(entityId)?.state);\n    return Number.isFinite(value) ? value : fallback;\n}\n\nfunction getString(entityId, fallback = \"\") {\n    const value = getEntity(entityId)?.state;\n    return value !== undefined && value !== null ? String(value) : fallback;\n}\n\nfunction getAttributeNumber(entityId, attributeName, fallback = 0) {\n    const value = parseFloat(getEntity(entityId)?.attributes?.[attributeName]);\n    return Number.isFinite(value) ? value : fallback;\n}\n\nfunction getWh(entityId) {\n    const entity = getEntity(entityId);\n    if (!entity) {\n        return 0;\n    }\n\n    const value = parseFloat(entity.state) || 0;\n    const unit = entity.attributes?.unit_of_measurement;\n    return unit === \"kWh\" ? value * 1000 : value;\n}\n\nconst gridPower = getNumber(\"sensor.smartmeter_keller_sml_watt_summe\");\nconst solarPrimaryPower = getNumber(\"sensor.wechselrichter_ac_leistung\");\nconst solarSecondaryPower = getNumber(\"sensor.hoymiles600_power\");\nconst batteryChargePower = getNumber(\"sensor.solarflow_800_pro_grid_input_power\");\nconst batteryDischargePower = getNumber(\"sensor.solarflow_800_pro_output_home_power\");\n\nif (!msg.derived) {\n    msg.derived = {};\n}\nif (!msg.action) {\n    msg.action = {};\n}\nif (!msg.meta) {\n    msg.meta = {};\n}\n\nmsg.data = {\n    grid: {\n        power: gridPower\n    },\n    solar: {\n        primaryPower: solarPrimaryPower,\n        secondaryPower: solarSecondaryPower,\n        totalPower: solarPrimaryPower + solarSecondaryPower\n    },\n    battery: {\n        soc: getNumber(\"sensor.solarflow_800_pro_electric_level\"),\n        minSoc: getNumber(\"number.solarflow_800_pro_min_soc\", 15),\n        socLimit: getNumber(\"number.solarflow_800_pro_soc_set\", 100),\n        availableWh: getNumber(\"sensor.solarflow_800_pro_available_kwh\") * 1000,\n        chargePower: batteryChargePower,\n        dischargePower: batteryDischargePower,\n        chargeSetpoint: getNumber(\"number.solarflow_800_pro_input_limit\"),\n        dischargeSetpoint: getNumber(\"number.solarflow_800_pro_output_limit\"),\n        chargeMaxPower: getNumber(\"sensor.solarflow_800_pro_charge_max_limit\", 800),\n        chargeHardwareMaxPower: getAttributeNumber(\n            \"sensor.solarflow_800_pro_charge_max_limit\",\n            \"max\",\n            800\n        )\n    },\n    house: {\n        demandPower:\n            gridPower +\n            batteryDischargePower +\n            solarPrimaryPower +\n            solarSecondaryPower -\n            batteryChargePower\n    },\n    forecast: {\n        solarRemainingWh:\n            getWh(\"sensor.energy_production_today_remaining\") +\n            getWh(\"sensor.energy_production_today_remaining_2\"),\n        nextHourWh: getNumber(\"sensor.energy_next_hour\") + getNumber(\"sensor.energy_next_hour_2\")\n    },\n    sun: {\n        aboveHorizon: getString(\"sun.sun\") === \"above_horizon\",\n        nextRising: getEntity(\"sun.sun\")?.attributes?.next_rising || null\n    },\n    inverter: {\n        acMode: getString(\"select.solarflow_800_pro_ac_mode\"),\n        inverseMaxPower: getNumber(\"sensor.solarflow_800_pro_inverse_max_power\"),\n        reachable: getString(\"binary_sensor.hoymiles600_reachable\"),\n        producing: getString(\"binary_sensor.hoymiles600_producing\"),\n        opendtuStatus: getString(\"binary_sensor.opendtu_b69d10_status\")\n    }\n};\n\nmsg.meta.source = {\n    kind: \"home_assistant_map\"\n};\n\nreturn msg;",
         "outputs": 1,
@@ -1161,19 +1187,19 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1110,
-        "y": 360,
+        "x": 1270,
+        "y": 580,
         "wires": [
             [
-                "1ea042ca1244df90"
+                "2d93f991ad520364"
             ]
         ]
     },
     {
-        "id": "1ea042ca1244df90",
+        "id": "2d93f991ad520364",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Statistical Averaging of House Load and Solar",
         "func": "function hasMessageValue(root, path) {\n    let current = root;\n    for (const segment of path.split(\".\")) {\n        if (\n            current === null ||\n            current === undefined ||\n            !Object.prototype.hasOwnProperty.call(current, segment)\n        ) {\n            return false;\n        }\n        current = current[segment];\n    }\n    return current !== undefined;\n}\n\nfunction abortForMissing(requiredPaths) {\n    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));\n    if (missing.length === 0) {\n        return false;\n    }\n\n    const errorMessage = `Missing mandatory message fields: ${missing.join(\", \")}`;\n    node.status({ fill: \"red\", shape: \"ring\", text: `Missing data: ${missing.join(\", \")}` });\n    node.error(errorMessage, msg);\n    return true;\n}\n\nif (abortForMissing([\"data.house.demandPower\", \"data.solar.totalPower\"])) {\n    return null;\n}\n\n// 1. Calculate current real house demand from normalized inputs\nconst data = msg.data;\nif (!msg.meta) {\n    msg.meta = {};\n}\nif (!msg.derived) {\n    msg.derived = {};\n}\n\nconst currentDemand = data.house.demandPower;\nconst currentSolarPower = data.solar.totalPower;\n\nfunction calculateAverage(values) {\n    return values.reduce((sum, value) => sum + value, 0) / values.length;\n}\n\nfunction calculateStdDev(values, average) {\n    if (values.length <= 1) {\n        return 0;\n    }\n\n    const variance =\n        values.reduce((sum, value) => sum + Math.pow(value - average, 2), 0) / values.length;\n    return Math.sqrt(variance);\n}\n\nfunction calculateTrend(values) {\n    if (values.length < 4) {\n        return 0;\n    }\n\n    const segmentSize = Math.max(2, Math.floor(values.length / 2));\n    const earlierSegment = values.slice(0, values.length - segmentSize);\n    const recentSegment = values.slice(-segmentSize);\n\n    if (earlierSegment.length === 0 || recentSegment.length === 0) {\n        return 0;\n    }\n\n    return calculateAverage(recentSegment) - calculateAverage(earlierSegment);\n}\n\nfunction calculateLowerBound(sortedValues) {\n    const segmentSize = Math.max(1, Math.ceil(sortedValues.length / 4));\n    return calculateAverage(sortedValues.slice(0, segmentSize));\n}\n\nfunction calculateTrendDirection(trendValue, deadband) {\n    if (trendValue > deadband) {\n        return \"up\";\n    }\n    if (trendValue < -deadband) {\n        return \"down\";\n    }\n    return \"flat\";\n}\n\nfunction countTrendDirectionChanges(directions) {\n    let lastDirection = null;\n    let changes = 0;\n\n    for (const direction of directions) {\n        if (direction === \"flat\") {\n            continue;\n        }\n        if (lastDirection && direction !== lastDirection) {\n            changes += 1;\n        }\n        lastDirection = direction;\n    }\n\n    return changes;\n}\n\n// 2. Manage 5-minute history based on the configured trigger interval\nconst historyWindowSeconds = 5 * 60;\nconst learnedDemandWindowSeconds = 48 * 60 * 60;\nconst learnedDemandWindowMs = learnedDemandWindowSeconds * 1000;\nconst learnedDemandUpwardAlpha = 0.02;\nconst triggerIntervalSeconds =\n    msg.meta?.trigger?.intervalSeconds || flow.get(\"triggerIntervalSeconds\") || 20;\nconst historySamples = Math.max(15, Math.ceil(historyWindowSeconds / triggerIntervalSeconds));\n\nlet history = context.get(\"demandHistory\") || [];\nhistory.push(currentDemand);\nwhile (history.length > historySamples) history.shift();\ncontext.set(\"demandHistory\", history);\n\nlet solarHistory = context.get(\"solarHistory\") || [];\nsolarHistory.push(currentSolarPower);\nwhile (solarHistory.length > historySamples) solarHistory.shift();\ncontext.set(\"solarHistory\", solarHistory);\n\n// 3. Calculate Average\nconst averageDemand = calculateAverage(history);\nconst averageSolar = calculateAverage(solarHistory);\nconst demandStdDev = calculateStdDev(history, averageDemand);\nconst solarStdDev = calculateStdDev(solarHistory, averageSolar);\nconst demandTrend = calculateTrend(history);\nconst solarTrend = calculateTrend(solarHistory);\nconst trendWindowSeconds = 120;\nconst trendHistorySamples = Math.max(3, Math.ceil(trendWindowSeconds / triggerIntervalSeconds));\nconst demandTrendDeadband = 15;\nconst solarTrendDeadband = 25;\nconst unstableTrendChangesThreshold = 2;\n\nconst demandTrendDirection = calculateTrendDirection(demandTrend, demandTrendDeadband);\nconst solarTrendDirection = calculateTrendDirection(solarTrend, solarTrendDeadband);\n\nlet demandTrendHistory = context.get(\"demandTrendHistory\") || [];\ndemandTrendHistory.push(demandTrendDirection);\nwhile (demandTrendHistory.length > trendHistorySamples) demandTrendHistory.shift();\ncontext.set(\"demandTrendHistory\", demandTrendHistory);\n\nlet solarTrendHistory = context.get(\"solarTrendHistory\") || [];\nsolarTrendHistory.push(solarTrendDirection);\nwhile (solarTrendHistory.length > trendHistorySamples) solarTrendHistory.shift();\ncontext.set(\"solarTrendHistory\", solarTrendHistory);\n\nconst demandTrendChanges = countTrendDirectionChanges(demandTrendHistory);\nconst solarTrendChanges = countTrendDirectionChanges(solarTrendHistory);\nconst demandTrendIsChaotic = demandTrendChanges >= unstableTrendChangesThreshold;\nconst solarTrendIsChaotic = solarTrendChanges >= unstableTrendChangesThreshold;\n\nconst demandStdDevThreshold = 60;\nconst solarStdDevThreshold = 80;\nconst demandStable = demandStdDev <= demandStdDevThreshold && !demandTrendIsChaotic;\nconst solarStable = solarStdDev <= solarStdDevThreshold && !solarTrendIsChaotic;\nconst stabilityMode = solarStable\n    ? demandStable\n        ? \"stable_stable\"\n        : \"demand_unstable\"\n    : demandStable\n      ? \"solar_unstable\"\n      : \"unstable_unstable\";\n\n// 4. Calculate Median (P50)\n// We create a copy so we don't mess up the chronological history\nconst sorted = [...history].sort((a, b) => a - b);\nconst lowMiddle = Math.floor((sorted.length - 1) / 2);\nconst highMiddle = Math.ceil((sorted.length - 1) / 2);\nconst medianDemand = (sorted[lowMiddle] + sorted[highMiddle]) / 2;\nconst lowerDemandBound = calculateLowerBound(sorted);\nconst demandFloorCandidate = Math.min(currentDemand, lowerDemandBound);\nconst now = Date.now();\nlet longTermMinimumDemand = context.get(\"learnedDemandFloor\");\nlet learnedDemandFloorUpdatedAt = context.get(\"learnedDemandFloorUpdatedAt\") || 0;\n\nif (!Number.isFinite(longTermMinimumDemand) || longTermMinimumDemand <= 0) {\n    longTermMinimumDemand = demandFloorCandidate;\n    learnedDemandFloorUpdatedAt = now;\n} else if (now - learnedDemandFloorUpdatedAt > learnedDemandWindowMs) {\n    longTermMinimumDemand = demandFloorCandidate;\n    learnedDemandFloorUpdatedAt = now;\n} else if (demandFloorCandidate < longTermMinimumDemand) {\n    longTermMinimumDemand = demandFloorCandidate;\n    learnedDemandFloorUpdatedAt = now;\n} else {\n    const upwardAdjustment =\n        (demandFloorCandidate - longTermMinimumDemand) * learnedDemandUpwardAlpha;\n    longTermMinimumDemand = Math.min(\n        demandFloorCandidate,\n        longTermMinimumDemand + upwardAdjustment\n    );\n}\n\ncontext.set(\"learnedDemandFloor\", longTermMinimumDemand);\ncontext.set(\"learnedDemandFloorUpdatedAt\", learnedDemandFloorUpdatedAt);\n\n// 5. ASYMMETRIC LOGIC\n// Demand: Use the Median/Defensive approach (STAY SLOW)\n// This prevents the battery from discharging too fast when a spike is brief.\nconst defensiveTarget = Math.min(medianDemand, currentDemand);\n\n// Solar: Keep the live value for quick visibility, but also publish the\n// rolling 5-minute average so the charge controller can make steadier decisions.\nconst proactiveSolar = currentSolarPower;\n\n// 6. THE \"CONTINUOUS FLOW\" BIAS\n// If there is any solar production (>50W), we artificially lower the\n// defensive demand slightly to ensure the calculation always results\n// in a small positive \"surplus\" for the battery.\nconst flowBias = proactiveSolar > 50 ? 20 : 0;\n\nnode.status({\n    fill: \"blue\",\n    shape: \"dot\",\n    text: `Mode: ${stabilityMode} | Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W`\n});\n\nmsg.derived.demand = {\n    current: Math.round(currentDemand),\n    average: Math.round(averageDemand),\n    median: Math.round(medianDemand),\n    lowerBound: Math.round(lowerDemandBound),\n    longTermMinimum: Math.round(longTermMinimumDemand),\n    defensiveTarget: Math.round(defensiveTarget - flowBias),\n    stdDev: Math.round(demandStdDev),\n    trend: Math.round(demandTrend),\n    trendDirection: demandTrendDirection,\n    trendChanges: demandTrendChanges\n};\nmsg.derived.solar = {\n    livePower: Math.round(proactiveSolar),\n    averagePower: Math.round(averageSolar),\n    stdDev: Math.round(solarStdDev),\n    trend: Math.round(solarTrend),\n    trendDirection: solarTrendDirection,\n    trendChanges: solarTrendChanges\n};\nmsg.meta.history = {\n    windowSeconds: historyWindowSeconds,\n    triggerIntervalSeconds: triggerIntervalSeconds,\n    triggerIntervalMs: triggerIntervalSeconds * 1000,\n    samples: historySamples,\n    longTermDemandWindowSeconds: learnedDemandWindowSeconds,\n    trendWindowSeconds: trendWindowSeconds,\n    trendSamples: trendHistorySamples\n};\nmsg.meta.stability = {\n    mode: stabilityMode,\n    demand: demandStable ? \"stable\" : \"unstable\",\n    solar: solarStable ? \"stable\" : \"unstable\",\n    thresholds: {\n        demandStdDev: demandStdDevThreshold,\n        solarStdDev: solarStdDevThreshold,\n        demandTrendDeadband: demandTrendDeadband,\n        solarTrendDeadband: solarTrendDeadband,\n        unstableTrendChanges: unstableTrendChangesThreshold\n    },\n    stats: {\n        demandAverage: Math.round(averageDemand),\n        demandLowerBound: Math.round(lowerDemandBound),\n        demandLongTermMinimum: Math.round(longTermMinimumDemand),\n        demandStdDev: Math.round(demandStdDev),\n        demandTrend: Math.round(demandTrend),\n        demandTrendDirection: demandTrendDirection,\n        demandTrendChanges: demandTrendChanges,\n        solarAverage: Math.round(averageSolar),\n        solarStdDev: Math.round(solarStdDev),\n        solarTrend: Math.round(solarTrend),\n        solarTrendDirection: solarTrendDirection,\n        solarTrendChanges: solarTrendChanges\n    }\n};\nreturn msg;",
         "outputs": 1,
@@ -1186,15 +1212,15 @@
         "y": 360,
         "wires": [
             [
-                "e431f5e11e9ac07a"
+                "ded2b5c390cb6d94"
             ]
         ]
     },
     {
-        "id": "e431f5e11e9ac07a",
+        "id": "ded2b5c390cb6d94",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Battery Budget",
         "func": "function hasMessageValue(root, path) {\n    let current = root;\n    for (const segment of path.split(\".\")) {\n        if (\n            current === null ||\n            current === undefined ||\n            !Object.prototype.hasOwnProperty.call(current, segment)\n        ) {\n            return false;\n        }\n        current = current[segment];\n    }\n    return current !== undefined && current !== null;\n}\n\nfunction abortForMissing(requiredPaths) {\n    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));\n    if (missing.length === 0) {\n        return false;\n    }\n\n    const errorMessage = `Missing mandatory message fields: ${missing.join(\", \")}`;\n    node.status({ fill: \"red\", shape: \"ring\", text: `Missing data: ${missing.join(\", \")}` });\n    node.error(errorMessage, msg);\n    return true;\n}\n\nif (\n    abortForMissing([\"data.battery.availableWh\", \"data.forecast.nextHourWh\", \"data.sun.nextRising\"])\n) {\n    return null;\n}\n\nconst data = msg.data;\n\n// 1. DATA EXTRACTION\nconst availableWh = data.battery.availableWh;\n\n// 2. NEXT HOUR FORECAST (Wh expected in the next 60 mins)\nconst totalNextHourWh = data.forecast.nextHourWh;\n\n// 3. TIME CALCULATION\nconst now = new Date().getTime();\nconst sunrise = new Date(data.sun.nextRising).getTime();\n\n// 4. DYNAMIC WINDOW ADJUSTMENT\nlet hoursToUsableSolar = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));\n\n// If the Next Hour forecast is already > 50Wh, the sun is effectively \"up\"\n// for the battery logic, even if the clock says it's early.\nif (totalNextHourWh > 100) {\n    // Sun is strong! Shorten the window to 1 hour to empty the battery faster.\n    hoursToUsableSolar = 1.0;\n} else if (totalNextHourWh > 20) {\n    // Sun is starting to peek through.\n    hoursToUsableSolar = Math.min(hoursToUsableSolar, 2.0);\n}\n\n// Handle edge case: If it's 2 AM and sunrise is 6 AM, hoursToSunrise = 4.\n// If sunrise has already passed or is invalid, default to a small number to avoid division by zero.\n// Calculate hours only if we have a valid date\nlet hoursToSunrise = 0.5; // Default safety\nif (!isNaN(sunrise)) {\n    // Math.max ensures we don't get negative numbers if sunrise just happened\n    hoursToSunrise = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));\n}\n\n// 3. CALCULATION\nconst usableWh = Math.max(0, availableWh);\nconst forcedRate = Math.round(usableWh / hoursToUsableSolar);\n\n// 4. PASS IT FORWARD\nmsg.derived = msg.derived || {};\nmsg.derived.forecast = msg.derived.forecast || {};\nmsg.derived.forecast.nextHourWh = totalNextHourWh;\nmsg.derived.forecast.hoursToUsableSolar = Math.round(hoursToUsableSolar);\nmsg.derived.forecast.hoursToSunrise = hoursToSunrise.toFixed(1);\nmsg.action = msg.action || {};\nmsg.action.battery = msg.action.battery || {};\nmsg.action.battery.discharge = msg.action.battery.discharge || {};\nmsg.action.battery.discharge.forcedRate = forcedRate;\n\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Budget: forced ${forcedRate}W until sunrise` });\n\nreturn msg;",
         "outputs": 1,
@@ -1207,15 +1233,15 @@
         "y": 360,
         "wires": [
             [
-                "56864570f77a0ebc"
+                "d2cc6a95e01438a2"
             ]
         ]
     },
     {
-        "id": "639694e845e6cc35",
+        "id": "6842476da0e2d59d",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "61f92a59a8e89662",
+        "z": "85c036d935247d38",
+        "g": "c10ee6eae0230598",
         "name": "Set Discharging State",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -1241,15 +1267,15 @@
         "y": 680,
         "wires": [
             [
-                "70d8fd62990a6dfe"
+                "0d1ae717cd5d0c65"
             ]
         ]
     },
     {
-        "id": "34a4e171a3ede839",
+        "id": "bcfcfa35e1d7693b",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "61f92a59a8e89662",
+        "z": "85c036d935247d38",
+        "g": "c10ee6eae0230598",
         "name": "Set Input Limit to Zero",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -1278,10 +1304,10 @@
         ]
     },
     {
-        "id": "a97c7cec63c69a9f",
+        "id": "c0f18b89d9bfb162",
         "type": "api-call-service",
-        "z": "f6f2187d.f17ca8",
-        "g": "61f92a59a8e89662",
+        "z": "85c036d935247d38",
+        "g": "c10ee6eae0230598",
         "name": "Set AC PowerMode to Discharge Battery",
         "server": "bf41ee605731eea3",
         "version": 7,
@@ -1310,10 +1336,10 @@
         ]
     },
     {
-        "id": "70d8fd62990a6dfe",
+        "id": "0d1ae717cd5d0c65",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "61f92a59a8e89662",
+        "z": "85c036d935247d38",
+        "g": "c10ee6eae0230598",
         "name": "Battery Status",
         "active": true,
         "tosidebar": true,
@@ -1328,27 +1354,27 @@
         "wires": []
     },
     {
-        "id": "278ad0be7b0b1281",
+        "id": "6858f88f272482de",
         "type": "link in",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "link in 2",
         "links": [
-            "43543a987662b3e9"
+            "451914fc191ebd33"
         ],
         "x": 595,
         "y": 140,
         "wires": [
             [
-                "batch_fetch_all_sensors"
+                "866f8ab99b081b03"
             ]
         ]
     },
     {
-        "id": "0daa574874bc427e",
+        "id": "742044c9accd94c6",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Gentle Controller Discharge Filter",
         "func": "function hasMessageValue(root, path) {\n    let current = root;\n    for (const segment of path.split(\".\")) {\n        if (\n            current === null ||\n            current === undefined ||\n            !Object.prototype.hasOwnProperty.call(current, segment)\n        ) {\n            return false;\n        }\n        current = current[segment];\n    }\n    return current !== undefined;\n}\n\nfunction abortForMissing(requiredPaths) {\n    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));\n    if (missing.length === 0) {\n        return false;\n    }\n\n    const errorMessage = `Missing mandatory message fields: ${missing.join(\", \")}`;\n    node.status({ fill: \"red\", shape: \"ring\", text: `Missing data: ${missing.join(\", \")}` });\n    node.error(errorMessage, msg);\n    return true;\n}\n\nif (\n    abortForMissing([\n        \"data.grid.power\",\n        \"data.battery.dischargePower\",\n        \"derived.demand.defensiveTarget\",\n        \"derived.demand.lowerBound\",\n        \"derived.demand.longTermMinimum\",\n        \"derived.solar.livePower\",\n        \"action.battery.discharge.forcedRate\"\n    ])\n) {\n    return null;\n}\n\n// 1. DATA RETRIEVAL\nconst data = msg.data;\nconst derived = msg.derived;\nconst action = msg.action;\nconst gridPower = data.grid.power;\nconst currentBatteryOut = data.battery.dischargePower;\nconst calculatedDemand = derived.demand.defensiveTarget;\nconst demandLowerBound = derived.demand.lowerBound;\nconst demandLongTermMinimum = derived.demand.longTermMinimum;\nconst solarPower = derived.solar.livePower;\nconst forcedDischarge = action.battery.discharge.forcedRate;\nconst stopRequested = action.battery.discharge.stopRequested === true;\nconst blockedByLowSoc = action.battery.discharge.blockedByLowSoc === true;\n\nif (stopRequested || blockedByLowSoc) {\n    context.set(\"lastCommand\", 0);\n\n    msg.action = action;\n    msg.action.battery = msg.action.battery || {};\n    msg.action.battery.discharge = msg.action.battery.discharge || {};\n    msg.action.battery.discharge.commandPower = 0;\n    msg.action.battery.discharge.requiredChange = 0;\n    msg.action.battery.discharge.isStable = true;\n    msg.action.battery.discharge.gridPower = Math.round(gridPower);\n\n    node.status({\n        fill: \"red\",\n        shape: \"ring\",\n        text: blockedByLowSoc ? \"Discharge blocked by low SoC\" : \"Discharge stop requested\"\n    });\n    return msg;\n}\n\n// 2. CONFIGURATION (Based on safety buffer strategy)\n// this addresses the \"Moving Target\" problem with huge latencies of smart meter and battery chargine changes:\n//   1. The Deadband(deadband = 75): This is your Cycle - Killer.\n//                                   It stops the battery from chasing the \"ghosts\" of small appliances.\n//                                   If your fridge compressor flickers, the battery ignores it.\n//\n//   2. The Safety Buffer(-30): By aiming for a 30W import, you create a \"cushion.\"\n//                              When a cloud disappears and solar spikes, you have 30W of \"room\" before\n//                              starting to feed-in into public grid.\n//\n//   3. The EMA(alpha = 0.9): This solves the 50s latency of smart meter and battery.\n//                            Instead of jumping to a new value every 20s (init trigger) and\n//                            overshooting, the battery \"slides\" toward the new value. This reduces the\n//                            chemical stress on the LiFePO4 cells.\n\nconst targetBuffer = -50; // Aim for 50W import to prevent feed-in\nconst deadband = 50; // Ignore fluctuations smaller than 50W\nconst alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)\nconst sustainTolerance = 30; // Treat demand near the lower bound as baseline night load\n\n// 3. CALCULATION\n// calculated Demand is the brutto demand of power, solar power the generated and usable power.\n// default expects, that there is more solar power than demand,\n// e.g. 10W (solar) - 300W (demand) - (-30) = -260W to discharge\n//       0W (solar) - 50W (demand) - (-30) = -20W to discharge\n//     100W (solar) - 200W (demand) - (-30) = -70W to discharge\n//       0W (solar) - 200W (demand) - (-30) = -170W to discharge\n//       1W (solar) - 201W (demand) - (-30) = -170W to discharge\n//       0W (solar) - (-50)W (demand) - (-30) = 80W to adjust or even stop discharging (discharging is at least 50W)\nlet requiredChange = solarPower - calculatedDemand - targetBuffer;\n\n// 4. THE CYCLE GUARD (Dynamic Deadband)\n// If the requiredChange is small AND we aren't \"exporting\", stay still to save battery cycles\nif (Math.abs(requiredChange) < deadband && gridPower > 0 && currentBatteryOut == 0) {\n    node.status({\n        fill: \"green\",\n        shape: \"dot\",\n        text: `Done (deadband) - Stable power - finish (calculated change is ${Math.round(requiredChange)}W, grid power: ${Math.round(gridPower)}W)`\n    });\n    return null; // Stop the message here; no command sent to inverter\n}\n\n// 5. EMA SMOOTHING (The \"Lag Compensator\")\nlet lastCommand = context.get(\"lastCommand\") || 0;\nlet rawCommand = requiredChange * -1; // invert to represent the power gap required from battery\n\nif (rawCommand < 0 && currentBatteryOut > 0) {\n    // demand is larger than solar power but still solar power available\n    rawCommand = (requiredChange - targetBuffer - currentBatteryOut) * -1; // 80W - 30 - 60 = -10 -> reduce discharging before stopping\n}\n\n// Apply Exponential Moving Average\nlet smoothedCommand = rawCommand * alpha + lastCommand * (1 - alpha);\n\nconst activeDischargeReference = Math.max(currentBatteryOut, lastCommand);\nconst isDischargingActive = activeDischargeReference > 5;\nconst baselineDemandFloor = Math.max(demandLowerBound, demandLongTermMinimum);\nconst isAtDemandFloor = calculatedDemand <= baselineDemandFloor + sustainTolerance;\nconst lowerBoundDischargeFloor = Math.max(0, baselineDemandFloor - solarPower);\nconst dischargeSustainFloor = Math.min(\n    forcedDischarge,\n    activeDischargeReference,\n    lowerBoundDischargeFloor\n);\nconst sustainDischargeActive =\n    isDischargingActive &&\n    forcedDischarge > 0 &&\n    gridPower > 0 &&\n    isAtDemandFloor &&\n    dischargeSustainFloor > 0;\n\nif (sustainDischargeActive && smoothedCommand < dischargeSustainFloor) {\n    smoothedCommand = dischargeSustainFloor;\n}\n\n// 5. THE ZERO-EXPORT DEFENSE (The \"No-Penalty\" Guard)\n// --> EMERGENCY BRAKE\nif (gridPower < 0) {\n    smoothedCommand = Math.max(0, currentBatteryOut + gridPower + targetBuffer);\n}\n\nsmoothedCommand = Math.min(smoothedCommand, forcedDischarge * 2.5);\n\n// Only output if the command actually changed significantly (e.g., > 5W)\nif (Math.abs(smoothedCommand - lastCommand) < 5 && gridPower > 0 && currentBatteryOut == 0) {\n    node.status({\n        fill: \"green\",\n        shape: \"dot\",\n        text: `Idle (deadband) - Hardly changed power - finish: ${Math.round(smoothedCommand)}W, grid Power ${gridPower}W`\n    });\n    return null;\n}\n\n// 6. FINAL OUTPUT & PERSISTENCE\ncontext.set(\"lastCommand\", smoothedCommand);\n\nmsg.action = action;\nmsg.action.battery = msg.action.battery || {};\nmsg.action.battery.discharge = msg.action.battery.discharge || {};\nmsg.action.battery.discharge.commandPower = Math.round(smoothedCommand);\nmsg.action.battery.discharge.requiredChange = Math.round(requiredChange);\nmsg.action.battery.discharge.isStable = Math.abs(requiredChange) < deadband;\nmsg.action.battery.discharge.gridPower = Math.round(gridPower);\nmsg.action.battery.discharge.baselineDemandFloor = Math.round(baselineDemandFloor);\nmsg.action.battery.discharge.sustainFloor = Math.round(dischargeSustainFloor);\nmsg.action.battery.discharge.sustainActive = sustainDischargeActive;\n\nnode.status({\n    fill: \"green\",\n    shape: \"dot\",\n    text: sustainDischargeActive\n        ? `Discharge sustain @ ${Math.round(smoothedCommand)}W`\n        : `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`\n});\nreturn msg;",
         "outputs": 1,
@@ -1361,17 +1387,17 @@
         "y": 700,
         "wires": [
             [
-                "44b0e371ae1efb71"
+                "d77667d76b9ada1f"
             ]
         ]
     },
     {
-        "id": "3045b532e79bbe4a",
+        "id": "01c36d203d7d0d98",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Insights Calculation",
-        "active": true,
+        "active": false,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -1379,15 +1405,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 2770,
+        "x": 2790,
         "y": 540,
         "wires": []
     },
     {
-        "id": "17d57030078385b5",
+        "id": "383d94bc825d7d01",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Charging Debug",
         "active": true,
         "tosidebar": true,
@@ -1402,10 +1428,10 @@
         "wires": []
     },
     {
-        "id": "8bdea7aed89f9af8",
+        "id": "231bce569006ceb5",
         "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "g": "2d61c17cef688f81",
+        "z": "85c036d935247d38",
+        "g": "b7850a919322bb49",
         "name": "Load sequencer started",
         "active": true,
         "tosidebar": true,
@@ -1418,6 +1444,92 @@
         "x": 3630,
         "y": 460,
         "wires": []
+    },
+    {
+        "id": "68e76bb7b33a0541",
+        "type": "csv",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "Controller Telemetry CSV",
+        "sep": ";",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "time,source,mode,ruleApplied,clampReason,gridPower,batteryInflow,currentSetInflow,maxChargePower,calculatedDemand,currentDemand,medianDemand,liveSolarPower,stableSolarPower,effectiveSolarPower,theoreticalSurplus,targetCharge,finalCommand,delta,soc,minSoc,totalProduced,isExporting,historySamples,triggerIntervalSeconds,demandStdDev,solarStdDev",
+        "skip": "0",
+        "strings": false,
+        "include_empty_strings": "",
+        "include_null_values": true,
+        "x": 2910,
+        "y": 920,
+        "wires": [
+            [
+                "4021057d92fc0eb0"
+            ]
+        ]
+    },
+    {
+        "id": "4021057d92fc0eb0",
+        "type": "file",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "logFileMsg_ControllerDayHandling.csv",
+        "filename": "/data/share/logFileMsg_ControllerDayHandling.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 3230,
+        "y": 920,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a4efc05b3bc93edb",
+        "type": "inject",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "Reset Controller Log Header",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "58 23 * * 0",
+        "once": false,
+        "onceDelay": "6",
+        "topic": "",
+        "payload": "time;source;mode;ruleApplied;clampReason;gridPower;batteryInflow;currentSetInflow;maxChargePower;calculatedDemand;currentDemand;medianDemand;liveSolarPower;stableSolarPower;effectiveSolarPower;theoreticalSurplus;targetCharge;finalCommand;delta;soc;minSoc;totalProduced;isExporting;historySamples;triggerIntervalSeconds;demandStdDev;solarStdDev",
+        "payloadType": "str",
+        "x": 2910,
+        "y": 1020,
+        "wires": [
+            [
+                "1fff34807fca139f"
+            ]
+        ]
+    },
+    {
+        "id": "1fff34807fca139f",
+        "type": "file",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "logFileMsg_ControllerDayHandling.csv",
+        "filename": "/data/share/logFileMsg_ControllerDayHandling.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 3230,
+        "y": 1020,
+        "wires": [
+            []
+        ]
     },
     {
         "id": "bf41ee605731eea3",
@@ -1450,97 +1562,11 @@
         "enableGlobalContextStore": true
     },
     {
-        "id": "d9f107edd2c0a61b",
+        "id": "b5a4ae8aaacf2a5d",
         "type": "global-config",
         "env": [],
         "modules": {
             "node-red-contrib-home-assistant-websocket": "0.80.3"
         }
-    },
-    {
-        "id": "f1c0a1b2c3d4e501",
-        "type": "csv",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
-        "name": "Controller Telemetry CSV",
-        "sep": ";",
-        "hdrin": true,
-        "hdrout": "none",
-        "multi": "one",
-        "ret": "\\r\\n",
-        "temp": "time,source,mode,ruleApplied,clampReason,gridPower,batteryInflow,currentSetInflow,maxChargePower,calculatedDemand,currentDemand,medianDemand,liveSolarPower,stableSolarPower,effectiveSolarPower,theoreticalSurplus,targetCharge,finalCommand,delta,soc,minSoc,totalProduced,isExporting,historySamples,triggerIntervalSeconds,demandStdDev,solarStdDev",
-        "skip": "0",
-        "strings": false,
-        "include_empty_strings": "",
-        "include_null_values": true,
-        "x": 1720,
-        "y": 1540,
-        "wires": [
-            [
-                "f1c0a1b2c3d4e502"
-            ]
-        ]
-    },
-    {
-        "id": "f1c0a1b2c3d4e502",
-        "type": "file",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
-        "name": "logFileMsg_ControllerDayHandling.csv",
-        "filename": "/data/share/logFileMsg_ControllerDayHandling.csv",
-        "filenameType": "str",
-        "appendNewline": false,
-        "createDir": true,
-        "overwriteFile": "false",
-        "encoding": "none",
-        "x": 2040,
-        "y": 1540,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "f1c0a1b2c3d4e503",
-        "type": "inject",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
-        "name": "Reset Controller Log Header",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "58 23 * * 0",
-        "once": false,
-        "onceDelay": "6",
-        "topic": "",
-        "payload": "time;source;mode;ruleApplied;clampReason;gridPower;batteryInflow;currentSetInflow;maxChargePower;calculatedDemand;currentDemand;medianDemand;liveSolarPower;stableSolarPower;effectiveSolarPower;theoreticalSurplus;targetCharge;finalCommand;delta;soc;minSoc;totalProduced;isExporting;historySamples;triggerIntervalSeconds;demandStdDev;solarStdDev",
-        "payloadType": "str",
-        "x": 1790,
-        "y": 1640,
-        "wires": [
-            [
-                "f1c0a1b2c3d4e504"
-            ]
-        ]
-    },
-    {
-        "id": "f1c0a1b2c3d4e504",
-        "type": "file",
-        "z": "f6f2187d.f17ca8",
-        "g": "6dd893d2c26e82bd",
-        "name": "logFileMsg_ControllerDayHandling.csv",
-        "filename": "/data/share/logFileMsg_ControllerDayHandling.csv",
-        "filenameType": "str",
-        "appendNewline": true,
-        "createDir": true,
-        "overwriteFile": "true",
-        "encoding": "none",
-        "x": 2040,
-        "y": 1640,
-        "wires": [
-            []
-        ]
     }
 ]
