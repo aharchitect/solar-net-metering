@@ -28,7 +28,6 @@ const maxInverterPower = 1200; // the Inverter limit
 const minSustain = 50; // Keep charging circuit active
 const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
 const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting
-const happyPathBuffer = 20; // Smaller reserve when solar and demand are both calm
 const happyPathDeadband = 15; // Ignore tiny setpoint changes during calm periods
 const happyPathRampUpAlpha = 0.35; // Raise charging gently on the happy path
 const happyPathRampDownAlpha = 0.15; // Drop charging even more gently on the happy path
@@ -47,7 +46,12 @@ const isExporting = gridPower < -exportTolerance;
 
 const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
 
+// Specification:
+// Use the calm 5-minute surplus when both solar and demand are stable,
+// keep battery changes gentle, and only react quickly when export appears.
 function calculateHappyPathCharge() {
+    const happyPathBuffer = 20; // Smaller reserve when solar and demand are both calm
+
     let nextTargetCharge = Math.max(0, theoreticalSurplus + happyPathBuffer);
     let nextRuleApplied = "Happy Path";
 
@@ -64,6 +68,9 @@ function calculateHappyPathCharge() {
     return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };
 }
 
+// Specification:
+// Use the more defensive default controller for unstable situations,
+// with stronger grid-anchored anti-export correction.
 function calculateDefaultCharge() {
     let nextTargetCharge = Math.max(0, theoreticalSurplus + targetBuffer);
     let nextRuleApplied = "None";
@@ -205,6 +212,39 @@ const insights = {
     }
 };
 
+const telemetry = {
+    payload: {
+        time: new Date().toISOString(),
+        source: "controller_day_handling",
+        mode: stabilityMode,
+        ruleApplied: ruleApplied,
+        clampReason: clampReason,
+        gridPower: Math.round(gridPower),
+        batteryInflow: Math.round(batteryInflow),
+        currentSetInflow: Math.round(currentSetInflow),
+        maxChargePower: Math.round(maxChargePower),
+        calculatedDemand: Math.round(calculatedDemand),
+        currentDemand: Math.round(msg.adjustment.netPowerConcumption ?? calculatedDemand),
+        medianDemand: Math.round(msg.adjustment.medianDemand ?? calculatedDemand),
+        liveSolarPower: Math.round(liveSolarPower),
+        stableSolarPower: Math.round(stableSolarPower),
+        effectiveSolarPower: Math.round(effectiveSolarPower),
+        theoreticalSurplus: Math.round(theoreticalSurplus),
+        targetCharge: Math.round(targetCharge),
+        finalCommand: roundedCommand,
+        delta: Math.round(delta),
+        soc: Math.round(soc),
+        minSoc: Math.round(minSoc),
+        totalProduced: Math.round(totalProduced),
+        isExporting: isExporting,
+        historySamples: msg.meta?.history?.samples ?? null,
+        triggerIntervalSeconds: msg.meta?.history?.triggerIntervalSeconds ?? null,
+        demandStdDev: msg.meta?.stability?.stats?.demandStdDev ?? null,
+        solarStdDev: msg.meta?.stability?.stats?.solarStdDev ?? null
+    },
+    insights: insights.payload
+};
+
 // Update node status to show the most important "Why"
 node.status({
     fill: isExporting ? "red" : "green",
@@ -212,4 +252,4 @@ node.status({
     text: `Cmd: ${roundedCommand}W | ${stabilityMode} | Export: ${Math.round(gridPower)}W`
 });
 
-return [msg, insights];
+return [msg, telemetry];
