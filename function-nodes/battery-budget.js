@@ -1,14 +1,47 @@
-const data = msg.data || {};
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined && current !== null;
+}
+
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing(["data.battery.availableWh", "data.forecast.nextHourWh", "data.sun.nextRising"])
+) {
+    return null;
+}
+
+const data = msg.data;
 
 // 1. DATA EXTRACTION
-const availableWh = data.battery?.availableWh || 0;
+const availableWh = data.battery.availableWh;
 
 // 2. NEXT HOUR FORECAST (Wh expected in the next 60 mins)
-const totalNextHourWh = data.forecast?.nextHourWh || 0;
+const totalNextHourWh = data.forecast.nextHourWh;
 
 // 3. TIME CALCULATION
 const now = new Date().getTime();
-const sunrise = new Date(data.sun?.nextRising).getTime();
+const sunrise = new Date(data.sun.nextRising).getTime();
 
 // 4. DYNAMIC WINDOW ADJUSTMENT
 let hoursToUsableSolar = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));

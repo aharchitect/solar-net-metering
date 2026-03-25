@@ -9,6 +9,9 @@ The goal of this schema is:
 - keep intermediate calculations separate from final control actions
 - make the flow easier to understand, test, and reuse
 
+Normalized controller nodes are expected to fail fast when mandatory contract fields are missing.
+They should not silently replace missing structured input with fallback `0` values.
+
 ## Buckets
 
 The main controller path uses these top-level message buckets:

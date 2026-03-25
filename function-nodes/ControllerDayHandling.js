@@ -1,25 +1,70 @@
-// 1. DATA RETRIEVAL (Using the Map in the input message)
-const data = msg.data || {};
-const derived = msg.derived || {};
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
+}
+
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing([
+        "data.grid.power",
+        "data.battery.chargeMaxPower",
+        "data.battery.chargePower",
+        "data.battery.soc",
+        "data.battery.minSoc",
+        "data.battery.chargeSetpoint",
+        "data.solar.totalPower",
+        "derived.demand.defensiveTarget",
+        "derived.solar.livePower",
+        "derived.solar.averagePower",
+        "meta.stability.mode"
+    ])
+) {
+    return null;
+}
+
+// 1. DATA RETRIEVAL (Using the normalized input message)
+const data = msg.data;
+const derived = msg.derived;
 const action = msg.action || {};
-const gridPower = data.grid?.power || 0;
-const maxChargePower = data.battery?.chargeMaxPower || 800;
-const batteryInflow = data.battery?.chargePower || 0;
-const calculatedDemand = derived.demand?.defensiveTarget || 0;
-const liveSolarPower = derived.solar?.livePower || 0;
-const stableSolarPower = derived.solar?.averagePower || liveSolarPower;
-const stability = msg.meta?.stability || {};
-const stabilityMode = stability.mode || "unstable_unstable";
+const gridPower = data.grid.power;
+const maxChargePower = data.battery.chargeMaxPower;
+const batteryInflow = data.battery.chargePower;
+const calculatedDemand = derived.demand.defensiveTarget;
+const liveSolarPower = derived.solar.livePower;
+const stableSolarPower = derived.solar.averagePower;
+const stability = msg.meta.stability;
+const stabilityMode = stability.mode;
 const isHappyPath = stabilityMode === "stable_stable";
 const solarLiveBlend = 0.35; // Pull part of the live solar into the stable value on cloudy days
 const effectiveSolarPower = Math.max(
     stableSolarPower,
     liveSolarPower * solarLiveBlend + stableSolarPower * (1 - solarLiveBlend)
 );
-const soc = data.battery?.soc || 0;
-const minSoc = data.battery?.minSoc || 15;
-const currentSetInflow = data.battery?.chargeSetpoint || 0;
-const totalProduced = data.solar?.totalPower || 0;
+const soc = data.battery.soc;
+const minSoc = data.battery.minSoc;
+const currentSetInflow = data.battery.chargeSetpoint;
+const totalProduced = data.solar.totalPower;
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:

@@ -1,16 +1,56 @@
-const data = msg.data || {};
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
+}
+
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing([
+        "data.sun.aboveHorizon",
+        "data.battery.soc",
+        "data.battery.minSoc",
+        "data.forecast.solarRemainingWh",
+        "derived.solar.livePower"
+    ])
+) {
+    return null;
+}
+
+const data = msg.data;
+const derived = msg.derived;
 
 // 1. DYNAMIC SUN LOGIC
 // Sun state: 'above_horizon' or 'below_horizon'
-const sunAbove = data.sun?.aboveHorizon;
+const sunAbove = data.sun.aboveHorizon;
 
 // 2. Soc of Battery in %
-const soc = data.battery?.soc || 0;
-const minimalCharge = data.battery?.minSoc || 0;
+const soc = data.battery.soc;
+const minimalCharge = data.battery.minSoc;
 
 // 2. FORECAST LOGIC (Total Energy Remaining)
 // Wh remaining today
-const totalSolarRemaining = data.forecast?.solarRemainingWh || 0;
+const totalSolarRemaining = data.forecast.solarRemainingWh;
 
 // 3. THE DECISION (The "Intelligent" Branch)
 let toCharge = null;
@@ -29,7 +69,7 @@ msg.action.decision = {
     isSolarDayOver,
     batteryHasReserve
 };
-const solarPower = msg.derived.solar?.livePower || 0;
+const solarPower = derived.solar.livePower;
 
 if (isSolarDayOver && batteryHasReserve) {
     toDischarge = msg;

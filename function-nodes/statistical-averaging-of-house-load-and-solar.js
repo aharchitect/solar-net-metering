@@ -1,5 +1,36 @@
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
+}
+
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (abortForMissing(["data.house.demandPower", "data.solar.totalPower"])) {
+    return null;
+}
+
 // 1. Calculate current real house demand from normalized inputs
-const data = msg.data || {};
+const data = msg.data;
 if (!msg.meta) {
     msg.meta = {};
 }
@@ -7,13 +38,8 @@ if (!msg.derived) {
     msg.derived = {};
 }
 
-const grid = data.grid?.power || 0;
-const batOut = data.battery?.dischargePower || 0;
-const solarIn1 = data.solar?.primaryPower || 0;
-const solarIn2 = data.solar?.secondaryPower || 0;
-const batIn = data.battery?.chargePower || 0;
-const currentDemand = data.house?.demandPower || grid + batOut + solarIn1 + solarIn2 - batIn;
-const currentSolarPower = data.solar?.totalPower || solarIn1 + solarIn2;
+const currentDemand = data.house.demandPower;
+const currentSolarPower = data.solar.totalPower;
 
 function calculateAverage(values) {
     return values.reduce((sum, value) => sum + value, 0) / values.length;

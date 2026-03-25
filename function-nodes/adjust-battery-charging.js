@@ -1,17 +1,57 @@
-const data = msg.data || {};
-const action = msg.action || {};
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
+}
+
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing([
+        "data.battery.soc",
+        "data.battery.socLimit",
+        "data.battery.chargePower",
+        "data.battery.chargeSetpoint",
+        "data.battery.chargeHardwareMaxPower",
+        "data.grid.power",
+        "action.charge.commandPower"
+    ])
+) {
+    return null;
+}
+
+const data = msg.data;
+const action = msg.action;
 
 // 1. DATA EXTRACTION
-const soc = data.battery?.soc || 0;
-const maxSoc = data.battery?.socLimit || 100;
-const currentInflow = data.battery?.chargePower || 0;
-const currentSetInflow = data.battery?.chargeSetpoint || 0;
-const maxChargeHardware =
-    data.battery?.chargeHardwareMaxPower || data.battery?.chargeMaxPower || 800;
-const gridPower = data.grid?.power || 0;
+const soc = data.battery.soc;
+const maxSoc = data.battery.socLimit;
+const currentInflow = data.battery.chargePower;
+const currentSetInflow = data.battery.chargeSetpoint;
+const maxChargeHardware = data.battery.chargeHardwareMaxPower;
+const gridPower = data.grid.power;
 
 // 2. CORE CALCULATION
-let targetCharge = Math.abs(action.charge?.commandPower || 0);
+let targetCharge = Math.abs(action.charge.commandPower);
 
 // Add a safety check: If Actual and Set are miles apart (e.g. communication error),
 // fallback to a more conservative average.

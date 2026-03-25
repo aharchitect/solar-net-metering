@@ -1,12 +1,51 @@
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
+}
+
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing([
+        "data.grid.power",
+        "data.battery.dischargePower",
+        "derived.demand.defensiveTarget",
+        "derived.solar.livePower",
+        "action.battery.discharge.forcedRate"
+    ])
+) {
+    return null;
+}
+
 // 1. DATA RETRIEVAL
-const data = msg.data || {};
-const derived = msg.derived || {};
-const action = msg.action || {};
-const gridPower = data.grid?.power || 0;
-const currentBatteryOut = data.battery?.dischargePower || 0;
-const calculatedDemand = derived.demand?.defensiveTarget || 0;
-const solarPower = derived.solar?.livePower || 0;
-const forcedDischarge = action.battery?.discharge?.forcedRate || 0;
+const data = msg.data;
+const derived = msg.derived;
+const action = msg.action;
+const gridPower = data.grid.power;
+const currentBatteryOut = data.battery.dischargePower;
+const calculatedDemand = derived.demand.defensiveTarget;
+const solarPower = derived.solar.livePower;
+const forcedDischarge = action.battery.discharge.forcedRate;
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
