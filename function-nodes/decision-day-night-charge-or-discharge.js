@@ -47,6 +47,8 @@ const sunAbove = data.sun.aboveHorizon;
 // 2. Soc of Battery in %
 const soc = data.battery.soc;
 const minimalCharge = data.battery.minSoc;
+const dischargeRestartBufferPercent = 1;
+const dischargeStopThreshold = minimalCharge + dischargeRestartBufferPercent;
 
 // 2. FORECAST LOGIC (Total Energy Remaining)
 // Wh remaining today
@@ -63,27 +65,50 @@ let toDischarge = null;
  * - AND we aren't in a "Low Battery" state where we should strictly wait for sun.
  */
 const isSolarDayOver = !sunAbove || totalSolarRemaining < 50;
-const batteryHasReserve = soc > minimalCharge; // Don't start discharging if battery is nearly empty
+let nightLowSocBlock = context.get("nightLowSocBlock") || false;
+if (!isSolarDayOver) {
+    nightLowSocBlock = false;
+}
+if (isSolarDayOver && soc <= dischargeStopThreshold) {
+    nightLowSocBlock = true;
+}
+
+const batteryHasReserve = soc > dischargeStopThreshold && !nightLowSocBlock;
 msg.action = msg.action || {};
+msg.action.battery = msg.action.battery || {};
+msg.action.battery.discharge = msg.action.battery.discharge || {};
 msg.action.decision = {
     isSolarDayOver,
-    batteryHasReserve
+    batteryHasReserve,
+    nightLowSocBlock,
+    dischargeStopThreshold
 };
 const solarPower = derived.solar.livePower;
+context.set("nightLowSocBlock", nightLowSocBlock);
 
 if (isSolarDayOver && batteryHasReserve) {
     toDischarge = msg;
     node.status({
         fill: "blue",
         shape: "dot",
-        text: `Discharge - Night, remaing solar ${totalSolarRemaining}Wh, Solar Day is Over: ${isSolarDayOver}, battery has res: ${batteryHasReserve}`
+        text: `Discharge - Night, remaining solar ${totalSolarRemaining}Wh, reserve above ${dischargeStopThreshold}%`
+    });
+} else if (isSolarDayOver && nightLowSocBlock) {
+    msg.action.battery.discharge.commandPower = 0;
+    msg.action.battery.discharge.stopRequested = true;
+    msg.action.battery.discharge.blockedByLowSoc = true;
+    toDischarge = msg;
+    node.status({
+        fill: "red",
+        shape: "ring",
+        text: `Night discharge blocked below ${dischargeStopThreshold}% SoC`
     });
 } else if (solarPower > 0) {
     toCharge = msg;
     node.status({
         fill: "yellow",
         shape: "dot",
-        text: `Charge - Day/Solar: remaing solar ${totalSolarRemaining}Wh`
+        text: `Charge - Day/Solar: remaining solar ${totalSolarRemaining}Wh`
     });
 } else {
     node.status({

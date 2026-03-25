@@ -169,10 +169,12 @@ Concrete control intentions and commands.
 
 #### `msg.action.decision`
 
-| Path                                    | Type    | Meaning                                                 | Producer                                    |
-| --------------------------------------- | ------- | ------------------------------------------------------- | ------------------------------------------- |
-| `msg.action.decision.isSolarDayOver`    | boolean | Day/night routing decision for charge vs discharge path | `decision-day-night-charge-or-discharge.js` |
-| `msg.action.decision.batteryHasReserve` | boolean | Whether battery SoC is above minimum reserve            | `decision-day-night-charge-or-discharge.js` |
+| Path                                         | Type    | Meaning                                                             | Producer                                    |
+| -------------------------------------------- | ------- | ------------------------------------------------------------------- | ------------------------------------------- |
+| `msg.action.decision.isSolarDayOver`         | boolean | Day/night routing decision for charge vs discharge path             | `decision-day-night-charge-or-discharge.js` |
+| `msg.action.decision.batteryHasReserve`      | boolean | Whether battery SoC is above minimum reserve                        | `decision-day-night-charge-or-discharge.js` |
+| `msg.action.decision.nightLowSocBlock`       | boolean | Latch that blocks further night discharge after low SoC cutoff      | `decision-day-night-charge-or-discharge.js` |
+| `msg.action.decision.dischargeStopThreshold` | number  | SoC threshold including restart buffer for stopping night discharge | `decision-day-night-charge-or-discharge.js` |
 
 #### `msg.action.charge`
 
@@ -185,13 +187,15 @@ Concrete control intentions and commands.
 
 #### `msg.action.battery.discharge`
 
-| Path                                          | Type    | Unit | Meaning                                                      | Producer                                |
-| --------------------------------------------- | ------- | ---- | ------------------------------------------------------------ | --------------------------------------- |
-| `msg.action.battery.discharge.forcedRate`     | number  | W    | Maximum desired discharge rate based on budget until sunrise | `battery-budget.js`                     |
-| `msg.action.battery.discharge.commandPower`   | number  | W    | Final discharge command after smoothing and safety rules     | `gentle-controller-discharge-filter.js` |
-| `msg.action.battery.discharge.requiredChange` | number  | W    | Raw discharge gap before smoothing                           | `gentle-controller-discharge-filter.js` |
-| `msg.action.battery.discharge.isStable`       | boolean | -    | Whether the current discharge situation is inside deadband   | `gentle-controller-discharge-filter.js` |
-| `msg.action.battery.discharge.gridPower`      | number  | W    | Grid power snapshot used by discharge controller             | `gentle-controller-discharge-filter.js` |
+| Path                                           | Type    | Unit | Meaning                                                      | Producer                                    |
+| ---------------------------------------------- | ------- | ---- | ------------------------------------------------------------ | ------------------------------------------- |
+| `msg.action.battery.discharge.forcedRate`      | number  | W    | Maximum desired discharge rate based on budget until sunrise | `battery-budget.js`                         |
+| `msg.action.battery.discharge.commandPower`    | number  | W    | Final discharge command after smoothing and safety rules     | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.requiredChange`  | number  | W    | Raw discharge gap before smoothing                           | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.isStable`        | boolean | -    | Whether the current discharge situation is inside deadband   | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.gridPower`       | number  | W    | Grid power snapshot used by discharge controller             | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.stopRequested`   | boolean | -    | Explicit request to send a `0W` discharge command            | `decision-day-night-charge-or-discharge.js` |
+| `msg.action.battery.discharge.blockedByLowSoc` | boolean | -    | Indicates night discharge is blocked due to low SoC          | `decision-day-night-charge-or-discharge.js` |
 
 ### `msg.meta`
 

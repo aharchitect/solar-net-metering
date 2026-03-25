@@ -46,6 +46,27 @@ const currentBatteryOut = data.battery.dischargePower;
 const calculatedDemand = derived.demand.defensiveTarget;
 const solarPower = derived.solar.livePower;
 const forcedDischarge = action.battery.discharge.forcedRate;
+const stopRequested = action.battery.discharge.stopRequested === true;
+const blockedByLowSoc = action.battery.discharge.blockedByLowSoc === true;
+
+if (stopRequested || blockedByLowSoc) {
+    context.set("lastCommand", 0);
+
+    msg.action = action;
+    msg.action.battery = msg.action.battery || {};
+    msg.action.battery.discharge = msg.action.battery.discharge || {};
+    msg.action.battery.discharge.commandPower = 0;
+    msg.action.battery.discharge.requiredChange = 0;
+    msg.action.battery.discharge.isStable = true;
+    msg.action.battery.discharge.gridPower = Math.round(gridPower);
+
+    node.status({
+        fill: "red",
+        shape: "ring",
+        text: blockedByLowSoc ? "Discharge blocked by low SoC" : "Discharge stop requested"
+    });
+    return msg;
+}
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
