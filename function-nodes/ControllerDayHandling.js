@@ -33,6 +33,7 @@ if (
         "data.battery.soc",
         "data.battery.minSoc",
         "data.battery.chargeSetpoint",
+        "data.forecast.solarRemainingWh",
         "data.solar.totalPower",
         "derived.demand.defensiveTarget",
         "derived.solar.livePower",
@@ -64,6 +65,7 @@ const effectiveSolarPower = Math.max(
 const soc = data.battery.soc;
 const minSoc = data.battery.minSoc;
 const currentSetInflow = data.battery.chargeSetpoint;
+const totalSolarRemaining = data.forecast.solarRemainingWh;
 const totalProduced = data.solar.totalPower;
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
@@ -76,6 +78,8 @@ const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when ex
 const happyPathDeadband = 15; // Ignore tiny setpoint changes during calm periods
 const happyPathRampUpAlpha = 0.35; // Raise charging gently on the happy path
 const happyPathRampDownAlpha = 0.15; // Drop charging even more gently on the happy path
+const forecastHoldThresholdWh = 50; // Only keep charging warm if more solar is still expected
+const warmHoldSolarFraction = 0.5; // Hold at half of the current solar power to avoid charge on/off cycling
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -88,8 +92,28 @@ const happyPathRampDownAlpha = 0.15; // Drop charging even more gently on the ha
 let clampReason = "None";
 let ruleApplied = "None";
 const isExporting = gridPower < -exportTolerance;
+const lastCommand = context.get("lastCommand") || 0;
+const isChargingActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 5;
+const hasMeaningfulSolarForecast = totalSolarRemaining > forecastHoldThresholdWh;
 
 const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
+
+function applyForecastWarmHold(nextTargetCharge, nextRuleApplied) {
+    if (!isChargingActive || !hasMeaningfulSolarForecast || isExporting || totalProduced <= 0) {
+        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };
+    }
+
+    const warmHoldPower = Math.max(minSustain, Math.round(totalProduced * warmHoldSolarFraction));
+    if (nextTargetCharge >= warmHoldPower) {
+        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied };
+    }
+
+    return {
+        targetCharge: warmHoldPower,
+        ruleApplied:
+            nextTargetCharge <= 0 ? "Forecast Warm Hold" : `${nextRuleApplied} + Forecast Warm Hold`
+    };
+}
 
 // Specification:
 // Use the calm 5-minute surplus when both solar and demand are stable,
@@ -134,6 +158,9 @@ function calculateDefaultCharge() {
 const calculation = isHappyPath ? calculateHappyPathCharge() : calculateDefaultCharge();
 let targetCharge = calculation.targetCharge;
 ruleApplied = calculation.ruleApplied;
+const warmHoldAdjustment = applyForecastWarmHold(targetCharge, ruleApplied);
+targetCharge = warmHoldAdjustment.targetCharge;
+ruleApplied = warmHoldAdjustment.ruleApplied;
 
 // 4. SANITY CHECKS & SUSTAIN
 // If solar production is > 150W, we keep the charging circuit 'warm' at 50W,
@@ -172,7 +199,6 @@ if (theoreticalSurplus > 10 && targetCharge < minSustain) {
 if (targetCharge < 0) targetCharge = 0;
 
 // 5. DYNAMIC SMOOTHING (Slew Rate)
-let lastCommand = context.get("lastCommand") || 0;
 // Instead of a fixed Alpha, we use a "Fast-Up, Slow-Down" approach.
 let finalAlpha;
 if (isExporting) {
@@ -292,6 +318,8 @@ const telemetry = {
         soc: Math.round(soc),
         minSoc: Math.round(minSoc),
         totalProduced: Math.round(totalProduced),
+        totalSolarRemaining: Math.round(totalSolarRemaining),
+        forecastWarmHoldActive: isChargingActive && hasMeaningfulSolarForecast && !isExporting,
         isExporting: isExporting,
         historySamples: msg.meta?.history?.samples ?? null,
         triggerIntervalSeconds: msg.meta?.history?.triggerIntervalSeconds ?? null,
