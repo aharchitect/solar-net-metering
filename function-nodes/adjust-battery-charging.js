@@ -1,17 +1,57 @@
-const map = msg.payload;
-const adj = msg.adjustment; // Contains .command, .requiredChange, and .grid
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
+}
 
-// 1. DATA EXTRACTION FROM MAP
-const soc = parseFloat(map["sensor.solarflow_800_pro_electric_level"]?.state) || 0;
-const maxSoc = parseFloat(map["number.solarflow_800_pro_soc_set"]?.state) || 100; // Your threshold
-const currentInflow = parseFloat(map["sensor.solarflow_800_pro_grid_input_power"]?.state) || 0;
-const currentSetInflow = parseFloat(map["number.solarflow_800_pro_input_limit"]?.state) || 0;
-const maxChargeHardware =
-    parseFloat(map["sensor.solarflow_800_pro_charge_max_limit"]?.attributes?.max) || 800;
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing([
+        "data.battery.soc",
+        "data.battery.socLimit",
+        "data.battery.chargePower",
+        "data.battery.chargeSetpoint",
+        "data.battery.chargeHardwareMaxPower",
+        "data.grid.power",
+        "action.charge.commandPower"
+    ])
+) {
+    return null;
+}
+
+const data = msg.data;
+const action = msg.action;
+
+// 1. DATA EXTRACTION
+const soc = data.battery.soc;
+const maxSoc = data.battery.socLimit;
+const currentInflow = data.battery.chargePower;
+const currentSetInflow = data.battery.chargeSetpoint;
+const maxChargeHardware = data.battery.chargeHardwareMaxPower;
+const gridPower = data.grid.power;
 
 // 2. CORE CALCULATION
-// adj.command is negative when we have to charge the battery with solar power
-let targetCharge = Math.abs(adj.command);
+let targetCharge = Math.abs(action.charge.commandPower);
 
 // Add a safety check: If Actual and Set are miles apart (e.g. communication error),
 // fallback to a more conservative average.
@@ -40,7 +80,7 @@ targetCharge = Math.max(0, Math.min(maxChargeHardware, targetCharge));
 const logMsg = {
     payload: {
         time: new Date().toLocaleString("de-DE"),
-        grid: adj.grid,
+        grid: Math.round(gridPower),
         soc: soc,
         targetCharge: Math.round(targetCharge),
         reason: reason

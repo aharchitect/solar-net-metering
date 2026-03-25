@@ -37,6 +37,20 @@ npm run release:prepare
 npm run check
 ```
 
+## Message Schema
+
+The main controller path now uses a normalized internal message contract:
+
+- `msg.payload`
+- `msg.data`
+- `msg.derived`
+- `msg.action`
+- `msg.meta`
+
+The detailed dictionary is documented in [docs/message-schema.md](/home/andreas/git/solar-net-metering/docs/message-schema.md).
+
+The normalization entry point is [normalize-home-assistant-data.js](/home/andreas/git/solar-net-metering/function-nodes/normalize-home-assistant-data.js).
+
 ## GitHub Actions
 
 The workflow at [.github/workflows/ci-release.yml](/home/andreas/git/solar-net-metering/.github/workflows/ci-release.yml) runs:

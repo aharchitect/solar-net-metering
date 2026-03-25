@@ -1,36 +1,202 @@
-// 1. Calculate current real house demand
-const map = msg.payload;
-// INITIALIZATION: Ensure msg.adjustment exists so we don't crash
-if (!msg.adjustment) {
-    msg.adjustment = {};
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
 }
 
-const grid = parseFloat(map["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0;
-const batOut = parseFloat(map["sensor.solarflow_800_pro_output_home_power"]?.state) || 0;
-const solarIn1 = parseFloat(map["sensor.wechselrichter_ac_leistung"]?.state) || 0;
-const solarIn2 = parseFloat(map["sensor.hoymiles600_power"]?.state) || 0;
-const batIn = parseFloat(map["sensor.solarflow_800_pro_grid_input_power"]?.state) || 0;
-const currentDemand = grid + batOut + solarIn1 + solarIn2 - batIn;
-const currentSolarPower = solarIn1 + solarIn2;
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
 
-// 2. Manage 5-minute history (15 samples @ 20s interval)
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (abortForMissing(["data.house.demandPower", "data.solar.totalPower"])) {
+    return null;
+}
+
+// 1. Calculate current real house demand from normalized inputs
+const data = msg.data;
+if (!msg.meta) {
+    msg.meta = {};
+}
+if (!msg.derived) {
+    msg.derived = {};
+}
+
+const currentDemand = data.house.demandPower;
+const currentSolarPower = data.solar.totalPower;
+
+function calculateAverage(values) {
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function calculateStdDev(values, average) {
+    if (values.length <= 1) {
+        return 0;
+    }
+
+    const variance =
+        values.reduce((sum, value) => sum + Math.pow(value - average, 2), 0) / values.length;
+    return Math.sqrt(variance);
+}
+
+function calculateTrend(values) {
+    if (values.length < 4) {
+        return 0;
+    }
+
+    const segmentSize = Math.max(2, Math.floor(values.length / 2));
+    const earlierSegment = values.slice(0, values.length - segmentSize);
+    const recentSegment = values.slice(-segmentSize);
+
+    if (earlierSegment.length === 0 || recentSegment.length === 0) {
+        return 0;
+    }
+
+    return calculateAverage(recentSegment) - calculateAverage(earlierSegment);
+}
+
+function calculateLowerBound(sortedValues) {
+    const segmentSize = Math.max(1, Math.ceil(sortedValues.length / 4));
+    return calculateAverage(sortedValues.slice(0, segmentSize));
+}
+
+function calculateTrendDirection(trendValue, deadband) {
+    if (trendValue > deadband) {
+        return "up";
+    }
+    if (trendValue < -deadband) {
+        return "down";
+    }
+    return "flat";
+}
+
+function countTrendDirectionChanges(directions) {
+    let lastDirection = null;
+    let changes = 0;
+
+    for (const direction of directions) {
+        if (direction === "flat") {
+            continue;
+        }
+        if (lastDirection && direction !== lastDirection) {
+            changes += 1;
+        }
+        lastDirection = direction;
+    }
+
+    return changes;
+}
+
+// 2. Manage 5-minute history based on the configured trigger interval
+const historyWindowSeconds = 5 * 60;
+const learnedDemandWindowSeconds = 48 * 60 * 60;
+const learnedDemandWindowMs = learnedDemandWindowSeconds * 1000;
+const learnedDemandUpwardAlpha = 0.02;
+const triggerIntervalSeconds =
+    msg.meta?.trigger?.intervalSeconds || flow.get("triggerIntervalSeconds") || 20;
+const historySamples = Math.max(15, Math.ceil(historyWindowSeconds / triggerIntervalSeconds));
+
 let history = context.get("demandHistory") || [];
 history.push(currentDemand);
-if (history.length > 15) history.shift();
+while (history.length > historySamples) history.shift();
 context.set("demandHistory", history);
+
 let solarHistory = context.get("solarHistory") || [];
 solarHistory.push(currentSolarPower);
-if (solarHistory.length > 15) solarHistory.shift();
+while (solarHistory.length > historySamples) solarHistory.shift();
 context.set("solarHistory", solarHistory);
 
 // 3. Calculate Average
-const averageSolar = solarHistory.reduce((c, d) => c + d, 0) / solarHistory.length;
+const averageDemand = calculateAverage(history);
+const averageSolar = calculateAverage(solarHistory);
+const demandStdDev = calculateStdDev(history, averageDemand);
+const solarStdDev = calculateStdDev(solarHistory, averageSolar);
+const demandTrend = calculateTrend(history);
+const solarTrend = calculateTrend(solarHistory);
+const trendWindowSeconds = 120;
+const trendHistorySamples = Math.max(3, Math.ceil(trendWindowSeconds / triggerIntervalSeconds));
+const demandTrendDeadband = 15;
+const solarTrendDeadband = 25;
+const unstableTrendChangesThreshold = 2;
+
+const demandTrendDirection = calculateTrendDirection(demandTrend, demandTrendDeadband);
+const solarTrendDirection = calculateTrendDirection(solarTrend, solarTrendDeadband);
+
+let demandTrendHistory = context.get("demandTrendHistory") || [];
+demandTrendHistory.push(demandTrendDirection);
+while (demandTrendHistory.length > trendHistorySamples) demandTrendHistory.shift();
+context.set("demandTrendHistory", demandTrendHistory);
+
+let solarTrendHistory = context.get("solarTrendHistory") || [];
+solarTrendHistory.push(solarTrendDirection);
+while (solarTrendHistory.length > trendHistorySamples) solarTrendHistory.shift();
+context.set("solarTrendHistory", solarTrendHistory);
+
+const demandTrendChanges = countTrendDirectionChanges(demandTrendHistory);
+const solarTrendChanges = countTrendDirectionChanges(solarTrendHistory);
+const demandTrendIsChaotic = demandTrendChanges >= unstableTrendChangesThreshold;
+const solarTrendIsChaotic = solarTrendChanges >= unstableTrendChangesThreshold;
+
+const demandStdDevThreshold = 60;
+const solarStdDevThreshold = 80;
+const demandStable = demandStdDev <= demandStdDevThreshold && !demandTrendIsChaotic;
+const solarStable = solarStdDev <= solarStdDevThreshold && !solarTrendIsChaotic;
+const stabilityMode = solarStable
+    ? demandStable
+        ? "stable_stable"
+        : "demand_unstable"
+    : demandStable
+      ? "solar_unstable"
+      : "unstable_unstable";
+
 // 4. Calculate Median (P50)
 // We create a copy so we don't mess up the chronological history
 const sorted = [...history].sort((a, b) => a - b);
 const lowMiddle = Math.floor((sorted.length - 1) / 2);
 const highMiddle = Math.ceil((sorted.length - 1) / 2);
 const medianDemand = (sorted[lowMiddle] + sorted[highMiddle]) / 2;
+const lowerDemandBound = calculateLowerBound(sorted);
+const demandFloorCandidate = Math.min(currentDemand, lowerDemandBound);
+const now = Date.now();
+let longTermMinimumDemand = context.get("learnedDemandFloor");
+let learnedDemandFloorUpdatedAt = context.get("learnedDemandFloorUpdatedAt") || 0;
+
+if (!Number.isFinite(longTermMinimumDemand) || longTermMinimumDemand <= 0) {
+    longTermMinimumDemand = demandFloorCandidate;
+    learnedDemandFloorUpdatedAt = now;
+} else if (now - learnedDemandFloorUpdatedAt > learnedDemandWindowMs) {
+    longTermMinimumDemand = demandFloorCandidate;
+    learnedDemandFloorUpdatedAt = now;
+} else if (demandFloorCandidate < longTermMinimumDemand) {
+    longTermMinimumDemand = demandFloorCandidate;
+    learnedDemandFloorUpdatedAt = now;
+} else {
+    const upwardAdjustment =
+        (demandFloorCandidate - longTermMinimumDemand) * learnedDemandUpwardAlpha;
+    longTermMinimumDemand = Math.min(
+        demandFloorCandidate,
+        longTermMinimumDemand + upwardAdjustment
+    );
+}
+
+context.set("learnedDemandFloor", longTermMinimumDemand);
+context.set("learnedDemandFloorUpdatedAt", learnedDemandFloorUpdatedAt);
 
 // 5. ASYMMETRIC LOGIC
 // Demand: Use the Median/Defensive approach (STAY SLOW)
@@ -50,10 +216,62 @@ const flowBias = proactiveSolar > 50 ? 20 : 0;
 node.status({
     fill: "blue",
     shape: "dot",
-    text: `Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W, (median): ${Math.round(medianDemand)}W`
+    text: `Mode: ${stabilityMode} | Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W`
 });
 
-msg.adjustment.defensiveTarget = Math.round(defensiveTarget - flowBias);
-msg.adjustment.solarPower = Math.round(proactiveSolar);
-msg.adjustment.solarAveragePower = Math.round(averageSolar);
+msg.derived.demand = {
+    current: Math.round(currentDemand),
+    average: Math.round(averageDemand),
+    median: Math.round(medianDemand),
+    lowerBound: Math.round(lowerDemandBound),
+    longTermMinimum: Math.round(longTermMinimumDemand),
+    defensiveTarget: Math.round(defensiveTarget - flowBias),
+    stdDev: Math.round(demandStdDev),
+    trend: Math.round(demandTrend),
+    trendDirection: demandTrendDirection,
+    trendChanges: demandTrendChanges
+};
+msg.derived.solar = {
+    livePower: Math.round(proactiveSolar),
+    averagePower: Math.round(averageSolar),
+    stdDev: Math.round(solarStdDev),
+    trend: Math.round(solarTrend),
+    trendDirection: solarTrendDirection,
+    trendChanges: solarTrendChanges
+};
+msg.meta.history = {
+    windowSeconds: historyWindowSeconds,
+    triggerIntervalSeconds: triggerIntervalSeconds,
+    triggerIntervalMs: triggerIntervalSeconds * 1000,
+    samples: historySamples,
+    longTermDemandWindowSeconds: learnedDemandWindowSeconds,
+    trendWindowSeconds: trendWindowSeconds,
+    trendSamples: trendHistorySamples
+};
+msg.meta.stability = {
+    mode: stabilityMode,
+    demand: demandStable ? "stable" : "unstable",
+    solar: solarStable ? "stable" : "unstable",
+    thresholds: {
+        demandStdDev: demandStdDevThreshold,
+        solarStdDev: solarStdDevThreshold,
+        demandTrendDeadband: demandTrendDeadband,
+        solarTrendDeadband: solarTrendDeadband,
+        unstableTrendChanges: unstableTrendChangesThreshold
+    },
+    stats: {
+        demandAverage: Math.round(averageDemand),
+        demandLowerBound: Math.round(lowerDemandBound),
+        demandLongTermMinimum: Math.round(longTermMinimumDemand),
+        demandStdDev: Math.round(demandStdDev),
+        demandTrend: Math.round(demandTrend),
+        demandTrendDirection: demandTrendDirection,
+        demandTrendChanges: demandTrendChanges,
+        solarAverage: Math.round(averageSolar),
+        solarStdDev: Math.round(solarStdDev),
+        solarTrend: Math.round(solarTrend),
+        solarTrendDirection: solarTrendDirection,
+        solarTrendChanges: solarTrendChanges
+    }
+};
 return msg;

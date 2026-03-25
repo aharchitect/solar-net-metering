@@ -1,12 +1,76 @@
-// 1. DATA RETRIEVAL (Using the Map in the input message)
-const ha = msg.payload;
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined;
+}
 
-// Get numeric values from Home Assistant collection (handling "unavailable" with || 0)
-const gridPower = parseFloat(ha["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0;
-const currentBatteryOut = parseFloat(ha["sensor.solarflow_800_pro_output_home_power"]?.state) || 0;
-const calculatedDemand = msg.adjustment.defensiveTarget;
-const smoothedSolarPower = msg.adjustment.solarPower;
-const forcedDischarge = msg.adjustment.forcedRate;
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing([
+        "data.grid.power",
+        "data.battery.dischargePower",
+        "derived.demand.defensiveTarget",
+        "derived.demand.lowerBound",
+        "derived.demand.longTermMinimum",
+        "derived.solar.livePower",
+        "action.battery.discharge.forcedRate"
+    ])
+) {
+    return null;
+}
+
+// 1. DATA RETRIEVAL
+const data = msg.data;
+const derived = msg.derived;
+const action = msg.action;
+const gridPower = data.grid.power;
+const currentBatteryOut = data.battery.dischargePower;
+const calculatedDemand = derived.demand.defensiveTarget;
+const demandLowerBound = derived.demand.lowerBound;
+const demandLongTermMinimum = derived.demand.longTermMinimum;
+const solarPower = derived.solar.livePower;
+const forcedDischarge = action.battery.discharge.forcedRate;
+const stopRequested = action.battery.discharge.stopRequested === true;
+const blockedByLowSoc = action.battery.discharge.blockedByLowSoc === true;
+
+if (stopRequested || blockedByLowSoc) {
+    context.set("lastCommand", 0);
+
+    msg.action = action;
+    msg.action.battery = msg.action.battery || {};
+    msg.action.battery.discharge = msg.action.battery.discharge || {};
+    msg.action.battery.discharge.commandPower = 0;
+    msg.action.battery.discharge.requiredChange = 0;
+    msg.action.battery.discharge.isStable = true;
+    msg.action.battery.discharge.gridPower = Math.round(gridPower);
+
+    node.status({
+        fill: "red",
+        shape: "ring",
+        text: blockedByLowSoc ? "Discharge blocked by low SoC" : "Discharge stop requested"
+    });
+    return msg;
+}
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
@@ -26,6 +90,7 @@ const forcedDischarge = msg.adjustment.forcedRate;
 const targetBuffer = -50; // Aim for 50W import to prevent feed-in
 const deadband = 50; // Ignore fluctuations smaller than 50W
 const alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
+const sustainTolerance = 30; // Treat demand near the lower bound as baseline night load
 
 // 3. CALCULATION
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
@@ -36,7 +101,7 @@ const alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
 //       0W (solar) - 200W (demand) - (-30) = -170W to discharge
 //       1W (solar) - 201W (demand) - (-30) = -170W to discharge
 //       0W (solar) - (-50)W (demand) - (-30) = 80W to adjust or even stop discharging (discharging is at least 50W)
-let requiredChange = smoothedSolarPower - calculatedDemand - targetBuffer;
+let requiredChange = solarPower - calculatedDemand - targetBuffer;
 
 // 4. THE CYCLE GUARD (Dynamic Deadband)
 // If the requiredChange is small AND we aren't "exporting", stay still to save battery cycles
@@ -61,6 +126,27 @@ if (rawCommand < 0 && currentBatteryOut > 0) {
 // Apply Exponential Moving Average
 let smoothedCommand = rawCommand * alpha + lastCommand * (1 - alpha);
 
+const activeDischargeReference = Math.max(currentBatteryOut, lastCommand);
+const isDischargingActive = activeDischargeReference > 5;
+const baselineDemandFloor = Math.max(demandLowerBound, demandLongTermMinimum);
+const isAtDemandFloor = calculatedDemand <= baselineDemandFloor + sustainTolerance;
+const lowerBoundDischargeFloor = Math.max(0, baselineDemandFloor - solarPower);
+const dischargeSustainFloor = Math.min(
+    forcedDischarge,
+    activeDischargeReference,
+    lowerBoundDischargeFloor
+);
+const sustainDischargeActive =
+    isDischargingActive &&
+    forcedDischarge > 0 &&
+    gridPower > 0 &&
+    isAtDemandFloor &&
+    dischargeSustainFloor > 0;
+
+if (sustainDischargeActive && smoothedCommand < dischargeSustainFloor) {
+    smoothedCommand = dischargeSustainFloor;
+}
+
 // 5. THE ZERO-EXPORT DEFENSE (The "No-Penalty" Guard)
 // --> EMERGENCY BRAKE
 if (gridPower < 0) {
@@ -82,19 +168,22 @@ if (Math.abs(smoothedCommand - lastCommand) < 5 && gridPower > 0 && currentBatte
 // 6. FINAL OUTPUT & PERSISTENCE
 context.set("lastCommand", smoothedCommand);
 
-// Store the results in their own property, keeping the map safe
-msg.adjustment = {
-    command: Math.round(smoothedCommand),
-    requiredChange: requiredChange, // The raw error before smoothing
-    isStable: Math.abs(requiredChange) < deadband,
-    grid: gridPower
-};
+msg.action = action;
+msg.action.battery = msg.action.battery || {};
+msg.action.battery.discharge = msg.action.battery.discharge || {};
+msg.action.battery.discharge.commandPower = Math.round(smoothedCommand);
+msg.action.battery.discharge.requiredChange = Math.round(requiredChange);
+msg.action.battery.discharge.isStable = Math.abs(requiredChange) < deadband;
+msg.action.battery.discharge.gridPower = Math.round(gridPower);
+msg.action.battery.discharge.baselineDemandFloor = Math.round(baselineDemandFloor);
+msg.action.battery.discharge.sustainFloor = Math.round(dischargeSustainFloor);
+msg.action.battery.discharge.sustainActive = sustainDischargeActive;
 
-// Now msg.payload still contains 31 entities,
-// and msg.adjustment contains this logic results.
 node.status({
     fill: "green",
     shape: "dot",
-    text: `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
+    text: sustainDischargeActive
+        ? `Discharge sustain @ ${Math.round(smoothedCommand)}W`
+        : `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
 });
 return msg;
