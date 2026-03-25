@@ -1,17 +1,17 @@
-const map = msg.payload;
-const adj = msg.adjustment; // Contains .command, .requiredChange, and .grid
+const data = msg.data || {};
+const action = msg.action || {};
 
-// 1. DATA EXTRACTION FROM MAP
-const soc = parseFloat(map["sensor.solarflow_800_pro_electric_level"]?.state) || 0;
-const maxSoc = parseFloat(map["number.solarflow_800_pro_soc_set"]?.state) || 100; // Your threshold
-const currentInflow = parseFloat(map["sensor.solarflow_800_pro_grid_input_power"]?.state) || 0;
-const currentSetInflow = parseFloat(map["number.solarflow_800_pro_input_limit"]?.state) || 0;
+// 1. DATA EXTRACTION
+const soc = data.battery?.soc || 0;
+const maxSoc = data.battery?.socLimit || 100;
+const currentInflow = data.battery?.chargePower || 0;
+const currentSetInflow = data.battery?.chargeSetpoint || 0;
 const maxChargeHardware =
-    parseFloat(map["sensor.solarflow_800_pro_charge_max_limit"]?.attributes?.max) || 800;
+    data.battery?.chargeHardwareMaxPower || data.battery?.chargeMaxPower || 800;
+const gridPower = data.grid?.power || 0;
 
 // 2. CORE CALCULATION
-// adj.command is negative when we have to charge the battery with solar power
-let targetCharge = Math.abs(adj.command);
+let targetCharge = Math.abs(action.charge?.commandPower || 0);
 
 // Add a safety check: If Actual and Set are miles apart (e.g. communication error),
 // fallback to a more conservative average.
@@ -40,7 +40,7 @@ targetCharge = Math.max(0, Math.min(maxChargeHardware, targetCharge));
 const logMsg = {
     payload: {
         time: new Date().toLocaleString("de-DE"),
-        grid: adj.grid,
+        grid: Math.round(gridPower),
         soc: soc,
         targetCharge: Math.round(targetCharge),
         reason: reason

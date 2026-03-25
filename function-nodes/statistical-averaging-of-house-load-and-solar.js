@@ -1,20 +1,19 @@
-// 1. Calculate current real house demand
-const map = msg.payload;
-// INITIALIZATION: Ensure msg.adjustment exists so we don't crash
-if (!msg.adjustment) {
-    msg.adjustment = {};
-}
+// 1. Calculate current real house demand from normalized inputs
+const data = msg.data || {};
 if (!msg.meta) {
     msg.meta = {};
 }
+if (!msg.derived) {
+    msg.derived = {};
+}
 
-const grid = parseFloat(map["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0;
-const batOut = parseFloat(map["sensor.solarflow_800_pro_output_home_power"]?.state) || 0;
-const solarIn1 = parseFloat(map["sensor.wechselrichter_ac_leistung"]?.state) || 0;
-const solarIn2 = parseFloat(map["sensor.hoymiles600_power"]?.state) || 0;
-const batIn = parseFloat(map["sensor.solarflow_800_pro_grid_input_power"]?.state) || 0;
-const currentDemand = grid + batOut + solarIn1 + solarIn2 - batIn;
-const currentSolarPower = solarIn1 + solarIn2;
+const grid = data.grid?.power || 0;
+const batOut = data.battery?.dischargePower || 0;
+const solarIn1 = data.solar?.primaryPower || 0;
+const solarIn2 = data.solar?.secondaryPower || 0;
+const batIn = data.battery?.chargePower || 0;
+const currentDemand = data.house?.demandPower || grid + batOut + solarIn1 + solarIn2 - batIn;
+const currentSolarPower = data.solar?.totalPower || solarIn1 + solarIn2;
 
 function calculateAverage(values) {
     return values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -91,11 +90,19 @@ node.status({
     shape: "dot",
     text: `Mode: ${stabilityMode} | Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W`
 });
-msg.adjustment.medianDemand = Math.round(medianDemand);
-msg.adjustment.netPowerConcumption = Math.round(currentDemand);
-msg.adjustment.defensiveTarget = Math.round(defensiveTarget - flowBias);
-msg.adjustment.solarPower = Math.round(proactiveSolar);
-msg.adjustment.solarAveragePower = Math.round(averageSolar);
+
+msg.derived.demand = {
+    current: Math.round(currentDemand),
+    average: Math.round(averageDemand),
+    median: Math.round(medianDemand),
+    defensiveTarget: Math.round(defensiveTarget - flowBias),
+    stdDev: Math.round(demandStdDev)
+};
+msg.derived.solar = {
+    livePower: Math.round(proactiveSolar),
+    averagePower: Math.round(averageSolar),
+    stdDev: Math.round(solarStdDev)
+};
 msg.meta.history = {
     windowSeconds: historyWindowSeconds,
     triggerIntervalSeconds: triggerIntervalSeconds,

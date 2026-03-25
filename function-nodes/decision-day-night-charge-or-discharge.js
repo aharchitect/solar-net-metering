@@ -1,34 +1,16 @@
-const map = msg.payload;
-const adj = msg.adjustment;
-
-// UNIT-AWARE FORECAST (Scaling kWh to Wh)
-function getWh(entityId) {
-    const entity = map[entityId];
-    if (!entity) return 0;
-
-    let value = parseFloat(entity.state) || 0;
-    const unit = entity.attributes?.unit_of_measurement;
-
-    // If the unit is kWh, multiply by 1000
-    if (unit === "kWh") {
-        return value * 1000;
-    }
-    return value; // Assume Wh otherwise
-}
+const data = msg.data || {};
 
 // 1. DYNAMIC SUN LOGIC
 // Sun state: 'above_horizon' or 'below_horizon'
-const sunAbove = map["sun.sun"]?.state === "above_horizon";
+const sunAbove = data.sun?.aboveHorizon;
 
 // 2. Soc of Battery in %
-const soc = parseFloat(map["sensor.solarflow_800_pro_electric_level"]?.state) || 0;
-const minimalCharge = parseFloat(map["number.solarflow_800_pro_min_soc"]?.state) || 0;
+const soc = data.battery?.soc || 0;
+const minimalCharge = data.battery?.minSoc || 0;
 
 // 2. FORECAST LOGIC (Total Energy Remaining)
 // Wh remaining today
-const totalSolarRemaining =
-    getWh("sensor.energy_production_today_remaining") +
-    getWh("sensor.energy_production_today_remaining_2");
+const totalSolarRemaining = data.forecast?.solarRemainingWh || 0;
 
 // 3. THE DECISION (The "Intelligent" Branch)
 let toCharge = null;
@@ -42,6 +24,12 @@ let toDischarge = null;
  */
 const isSolarDayOver = !sunAbove || totalSolarRemaining < 50;
 const batteryHasReserve = soc > minimalCharge; // Don't start discharging if battery is nearly empty
+msg.action = msg.action || {};
+msg.action.decision = {
+    isSolarDayOver,
+    batteryHasReserve
+};
+const solarPower = msg.derived.solar?.livePower || 0;
 
 if (isSolarDayOver && batteryHasReserve) {
     toDischarge = msg;
@@ -50,7 +38,7 @@ if (isSolarDayOver && batteryHasReserve) {
         shape: "dot",
         text: `Discharge - Night, remaing solar ${totalSolarRemaining}Wh, Solar Day is Over: ${isSolarDayOver}, battery has res: ${batteryHasReserve}`
     });
-} else if (adj.solarPower > 0) {
+} else if (solarPower > 0) {
     toCharge = msg;
     node.status({
         fill: "yellow",
@@ -61,7 +49,7 @@ if (isSolarDayOver && batteryHasReserve) {
     node.status({
         fill: "red",
         shape: "dot",
-        text: `Empty Battery, no solar power: ${adj.solarPower}W, solar forecast ${totalSolarRemaining}Wh, battery soc: ${soc}`
+        text: `Empty Battery, no solar power: ${solarPower}W, solar forecast ${totalSolarRemaining}Wh, battery soc: ${soc}`
     });
 }
 

@@ -1,12 +1,12 @@
-// 1. DATA RETRIEVAL (Using the Map in the input message)
-const ha = msg.payload;
-
-// Get numeric values from Home Assistant collection (handling "unavailable" with || 0)
-const gridPower = parseFloat(ha["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0;
-const currentBatteryOut = parseFloat(ha["sensor.solarflow_800_pro_output_home_power"]?.state) || 0;
-const calculatedDemand = msg.adjustment.defensiveTarget;
-const smoothedSolarPower = msg.adjustment.solarPower;
-const forcedDischarge = msg.adjustment.forcedRate;
+// 1. DATA RETRIEVAL
+const data = msg.data || {};
+const derived = msg.derived || {};
+const action = msg.action || {};
+const gridPower = data.grid?.power || 0;
+const currentBatteryOut = data.battery?.dischargePower || 0;
+const calculatedDemand = derived.demand?.defensiveTarget || 0;
+const solarPower = derived.solar?.livePower || 0;
+const forcedDischarge = action.battery?.discharge?.forcedRate || 0;
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
@@ -36,7 +36,7 @@ const alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
 //       0W (solar) - 200W (demand) - (-30) = -170W to discharge
 //       1W (solar) - 201W (demand) - (-30) = -170W to discharge
 //       0W (solar) - (-50)W (demand) - (-30) = 80W to adjust or even stop discharging (discharging is at least 50W)
-let requiredChange = smoothedSolarPower - calculatedDemand - targetBuffer;
+let requiredChange = solarPower - calculatedDemand - targetBuffer;
 
 // 4. THE CYCLE GUARD (Dynamic Deadband)
 // If the requiredChange is small AND we aren't "exporting", stay still to save battery cycles
@@ -82,16 +82,14 @@ if (Math.abs(smoothedCommand - lastCommand) < 5 && gridPower > 0 && currentBatte
 // 6. FINAL OUTPUT & PERSISTENCE
 context.set("lastCommand", smoothedCommand);
 
-// Store the results in their own property, keeping the map safe
-msg.adjustment = {
-    command: Math.round(smoothedCommand),
-    requiredChange: requiredChange, // The raw error before smoothing
-    isStable: Math.abs(requiredChange) < deadband,
-    grid: gridPower
-};
+msg.action = action;
+msg.action.battery = msg.action.battery || {};
+msg.action.battery.discharge = msg.action.battery.discharge || {};
+msg.action.battery.discharge.commandPower = Math.round(smoothedCommand);
+msg.action.battery.discharge.requiredChange = Math.round(requiredChange);
+msg.action.battery.discharge.isStable = Math.abs(requiredChange) < deadband;
+msg.action.battery.discharge.gridPower = Math.round(gridPower);
 
-// Now msg.payload still contains 31 entities,
-// and msg.adjustment contains this logic results.
 node.status({
     fill: "green",
     shape: "dot",

@@ -37,6 +37,23 @@ npm run release:prepare
 npm run check
 ```
 
+## Message Schema
+
+The flow is moving toward a stable internal message contract so that Home Assistant entity ids are encapsulated in one normalization step.
+
+- `msg.payload`
+  Raw Home Assistant entity map as received from the upstream collector.
+- `msg.data`
+  Normalized domain data grouped semantically, for example `data.grid`, `data.solar`, `data.battery`, `data.house`, `data.forecast`, and `data.sun`.
+- `msg.derived`
+  Intermediate calculated values such as averages, medians, standard deviations, stability classification, and theoretical surplus.
+- `msg.action`
+  Concrete controller intentions such as charge targets, discharge targets, and later load switching requests.
+- `msg.meta`
+  Technical metadata such as trigger interval, history window, telemetry source, and tracing context.
+
+The normalization entry point is [normalize-home-assistant-data.js](/home/andreas/git/solar-net-metering/function-nodes/normalize-home-assistant-data.js).
+
 ## GitHub Actions
 
 The workflow at [.github/workflows/ci-release.yml](/home/andreas/git/solar-net-metering/.github/workflows/ci-release.yml) runs:

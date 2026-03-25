@@ -1,11 +1,13 @@
 // 1. DATA RETRIEVAL (Using the Map in the input message)
-const ha = msg.payload;
-const gridPower = parseFloat(ha["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0;
-const maxChargePower = parseFloat(ha["sensor.solarflow_800_pro_charge_max_limit"]?.state) || 800;
-const batteryInflow = parseFloat(ha["sensor.solarflow_800_pro_grid_input_power"]?.state) || 0;
-const calculatedDemand = msg.adjustment.defensiveTarget;
-const liveSolarPower = msg.adjustment.solarPower;
-const stableSolarPower = msg.adjustment.solarAveragePower ?? liveSolarPower;
+const data = msg.data || {};
+const derived = msg.derived || {};
+const action = msg.action || {};
+const gridPower = data.grid?.power || 0;
+const maxChargePower = data.battery?.chargeMaxPower || 800;
+const batteryInflow = data.battery?.chargePower || 0;
+const calculatedDemand = derived.demand?.defensiveTarget || 0;
+const liveSolarPower = derived.solar?.livePower || 0;
+const stableSolarPower = derived.solar?.averagePower || liveSolarPower;
 const stability = msg.meta?.stability || {};
 const stabilityMode = stability.mode || "unstable_unstable";
 const isHappyPath = stabilityMode === "stable_stable";
@@ -14,12 +16,10 @@ const effectiveSolarPower = Math.max(
     stableSolarPower,
     liveSolarPower * solarLiveBlend + stableSolarPower * (1 - solarLiveBlend)
 );
-const soc = parseFloat(ha["sensor.solarflow_800_pro_electric_level"]?.state) || 0;
-const minSoc = parseFloat(ha["number.solarflow_800_pro_min_soc"]?.state) || 15;
-const currentSetInflow = parseFloat(ha["number.solarflow_800_pro_input_limit"]?.state) || 0;
-const totalProduced =
-    (parseFloat(ha["sensor.hoymiles600_power"]?.state) || 0) +
-    (parseFloat(ha["sensor.wechselrichter_ac_leistung"]?.state) || 0);
+const soc = data.battery?.soc || 0;
+const minSoc = data.battery?.minSoc || 15;
+const currentSetInflow = data.battery?.chargeSetpoint || 0;
+const totalProduced = data.solar?.totalPower || 0;
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
@@ -181,10 +181,21 @@ if (delta < (isHappyPath ? happyPathDeadband : 5) && gridPower >= 0 && batteryIn
 // 8. OUTPUTS & PERSISTENCE
 const roundedCommand = Math.round(smoothedCommand);
 
-// Store the results in their own property, keeping the map safe
-msg.adjustment.command = roundedCommand;
-msg.adjustment.grid = gridPower;
 context.set("lastCommand", smoothedCommand);
+
+msg.derived = derived;
+msg.derived.solar = msg.derived.solar || {};
+msg.derived.solar.effectivePower = Math.round(effectiveSolarPower);
+msg.derived.energy = msg.derived.energy || {};
+msg.derived.energy.theoreticalSurplus = Math.round(theoreticalSurplus);
+
+msg.action = action;
+msg.action.charge = {
+    targetPower: Math.round(targetCharge),
+    commandPower: roundedCommand,
+    ruleApplied: ruleApplied,
+    clampReason: clampReason
+};
 
 const insights = {
     payload: {
@@ -224,8 +235,8 @@ const telemetry = {
         currentSetInflow: Math.round(currentSetInflow),
         maxChargePower: Math.round(maxChargePower),
         calculatedDemand: Math.round(calculatedDemand),
-        currentDemand: Math.round(msg.adjustment.netPowerConcumption ?? calculatedDemand),
-        medianDemand: Math.round(msg.adjustment.medianDemand ?? calculatedDemand),
+        currentDemand: Math.round(msg.derived?.demand?.current ?? calculatedDemand),
+        medianDemand: Math.round(msg.derived?.demand?.median ?? calculatedDemand),
         liveSolarPower: Math.round(liveSolarPower),
         stableSolarPower: Math.round(stableSolarPower),
         effectiveSolarPower: Math.round(effectiveSolarPower),
@@ -239,8 +250,8 @@ const telemetry = {
         isExporting: isExporting,
         historySamples: msg.meta?.history?.samples ?? null,
         triggerIntervalSeconds: msg.meta?.history?.triggerIntervalSeconds ?? null,
-        demandStdDev: msg.meta?.stability?.stats?.demandStdDev ?? null,
-        solarStdDev: msg.meta?.stability?.stats?.solarStdDev ?? null
+        demandStdDev: msg.derived?.demand?.stdDev ?? null,
+        solarStdDev: msg.derived?.solar?.stdDev ?? null
     },
     insights: insights.payload
 };
