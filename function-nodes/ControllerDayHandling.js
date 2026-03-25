@@ -103,6 +103,8 @@ const demandTrendChangeBufferStep = 8; // Add confidence buffer when demand dire
 const maxTrendChangeBufferBoost = 40; // Keep trend-change contribution bounded
 const solarTrendChangeRampStep = 8; // Extra pre-charge for chaotic solar ramps
 const maxTrendChangeRampBoost = 30; // Bound extra ramp boost from trend changes
+const unstableLowSolarThreshold = 100; // Objective 4: explicitly keep at least half of low unstable solar
+const unstableLowSolarChargeFraction = 0.5; // Minimum charge share of generated solar in low unstable conditions
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -202,6 +204,28 @@ function applyForecastWarmHold(nextTargetCharge, nextRuleApplied) {
     };
 }
 
+function applyUnstableLowSolarMinimum(nextTargetCharge, nextRuleApplied) {
+    const isSolarUnstable =
+        stability.solar === "unstable" ||
+        stabilityMode === "solar_unstable" ||
+        stabilityMode === "unstable_unstable";
+
+    if (!isSolarUnstable || totalProduced <= 0 || totalProduced >= unstableLowSolarThreshold) {
+        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };
+    }
+
+    const unstableLowSolarMinimum = Math.round(totalProduced * unstableLowSolarChargeFraction);
+    if (nextTargetCharge >= unstableLowSolarMinimum) {
+        return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };
+    }
+
+    return {
+        targetCharge: unstableLowSolarMinimum,
+        ruleApplied: appendRule(nextRuleApplied, "Unstable Low Solar Minimum"),
+        isActive: true
+    };
+}
+
 function applyReductionGuard(nextTargetCharge, nextRuleApplied) {
     if (nextTargetCharge >= lastCommand || isExporting || lastCommand <= 0) {
         return { targetCharge: nextTargetCharge, ruleApplied: nextRuleApplied, isActive: false };
@@ -279,6 +303,10 @@ function calculateDefaultCharge() {
 const calculation = isHappyPath ? calculateHappyPathCharge() : calculateDefaultCharge();
 let targetCharge = calculation.targetCharge;
 ruleApplied = calculation.ruleApplied;
+const unstableLowSolarAdjustment = applyUnstableLowSolarMinimum(targetCharge, ruleApplied);
+targetCharge = unstableLowSolarAdjustment.targetCharge;
+ruleApplied = unstableLowSolarAdjustment.ruleApplied;
+const unstableLowSolarActive = unstableLowSolarAdjustment.isActive;
 const warmHoldAdjustment = applyForecastWarmHold(targetCharge, ruleApplied);
 targetCharge = warmHoldAdjustment.targetCharge;
 ruleApplied = warmHoldAdjustment.ruleApplied;
@@ -455,6 +483,7 @@ const telemetry = {
         minSoc: Math.round(minSoc),
         totalProduced: Math.round(totalProduced),
         totalSolarRemaining: Math.round(totalSolarRemaining),
+        unstableLowSolarActive: unstableLowSolarActive,
         forecastWarmHoldActive: isChargingActive && hasMeaningfulSolarForecast && !isExporting,
         reductionGuardActive: reductionGuardActive,
         dynamicImportBuffer: Math.round(dynamicImportBuffer),
