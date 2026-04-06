@@ -160,6 +160,19 @@ Intermediate calculated values. These fields are reusable helper values, not dir
 | `msg.derived.forecast.hoursToUsableSolar` | number | h    | Estimated hours until usable solar is available | `battery-budget.js` |
 | `msg.derived.forecast.hoursToSunrise`     | string | h    | Hours until sunrise as formatted decimal string | `battery-budget.js` |
 
+#### `msg.derived.houseDemandPlausibility`
+
+| Path                                                   | Type    | Meaning                                                                                                 | Producer                           |
+| ------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `msg.derived.houseDemandPlausibility.isConsistent`     | boolean | Whether the normalized house-demand snapshot passed plausibility checks                                 | `normalize-home-assistant-data.js` |
+| `msg.derived.houseDemandPlausibility.issues`           | array   | Machine-readable issue codes such as stale inputs, timing spread, negative demand, or setpoint mismatch | `normalize-home-assistant-data.js` |
+| `msg.derived.houseDemandPlausibility.details`          | array   | Human-readable summary strings for the detected plausibility issues                                     | `normalize-home-assistant-data.js` |
+| `msg.derived.houseDemandPlausibility.staleInputs`      | array   | Demand-balance inputs that were still numeric but older than the configured stale-age threshold         | `normalize-home-assistant-data.js` |
+| `msg.derived.houseDemandPlausibility.timing.*`         | object  | Input-age statistics and spread-threshold result for the demand-balance snapshot                        | `normalize-home-assistant-data.js` |
+| `msg.derived.houseDemandPlausibility.houseDemand.*`    | object  | Raw/clamped demand values and flags such as negative demand or below-minimum expected demand            | `normalize-home-assistant-data.js` |
+| `msg.derived.houseDemandPlausibility.setpointMismatch` | object  | Flags indicating that charge/discharge setpoints imply fresher power values than the reported snapshot  | `normalize-home-assistant-data.js` |
+| `msg.derived.houseDemandPlausibility.thresholds`       | object  | Thresholds used for stale-age, timing-spread, minimum-demand, and setpoint-mismatch checks              | `normalize-home-assistant-data.js` |
+
 #### `msg.derived.energy`
 
 | Path                                    | Type   | Unit | Meaning                                                   | Producer                   |
@@ -216,12 +229,13 @@ Technical metadata and classification.
 
 #### `msg.meta.normalization`
 
-| Path                                            | Type   | Meaning                                                                                                                          | Producer                           |
-| ----------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `msg.meta.normalization.triggerIntervalSeconds` | number | Trigger interval used to size the retained-reading window                                                                        | `normalize-home-assistant-data.js` |
-| `msg.meta.normalization.retainedReadingMs`      | number | Maximum age for reusing the last valid numeric reading when a sensor is temporarily invalid                                      | `normalize-home-assistant-data.js` |
-| `msg.meta.normalization.readings.*`             | object | Per-sensor normalization details including raw state, parsed value, reused-last-valid flag, and fallback usage for demand inputs | `normalize-home-assistant-data.js` |
-| `msg.meta.normalization.houseDemand.*`          | object | Diagnostics for house-demand calculation, including invalid inputs, reused inputs, raw power, and zero-fallback comparison       | `normalize-home-assistant-data.js` |
+| Path                                            | Type   | Meaning                                                                                                                              | Producer                           |
+| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| `msg.meta.normalization.triggerIntervalSeconds` | number | Trigger interval used to size the retained-reading window                                                                            | `normalize-home-assistant-data.js` |
+| `msg.meta.normalization.retainedReadingMs`      | number | Maximum age for reusing the last valid numeric reading when a sensor is temporarily invalid                                          | `normalize-home-assistant-data.js` |
+| `msg.meta.normalization.readings.*`             | object | Per-sensor normalization details including raw state, parsed value, timestamp age, stale flag, reused-last-valid flag, and fallbacks | `normalize-home-assistant-data.js` |
+| `msg.meta.normalization.houseDemand.*`          | object | Diagnostics for house-demand calculation, including invalid, retained, stale inputs, raw power, and zero-fallback comparison         | `normalize-home-assistant-data.js` |
+| `msg.meta.normalization.plausibility.*`         | object | Detailed plausibility classification for the demand snapshot, mirrored into `msg.derived.houseDemandPlausibility`                    | `normalize-home-assistant-data.js` |
 
 #### `msg.meta.trigger`
 

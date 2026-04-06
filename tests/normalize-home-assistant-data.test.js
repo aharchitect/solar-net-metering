@@ -93,8 +93,28 @@ function executeNormalize({ payload = createPayload(), contextState, now = NOW, 
     };
 }
 
+function toNativeArray(value) {
+    return Array.from(value);
+}
+
+function getHouseDemandPlausibility(normalizedMsg) {
+    return normalizedMsg.derived.houseDemandPlausibility;
+}
+
+function assertIncludesAll(actualValues, expectedValues) {
+    const nativeValues = toNativeArray(actualValues);
+
+    expectedValues.forEach((expectedValue) => {
+        assert.ok(
+            nativeValues.includes(expectedValue),
+            `Expected ${JSON.stringify(nativeValues)} to include ${expectedValue}`
+        );
+    });
+}
+
 test("normalizes a daytime happy path with timestamp and age logging", () => {
     const { normalizedMsg, telemetry, statuses, contextState } = executeNormalize();
+    const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
     assert.equal(normalizedMsg.data.grid.power, 120);
     assert.equal(normalizedMsg.data.solar.primaryPower, 500);
@@ -112,6 +132,9 @@ test("normalizes a daytime happy path with timestamp and age logging", () => {
     assert.equal(normalizedMsg.meta.normalization.readings.gridPower.sourceAgeMs, 10000);
     assert.equal(telemetry.payload.gridAgeMs, 10000);
     assert.equal(telemetry.payload.demandPower, 720);
+    assert.equal(plausibility.isConsistent, true);
+    assert.deepEqual(toNativeArray(plausibility.issues), []);
+    assert.equal(telemetry.payload.demandPlausible, true);
     assert.deepEqual(statuses, [{ fill: "green", shape: "dot", text: "Demand 720W" }]);
     assert.equal(
         contextState.lastValidNumbers["sensor.smartmeter_keller_sml_watt_summe"].value,
@@ -130,6 +153,7 @@ test("normalizes a nighttime happy path without solar production", () => {
     });
 
     const { normalizedMsg, telemetry, statuses } = executeNormalize({ payload });
+    const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
     assert.equal(normalizedMsg.data.solar.totalPower, 0);
     assert.equal(normalizedMsg.data.house.demandPowerRaw, 180);
@@ -137,6 +161,9 @@ test("normalizes a nighttime happy path without solar production", () => {
     assert.equal(normalizedMsg.data.sun.aboveHorizon, false);
     assert.equal(normalizedMsg.data.sun.nextRising, "2026-04-07T04:33:00.000Z");
     assert.equal(telemetry.payload.totalSolarPower, 0);
+    assert.equal(plausibility.isConsistent, true);
+    assert.deepEqual(toNativeArray(plausibility.staleInputs), []);
+    assert.equal(telemetry.payload.demandPlausible, true);
     assert.deepEqual(statuses, [{ fill: "green", shape: "dot", text: "Demand 180W" }]);
 });
 
@@ -155,6 +182,7 @@ test("normalizes nighttime when both inverter power sensors are unavailable", ()
     });
 
     const { normalizedMsg, telemetry, statuses } = executeNormalize({ payload });
+    const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
     assert.equal(normalizedMsg.data.solar.primaryPower, 0);
     assert.equal(normalizedMsg.data.solar.secondaryPower, 0);
@@ -162,12 +190,15 @@ test("normalizes nighttime when both inverter power sensors are unavailable", ()
     assert.equal(normalizedMsg.data.house.demandPowerRaw, 180);
     assert.equal(normalizedMsg.data.house.demandPower, 180);
     assert.equal(normalizedMsg.data.sun.aboveHorizon, false);
-    assert.deepEqual(Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs), [
+    assert.deepEqual(toNativeArray(normalizedMsg.meta.normalization.houseDemand.invalidInputs), [
         "solarPrimaryPower",
         "solarSecondaryPower"
     ]);
+    assert.equal(plausibility.isConsistent, false);
+    assertIncludesAll(plausibility.issues, ["invalid_inputs"]);
     assert.equal(telemetry.payload.solarPrimaryValid, false);
     assert.equal(telemetry.payload.solarSecondaryValid, false);
+    assert.equal(telemetry.payload.demandPlausible, false);
     assert.equal(telemetry.payload.totalSolarPower, 0);
     assert.deepEqual(statuses, [
         {
@@ -225,16 +256,22 @@ test("reuses the last valid grid value when the current grid reading is unavaila
         30000
     );
     assert.deepEqual(
-        Array.from(secondRun.normalizedMsg.meta.normalization.houseDemand.invalidInputs),
+        toNativeArray(secondRun.normalizedMsg.meta.normalization.houseDemand.invalidInputs),
         ["gridPower"]
     );
     assert.deepEqual(
-        Array.from(secondRun.normalizedMsg.meta.normalization.houseDemand.retainedInputs),
+        toNativeArray(secondRun.normalizedMsg.meta.normalization.houseDemand.retainedInputs),
         ["gridPower"]
     );
+    assert.equal(secondRun.normalizedMsg.derived.houseDemandPlausibility.isConsistent, false);
+    assertIncludesAll(secondRun.normalizedMsg.derived.houseDemandPlausibility.issues, [
+        "invalid_inputs",
+        "retained_inputs"
+    ]);
     assert.equal(secondRun.telemetry.payload.gridState, "unavailable");
     assert.equal(secondRun.telemetry.payload.gridPower, 250);
     assert.equal(secondRun.telemetry.payload.gridUsedLastValid, true);
+    assert.equal(secondRun.telemetry.payload.demandPlausible, false);
     assert.deepEqual(secondRun.statuses, [
         {
             fill: "yellow",
@@ -267,21 +304,27 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
         payload,
         now: "2026-04-05T13:00:23.491Z"
     });
+    const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
     assert.ok(Math.abs(normalizedMsg.data.house.demandPowerRaw + 135.11) < 1e-9);
     assert.equal(normalizedMsg.data.house.demandPower, 0);
     assert.ok(Math.abs(normalizedMsg.data.house.demandPowerZeroFallback + 135.11) < 1e-9);
     assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, true);
-    assert.deepEqual(Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.deepEqual(toNativeArray(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.equal(plausibility.isConsistent, false);
+    assertIncludesAll(plausibility.issues, ["stale_inputs", "timing_spread", "negative_demand"]);
+    assert.deepEqual(toNativeArray(plausibility.staleInputs), ["solarPrimaryPower"]);
     assert.equal(telemetry.payload.demandPowerRaw, -135);
     assert.equal(telemetry.payload.demandPower, 0);
     assert.equal(telemetry.payload.demandPowerClamped, true);
     assert.equal(telemetry.payload.demandWouldBeNegativeWithZeroFallback, true);
+    assert.equal(telemetry.payload.demandPlausible, false);
+    assert.equal(telemetry.payload.demandStaleInputs, "solarPrimaryPower");
     assert.deepEqual(statuses, [
         {
             fill: "yellow",
             shape: "ring",
-            text: "Demand 0W | negative demand clamped"
+            text: "Demand 0W | stale solarPrimaryPower"
         }
     ]);
 });
@@ -344,6 +387,7 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
             payload,
             now: scenario.now
         });
+        const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
         assert.equal(
             normalizedMsg.meta.normalization.readings.solarPrimaryPower.sourceAgeMs,
@@ -355,14 +399,19 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
         );
         assert.equal(normalizedMsg.meta.normalization.readings.solarPrimaryPower.isValid, true);
         assert.deepEqual(
-            Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs),
+            toNativeArray(normalizedMsg.meta.normalization.houseDemand.invalidInputs),
             []
         );
         assert.deepEqual(
-            Array.from(normalizedMsg.meta.normalization.houseDemand.retainedInputs),
+            toNativeArray(normalizedMsg.meta.normalization.houseDemand.retainedInputs),
             []
         );
+        assert.equal(plausibility.isConsistent, false);
+        assertIncludesAll(plausibility.issues, ["stale_inputs", "timing_spread"]);
+        assert.deepEqual(toNativeArray(plausibility.staleInputs), ["solarPrimaryPower"]);
         assert.equal(telemetry.payload.solarPrimaryAgeMs, 20000);
+        assert.equal(telemetry.payload.demandPlausible, false);
+        assert.equal(telemetry.payload.demandStaleInputs, "solarPrimaryPower");
         assert.ok(
             Math.abs(
                 normalizedMsg.meta.normalization.houseDemand.rawPower - scenario.expectedRawDemand
@@ -375,6 +424,7 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
             assert.equal(normalizedMsg.data.house.demandPower, 0);
             assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, true);
             assert.equal(telemetry.payload.demandPowerClamped, true);
+            assertIncludesAll(plausibility.issues, ["negative_demand"]);
         } else {
             assert.ok(
                 Math.abs(normalizedMsg.data.house.demandPower - scenario.expectedRawDemand) < 1e-9
@@ -382,6 +432,7 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
             assert.ok(normalizedMsg.data.house.demandPowerRaw < 40);
             assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, false);
             assert.equal(telemetry.payload.demandPowerClamped, false);
+            assertIncludesAll(plausibility.issues, ["below_minimum_house_demand"]);
         }
     });
 });
@@ -472,19 +523,23 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
             payload,
             now: scenario.now
         });
+        const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
         const reading = normalizedMsg.meta.normalization.readings[scenario.staleField];
         assert.equal(reading.sourceAgeMs, 20000);
         assert.equal(reading.usedLastValid, false);
         assert.equal(reading.isValid, true);
         assert.deepEqual(
-            Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs),
+            toNativeArray(normalizedMsg.meta.normalization.houseDemand.invalidInputs),
             []
         );
         assert.deepEqual(
-            Array.from(normalizedMsg.meta.normalization.houseDemand.retainedInputs),
+            toNativeArray(normalizedMsg.meta.normalization.houseDemand.retainedInputs),
             []
         );
+        assert.equal(plausibility.isConsistent, false);
+        assertIncludesAll(plausibility.issues, ["stale_inputs", "timing_spread"]);
+        assert.deepEqual(toNativeArray(plausibility.staleInputs), [scenario.staleField]);
         assert.ok(
             Math.abs(
                 normalizedMsg.meta.normalization.houseDemand.rawPower - scenario.expectedRawDemand
@@ -492,6 +547,7 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
         );
         assert.equal(telemetry.payload.demandPowerRaw, scenario.expectedTelemetryDemand);
         assert.equal(normalizedMsg.data.house.demandPower, scenario.expectedClampedDemand);
+        assert.equal(telemetry.payload.demandPlausible, false);
 
         if (scenario.expectedRawDemand <= 0) {
             assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, true);
@@ -499,6 +555,10 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
         } else {
             assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, false);
             assert.equal(telemetry.payload.demandPowerClamped, false);
+            if (scenario.staleField === "batteryChargePower") {
+                assertIncludesAll(plausibility.issues, ["charge_setpoint_mismatch"]);
+                assert.equal(telemetry.payload.demandChargeSetpointMismatch, true);
+            }
         }
     });
 });
@@ -530,6 +590,7 @@ test("at night a 20s stale grid reading together with fresh high discharge overs
     });
 
     const { normalizedMsg, telemetry } = executeNormalize({ payload, now });
+    const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
     assert.equal(normalizedMsg.data.sun.aboveHorizon, false);
     assert.equal(normalizedMsg.meta.normalization.readings.gridPower.sourceAgeMs, 20000);
@@ -538,10 +599,14 @@ test("at night a 20s stale grid reading together with fresh high discharge overs
     assert.equal(normalizedMsg.data.battery.dischargeSetpoint, 300);
     assert.equal(normalizedMsg.data.house.demandPowerRaw, 370);
     assert.equal(normalizedMsg.data.house.demandPower, 370);
-    assert.deepEqual(Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.deepEqual(toNativeArray(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.equal(plausibility.isConsistent, false);
+    assertIncludesAll(plausibility.issues, ["stale_inputs", "timing_spread"]);
+    assert.deepEqual(toNativeArray(plausibility.staleInputs), ["gridPower"]);
     assert.equal(telemetry.payload.gridAgeMs, 20000);
     assert.equal(telemetry.payload.demandPowerRaw, 370);
     assert.equal(telemetry.payload.demandPowerClamped, false);
+    assert.equal(telemetry.payload.demandPlausible, false);
 });
 
 test("at night a stale discharge reading can hide an increasing discharge setpoint and collapse demand toward zero", () => {
@@ -571,6 +636,7 @@ test("at night a stale discharge reading can hide an increasing discharge setpoi
     });
 
     const { normalizedMsg, telemetry } = executeNormalize({ payload, now });
+    const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
     assert.equal(normalizedMsg.data.sun.aboveHorizon, false);
     assert.equal(
@@ -582,16 +648,27 @@ test("at night a stale discharge reading can hide an increasing discharge setpoi
     assert.equal(normalizedMsg.data.battery.dischargeSetpoint, 350);
     assert.equal(normalizedMsg.data.house.demandPowerRaw, -20);
     assert.equal(normalizedMsg.data.house.demandPower, 0);
-    assert.deepEqual(Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.deepEqual(toNativeArray(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.equal(plausibility.isConsistent, false);
+    assertIncludesAll(plausibility.issues, [
+        "stale_inputs",
+        "timing_spread",
+        "negative_demand",
+        "discharge_setpoint_mismatch"
+    ]);
+    assert.deepEqual(toNativeArray(plausibility.staleInputs), ["batteryDischargePower"]);
     assert.equal(telemetry.payload.batteryDischargeAgeMs, 20000);
     assert.equal(telemetry.payload.demandPowerRaw, -20);
     assert.equal(telemetry.payload.demandPowerClamped, true);
+    assert.equal(telemetry.payload.demandDischargeSetpointMismatch, true);
+    assert.equal(telemetry.payload.demandPlausible, false);
 });
 
 test("falls back safely when Home Assistant does not respond at all", () => {
     const { normalizedMsg, telemetry, statuses } = executeNormalize({
         payload: null
     });
+    const plausibility = getHouseDemandPlausibility(normalizedMsg);
 
     assert.equal(normalizedMsg.data.grid.power, 0);
     assert.equal(normalizedMsg.data.solar.totalPower, 0);
@@ -600,16 +677,19 @@ test("falls back safely when Home Assistant does not respond at all", () => {
     assert.equal(normalizedMsg.data.house.demandPower, 0);
     assert.equal(normalizedMsg.data.sun.aboveHorizon, false);
     assert.equal(normalizedMsg.data.sun.nextRising, null);
-    assert.deepEqual(Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs), [
+    assert.deepEqual(toNativeArray(normalizedMsg.meta.normalization.houseDemand.invalidInputs), [
         "gridPower",
         "batteryDischargePower",
         "solarPrimaryPower",
         "solarSecondaryPower",
         "batteryChargePower"
     ]);
+    assert.equal(plausibility.isConsistent, false);
+    assertIncludesAll(plausibility.issues, ["invalid_inputs", "below_minimum_house_demand"]);
     assert.equal(telemetry.payload.gridValid, false);
     assert.equal(telemetry.payload.solarPrimaryValid, false);
     assert.equal(telemetry.payload.batteryChargeValid, false);
+    assert.equal(telemetry.payload.demandPlausible, false);
     assert.deepEqual(statuses, [
         {
             fill: "yellow",
