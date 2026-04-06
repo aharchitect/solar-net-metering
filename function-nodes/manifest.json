@@ -36,7 +36,7 @@
         "path": "function-nodes/adjust-battery-discharging.js"
     },
     {
-        "id": "1ea042ca1244df90",
+        "id": "2d93f991ad520364",
         "name": "Statistical Averaging of House Load and Solar",
         "path": "function-nodes/statistical-averaging-of-house-load-and-solar.js"
     },

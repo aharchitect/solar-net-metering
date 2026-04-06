@@ -178,7 +178,36 @@
         "h": 222
     },
     {
-        "id": "5739c3f29a1ea937",
+        "id": "20475e1a88e49de9",
+        "type": "group",
+        "z": "85c036d935247d38",
+        "g": "9f3e1f58b6c00571",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "68e76bb7b33a0541",
+            "4021057d92fc0eb0",
+            "a4efc05b3bc93edb",
+            "1fff34807fca139f",
+            "9e5c7a4d1b2f0031",
+            "c0b29f9d4c8ae112",
+            "91fd6e8e5070b439",
+            "7996c5aee4e90722"
+        ],
+        "x": 2734,
+        "y": 879,
+        "w": 672,
+        "h": 352
+    },
+    {
+        "id": "ad6875745e3173bb",
         "type": "inject",
         "z": "f6f2187d.f17ca8",
         "g": "5cf6489d8647b69b",
@@ -1150,8 +1179,32 @@
     {
         "id": "1ea042ca1244df90",
         "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "g": "5cf6489d8647b69b",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
+        "name": "Normalize Home Assistant Data",
+        "func": "// Specification:\n// Encapsulate Home Assistant entity ids in one place and expose a semantic,\n// reusable internal message structure for all subsequent controller nodes.\nconst ha = msg.payload || {};\nconst now = Date.now();\nconst triggerIntervalSeconds =\n    msg.meta?.trigger?.intervalSeconds || flow.get(\"triggerIntervalSeconds\") || 20;\nconst retainedReadingMs = Math.max(60 * 1000, triggerIntervalSeconds * 6 * 1000);\nlet lastValidNumbers = context.get(\"lastValidNumbers\") || {};\n\nfunction getEntity(entityId) {\n    return ha[entityId];\n}\n\nfunction readNumber(entityId, fallback = 0, options = {}) {\n    const { remember = false, maxAgeMs = retainedReadingMs } = options;\n    const rawState = getEntity(entityId)?.state ?? null;\n    const parsedValue = parseFloat(rawState);\n    const isValid = Number.isFinite(parsedValue);\n    let value = fallback;\n    let usedLastValid = false;\n    let lastValidAgeMs = null;\n\n    if (isValid) {\n        value = parsedValue;\n        if (remember) {\n            lastValidNumbers[entityId] = {\n                value: parsedValue,\n                timestamp: now\n            };\n        }\n    } else if (remember) {\n        const cached = lastValidNumbers[entityId];\n        if (cached) {\n            lastValidAgeMs = now - cached.timestamp;\n            if (lastValidAgeMs <= maxAgeMs) {\n                value = cached.value;\n                usedLastValid = true;\n            }\n        }\n    }\n\n    return {\n        entityId,\n        rawState,\n        parsedValue: isValid ? parsedValue : null,\n        value,\n        isValid,\n        usedLastValid,\n        usedFallback: !isValid && !usedLastValid,\n        lastValidAgeMs\n    };\n}\n\nfunction getNumber(entityId, fallback = 0, options = {}) {\n    return readNumber(entityId, fallback, options).value;\n}\n\nfunction getString(entityId, fallback = \"\") {\n    const value = getEntity(entityId)?.state;\n    return value !== undefined && value !== null ? String(value) : fallback;\n}\n\nfunction getAttributeNumber(entityId, attributeName, fallback = 0) {\n    const value = parseFloat(getEntity(entityId)?.attributes?.[attributeName]);\n    return Number.isFinite(value) ? value : fallback;\n}\n\nfunction readWh(entityId, fallback = 0, options = {}) {\n    const { remember = false, maxAgeMs = retainedReadingMs } = options;\n    const entity = getEntity(entityId);\n    const rawState = entity?.state ?? null;\n    const parsedValue = parseFloat(rawState);\n    const isValid = Number.isFinite(parsedValue);\n    const unit = entity?.attributes?.unit_of_measurement;\n    let value = fallback;\n    let usedLastValid = false;\n    let lastValidAgeMs = null;\n\n    if (isValid) {\n        value = unit === \"kWh\" ? parsedValue * 1000 : parsedValue;\n        if (remember) {\n            lastValidNumbers[entityId] = {\n                value,\n                timestamp: now\n            };\n        }\n    } else if (remember) {\n        const cached = lastValidNumbers[entityId];\n        if (cached) {\n            lastValidAgeMs = now - cached.timestamp;\n            if (lastValidAgeMs <= maxAgeMs) {\n                value = cached.value;\n                usedLastValid = true;\n            }\n        }\n    }\n\n    return {\n        entityId,\n        rawState,\n        parsedValue: isValid ? value : null,\n        value,\n        isValid,\n        usedLastValid,\n        usedFallback: !isValid && !usedLastValid,\n        lastValidAgeMs\n    };\n}\n\nfunction summarizeReading(reading) {\n    return {\n        entityId: reading.entityId,\n        rawState: reading.rawState,\n        parsedValue: reading.parsedValue,\n        value: reading.value,\n        isValid: reading.isValid,\n        usedLastValid: reading.usedLastValid,\n        usedFallback: reading.usedFallback,\n        lastValidAgeMs: reading.lastValidAgeMs\n    };\n}\n\nconst gridPowerReading = readNumber(\"sensor.smartmeter_keller_sml_watt_summe\", 0, {\n    remember: true\n});\nconst solarPrimaryPowerReading = readNumber(\"sensor.wechselrichter_ac_leistung\", 0, {\n    remember: true\n});\nconst solarSecondaryPowerReading = readNumber(\"sensor.hoymiles600_power\", 0, {\n    remember: true\n});\nconst batteryChargePowerReading = readNumber(\"sensor.solarflow_800_pro_grid_input_power\", 0, {\n    remember: true\n});\nconst batteryDischargePowerReading = readNumber(\"sensor.solarflow_800_pro_output_home_power\", 0, {\n    remember: true\n});\n\nconst demandComponentReadings = [\n    { key: \"grid\", label: \"gridPower\", reading: gridPowerReading, sign: 1 },\n    {\n        key: \"batteryDischarge\",\n        label: \"batteryDischargePower\",\n        reading: batteryDischargePowerReading,\n        sign: 1\n    },\n    { key: \"solarPrimary\", label: \"solarPrimaryPower\", reading: solarPrimaryPowerReading, sign: 1 },\n    {\n        key: \"solarSecondary\",\n        label: \"solarSecondaryPower\",\n        reading: solarSecondaryPowerReading,\n        sign: 1\n    },\n    {\n        key: \"batteryCharge\",\n        label: \"batteryChargePower\",\n        reading: batteryChargePowerReading,\n        sign: -1\n    }\n];\n\nconst demandPowerRaw = demandComponentReadings.reduce(\n    (sum, component) => sum + component.reading.value * component.sign,\n    0\n);\nconst demandPowerZeroFallback = demandComponentReadings.reduce((sum, component) => {\n    const readingValue = component.reading.isValid ? component.reading.parsedValue : 0;\n    return sum + readingValue * component.sign;\n}, 0);\nconst demandInvalidInputs = demandComponentReadings\n    .filter((component) => !component.reading.isValid)\n    .map((component) => component.label);\nconst demandRetainedInputs = demandComponentReadings\n    .filter((component) => component.reading.usedLastValid)\n    .map((component) => component.label);\nconst demandPower = Math.max(0, demandPowerRaw);\nconst demandPowerClamped = demandPowerRaw < 0;\n\nif (!msg.derived) {\n    msg.derived = {};\n}\nif (!msg.action) {\n    msg.action = {};\n}\nif (!msg.meta) {\n    msg.meta = {};\n}\n\nconst solarRemainingWhPrimaryReading = readWh(\"sensor.energy_production_today_remaining\", 0, {\n    remember: true\n});\nconst solarRemainingWhSecondaryReading = readWh(\"sensor.energy_production_today_remaining_2\", 0, {\n    remember: true\n});\nconst nextHourPrimaryReading = readNumber(\"sensor.energy_next_hour\", 0, { remember: true });\nconst nextHourSecondaryReading = readNumber(\"sensor.energy_next_hour_2\", 0, { remember: true });\n\nmsg.data = {\n    grid: {\n        power: gridPowerReading.value\n    },\n    solar: {\n        primaryPower: solarPrimaryPowerReading.value,\n        secondaryPower: solarSecondaryPowerReading.value,\n        totalPower: solarPrimaryPowerReading.value + solarSecondaryPowerReading.value\n    },\n    battery: {\n        soc: getNumber(\"sensor.solarflow_800_pro_electric_level\", 0, { remember: true }),\n        minSoc: getNumber(\"number.solarflow_800_pro_min_soc\", 15, { remember: true }),\n        socLimit: getNumber(\"number.solarflow_800_pro_soc_set\", 100, { remember: true }),\n        availableWh:\n            getNumber(\"sensor.solarflow_800_pro_available_kwh\", 0, { remember: true }) * 1000,\n        chargePower: batteryChargePowerReading.value,\n        dischargePower: batteryDischargePowerReading.value,\n        chargeSetpoint: getNumber(\"number.solarflow_800_pro_input_limit\", 0, { remember: true }),\n        dischargeSetpoint: getNumber(\"number.solarflow_800_pro_output_limit\", 0, {\n            remember: true\n        }),\n        chargeMaxPower: getNumber(\"sensor.solarflow_800_pro_charge_max_limit\", 800, {\n            remember: true\n        }),\n        chargeHardwareMaxPower: getAttributeNumber(\n            \"sensor.solarflow_800_pro_charge_max_limit\",\n            \"max\",\n            800\n        )\n    },\n    house: {\n        demandPower: demandPower,\n        demandPowerRaw: demandPowerRaw,\n        demandPowerZeroFallback: demandPowerZeroFallback\n    },\n    forecast: {\n        solarRemainingWh:\n            solarRemainingWhPrimaryReading.value + solarRemainingWhSecondaryReading.value,\n        nextHourWh: nextHourPrimaryReading.value + nextHourSecondaryReading.value\n    },\n    sun: {\n        aboveHorizon: getString(\"sun.sun\") === \"above_horizon\",\n        nextRising: getEntity(\"sun.sun\")?.attributes?.next_rising || null\n    },\n    inverter: {\n        acMode: getString(\"select.solarflow_800_pro_ac_mode\"),\n        inverseMaxPower: getNumber(\"sensor.solarflow_800_pro_inverse_max_power\", 0, {\n            remember: true\n        }),\n        reachable: getString(\"binary_sensor.hoymiles600_reachable\"),\n        producing: getString(\"binary_sensor.hoymiles600_producing\"),\n        opendtuStatus: getString(\"binary_sensor.opendtu_b69d10_status\")\n    }\n};\n\nmsg.meta.source = {\n    kind: \"home_assistant_map\"\n};\nmsg.meta.normalization = {\n    triggerIntervalSeconds: triggerIntervalSeconds,\n    retainedReadingMs: retainedReadingMs,\n    readings: {\n        gridPower: summarizeReading(gridPowerReading),\n        solarPrimaryPower: summarizeReading(solarPrimaryPowerReading),\n        solarSecondaryPower: summarizeReading(solarSecondaryPowerReading),\n        batteryChargePower: summarizeReading(batteryChargePowerReading),\n        batteryDischargePower: summarizeReading(batteryDischargePowerReading)\n    },\n    houseDemand: {\n        power: demandPower,\n        rawPower: demandPowerRaw,\n        zeroFallbackPower: demandPowerZeroFallback,\n        isClamped: demandPowerClamped,\n        invalidInputs: demandInvalidInputs,\n        retainedInputs: demandRetainedInputs,\n        wouldBeNegativeWithZeroFallback: demandPowerZeroFallback < 0\n    }\n};\n\ncontext.set(\"lastValidNumbers\", lastValidNumbers);\n\nconst telemetry = {\n    payload: {\n        time: new Date().toISOString(),\n        source: \"normalize_home_assistant_data\",\n        triggerIntervalSeconds: triggerIntervalSeconds,\n        retainedReadingMs: retainedReadingMs,\n        gridState: gridPowerReading.rawState,\n        gridParsedPower: gridPowerReading.parsedValue,\n        gridPower: gridPowerReading.value,\n        gridValid: gridPowerReading.isValid,\n        gridUsedLastValid: gridPowerReading.usedLastValid,\n        gridLastValidAgeMs: gridPowerReading.lastValidAgeMs,\n        solarPrimaryState: solarPrimaryPowerReading.rawState,\n        solarPrimaryParsedPower: solarPrimaryPowerReading.parsedValue,\n        solarPrimaryPower: solarPrimaryPowerReading.value,\n        solarPrimaryValid: solarPrimaryPowerReading.isValid,\n        solarPrimaryUsedLastValid: solarPrimaryPowerReading.usedLastValid,\n        solarPrimaryLastValidAgeMs: solarPrimaryPowerReading.lastValidAgeMs,\n        solarSecondaryState: solarSecondaryPowerReading.rawState,\n        solarSecondaryParsedPower: solarSecondaryPowerReading.parsedValue,\n        solarSecondaryPower: solarSecondaryPowerReading.value,\n        solarSecondaryValid: solarSecondaryPowerReading.isValid,\n        solarSecondaryUsedLastValid: solarSecondaryPowerReading.usedLastValid,\n        solarSecondaryLastValidAgeMs: solarSecondaryPowerReading.lastValidAgeMs,\n        batteryChargeState: batteryChargePowerReading.rawState,\n        batteryChargeParsedPower: batteryChargePowerReading.parsedValue,\n        batteryChargePower: batteryChargePowerReading.value,\n        batteryChargeValid: batteryChargePowerReading.isValid,\n        batteryChargeUsedLastValid: batteryChargePowerReading.usedLastValid,\n        batteryChargeLastValidAgeMs: batteryChargePowerReading.lastValidAgeMs,\n        batteryDischargeState: batteryDischargePowerReading.rawState,\n        batteryDischargeParsedPower: batteryDischargePowerReading.parsedValue,\n        batteryDischargePower: batteryDischargePowerReading.value,\n        batteryDischargeValid: batteryDischargePowerReading.isValid,\n        batteryDischargeUsedLastValid: batteryDischargePowerReading.usedLastValid,\n        batteryDischargeLastValidAgeMs: batteryDischargePowerReading.lastValidAgeMs,\n        totalSolarPower: msg.data.solar.totalPower,\n        demandPowerRaw: Math.round(demandPowerRaw),\n        demandPower: Math.round(demandPower),\n        demandPowerZeroFallback: Math.round(demandPowerZeroFallback),\n        demandPowerClamped: demandPowerClamped,\n        demandWouldBeNegativeWithZeroFallback: demandPowerZeroFallback < 0,\n        demandInvalidInputs: demandInvalidInputs.join(\"|\"),\n        demandRetainedInputs: demandRetainedInputs.join(\"|\")\n    }\n};\n\nif (demandInvalidInputs.length > 0 || demandPowerClamped) {\n    const statusDetails =\n        demandInvalidInputs.length > 0\n            ? `invalid ${demandInvalidInputs.join(\",\")}`\n            : \"negative demand clamped\";\n    node.status({\n        fill: \"yellow\",\n        shape: \"ring\",\n        text: `Demand ${Math.round(demandPower)}W | ${statusDetails}`\n    });\n} else {\n    node.status({\n        fill: \"green\",\n        shape: \"dot\",\n        text: `Demand ${Math.round(demandPower)}W`\n    });\n}\n\nreturn [msg, telemetry];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1270,
+        "y": 580,
+        "wires": [
+            [
+                "2d93f991ad520364"
+            ],
+            [
+                "9e5c7a4d1b2f0031"
+            ]
+        ]
+    },
+    {
+        "id": "2d93f991ad520364",
+        "type": "function",
+        "z": "85c036d935247d38",
+        "g": "835edd95be21e3cf",
         "name": "Statistical Averaging of House Load and Solar",
         "func": "// 1. Calculate current real house demand\nconst map = msg.payload;\n// INITIALIZATION: Ensure msg.adjustment exists so we don't crash\nif (!msg.adjustment) {\n    msg.adjustment = {};\n}\n\nconst grid = parseFloat(map[\"sensor.smartmeter_keller_sml_watt_summe\"]?.state) || 0;\nconst batOut = parseFloat(map[\"sensor.solarflow_800_pro_output_home_power\"]?.state) || 0;\nconst solarIn1 = parseFloat(map[\"sensor.wechselrichter_ac_leistung\"]?.state) || 0;\nconst solarIn2 = parseFloat(map[\"sensor.hoymiles600_power\"]?.state) || 0;\nconst batIn = parseFloat(map[\"sensor.solarflow_800_pro_grid_input_power\"]?.state) || 0;\nconst currentDemand = grid + batOut + solarIn1 + solarIn2 - batIn;\nconst currentSolarPower = solarIn1 + solarIn2;\n\n// 2. Manage 5-minute history (15 samples @ 20s interval)\nlet history = context.get(\"demandHistory\") || [];\nhistory.push(currentDemand);\nif (history.length > 15) history.shift();\ncontext.set(\"demandHistory\", history);\nlet solarHistory = context.get(\"solarHistory\") || [];\nsolarHistory.push(currentSolarPower);\nif (solarHistory.length > 15) solarHistory.shift();\ncontext.set(\"solarHistory\", solarHistory);\n\n// 3. Calculate Average\nconst averageSolar = solarHistory.reduce((c, d) => c + d, 0) / solarHistory.length;\n// 4. Calculate Median (P50)\n// We create a copy so we don't mess up the chronological history\nconst sorted = [...history].sort((a, b) => a - b);\nconst lowMiddle = Math.floor((sorted.length - 1) / 2);\nconst highMiddle = Math.ceil((sorted.length - 1) / 2);\nconst medianDemand = (sorted[lowMiddle] + sorted[highMiddle]) / 2;\n\n// 5. ASYMMETRIC LOGIC\n// Demand: Use the Median/Defensive approach (STAY SLOW)\n// This prevents the battery from discharging too fast when a spike is brief.\nconst defensiveTarget = Math.min(medianDemand, currentDemand);\n\n// Solar: Keep the live value for quick visibility, but also publish the\n// rolling 5-minute average so the charge controller can make steadier decisions.\nconst proactiveSolar = currentSolarPower;\n\n// 6. THE \"CONTINUOUS FLOW\" BIAS\n// If there is any solar production (>50W), we artificially lower the\n// defensive demand slightly to ensure the calculation always results\n// in a small positive \"surplus\" for the battery.\nconst flowBias = proactiveSolar > 50 ? 20 : 0;\n\nnode.status({\n    fill: \"blue\",\n    shape: \"dot\",\n    text: `Solar (Now): ${Math.round(proactiveSolar)}W, (5min avg): ${Math.round(averageSolar)}W | Demand (Def): ${Math.round(defensiveTarget)}W, (median): ${Math.round(medianDemand)}W`\n});\n\nmsg.adjustment.defensiveTarget = Math.round(defensiveTarget - flowBias);\nmsg.adjustment.solarPower = Math.round(proactiveSolar);\nmsg.adjustment.solarAveragePower = Math.round(averageSolar);\nreturn msg;",
         "outputs": 1,
@@ -1396,6 +1449,178 @@
         "x": 3630,
         "y": 460,
         "wires": []
+    },
+    {
+        "id": "68e76bb7b33a0541",
+        "type": "csv",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "Controller Telemetry CSV",
+        "sep": ";",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "time,source,mode,ruleApplied,clampReason,gridPower,batteryInflow,currentSetInflow,maxChargePower,calculatedDemand,currentDemand,medianDemand,liveSolarPower,stableSolarPower,effectiveSolarPower,theoreticalSurplus,targetCharge,finalCommand,delta,soc,minSoc,totalProduced,isExporting,historySamples,triggerIntervalSeconds,demandStdDev,solarStdDev",
+        "skip": "0",
+        "strings": false,
+        "include_empty_strings": "",
+        "include_null_values": true,
+        "x": 2910,
+        "y": 920,
+        "wires": [
+            [
+                "4021057d92fc0eb0"
+            ]
+        ]
+    },
+    {
+        "id": "4021057d92fc0eb0",
+        "type": "file",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "logFileMsg_ControllerDayHandling.csv",
+        "filename": "/data/share/logFileMsg_ControllerDayHandling.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 3230,
+        "y": 920,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a4efc05b3bc93edb",
+        "type": "inject",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "Reset Controller Log Header",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "58 23 * * 0",
+        "once": false,
+        "onceDelay": "6",
+        "topic": "",
+        "payload": "time;source;mode;ruleApplied;clampReason;gridPower;batteryInflow;currentSetInflow;maxChargePower;calculatedDemand;currentDemand;medianDemand;liveSolarPower;stableSolarPower;effectiveSolarPower;theoreticalSurplus;targetCharge;finalCommand;delta;soc;minSoc;totalProduced;isExporting;historySamples;triggerIntervalSeconds;demandStdDev;solarStdDev",
+        "payloadType": "str",
+        "x": 2910,
+        "y": 1020,
+        "wires": [
+            [
+                "1fff34807fca139f"
+            ]
+        ]
+    },
+    {
+        "id": "1fff34807fca139f",
+        "type": "file",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "logFileMsg_ControllerDayHandling.csv",
+        "filename": "/data/share/logFileMsg_ControllerDayHandling.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 3230,
+        "y": 1020,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9e5c7a4d1b2f0031",
+        "type": "csv",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "Normalize Telemetry CSV",
+        "sep": ";",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "time,source,triggerIntervalSeconds,retainedReadingMs,gridState,gridParsedPower,gridPower,gridValid,gridUsedLastValid,gridLastValidAgeMs,solarPrimaryState,solarPrimaryParsedPower,solarPrimaryPower,solarPrimaryValid,solarPrimaryUsedLastValid,solarPrimaryLastValidAgeMs,solarSecondaryState,solarSecondaryParsedPower,solarSecondaryPower,solarSecondaryValid,solarSecondaryUsedLastValid,solarSecondaryLastValidAgeMs,batteryChargeState,batteryChargeParsedPower,batteryChargePower,batteryChargeValid,batteryChargeUsedLastValid,batteryChargeLastValidAgeMs,batteryDischargeState,batteryDischargeParsedPower,batteryDischargePower,batteryDischargeValid,batteryDischargeUsedLastValid,batteryDischargeLastValidAgeMs,totalSolarPower,demandPowerRaw,demandPower,demandPowerZeroFallback,demandPowerClamped,demandWouldBeNegativeWithZeroFallback,demandInvalidInputs,demandRetainedInputs",
+        "skip": "0",
+        "strings": false,
+        "include_empty_strings": "",
+        "include_null_values": true,
+        "x": 2910,
+        "y": 1120,
+        "wires": [
+            [
+                "c0b29f9d4c8ae112"
+            ]
+        ]
+    },
+    {
+        "id": "c0b29f9d4c8ae112",
+        "type": "file",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "logFileMsg_NormalizeHomeAssistantData.csv",
+        "filename": "/data/share/logFileMsg_NormalizeHomeAssistantData.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 3260,
+        "y": 1120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "91fd6e8e5070b439",
+        "type": "inject",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "Reset Normalize Log Header",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "58 23 * * 0",
+        "once": false,
+        "onceDelay": "6",
+        "topic": "",
+        "payload": "time;source;triggerIntervalSeconds;retainedReadingMs;gridState;gridParsedPower;gridPower;gridValid;gridUsedLastValid;gridLastValidAgeMs;solarPrimaryState;solarPrimaryParsedPower;solarPrimaryPower;solarPrimaryValid;solarPrimaryUsedLastValid;solarPrimaryLastValidAgeMs;solarSecondaryState;solarSecondaryParsedPower;solarSecondaryPower;solarSecondaryValid;solarSecondaryUsedLastValid;solarSecondaryLastValidAgeMs;batteryChargeState;batteryChargeParsedPower;batteryChargePower;batteryChargeValid;batteryChargeUsedLastValid;batteryChargeLastValidAgeMs;batteryDischargeState;batteryDischargeParsedPower;batteryDischargePower;batteryDischargeValid;batteryDischargeUsedLastValid;batteryDischargeLastValidAgeMs;totalSolarPower;demandPowerRaw;demandPower;demandPowerZeroFallback;demandPowerClamped;demandWouldBeNegativeWithZeroFallback;demandInvalidInputs;demandRetainedInputs",
+        "payloadType": "str",
+        "x": 2920,
+        "y": 1220,
+        "wires": [
+            [
+                "7996c5aee4e90722"
+            ]
+        ]
+    },
+    {
+        "id": "7996c5aee4e90722",
+        "type": "file",
+        "z": "85c036d935247d38",
+        "g": "20475e1a88e49de9",
+        "name": "logFileMsg_NormalizeHomeAssistantData.csv",
+        "filename": "/data/share/logFileMsg_NormalizeHomeAssistantData.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 3260,
+        "y": 1220,
+        "wires": [
+            []
+        ]
     },
     {
         "id": "bf41ee605731eea3",
