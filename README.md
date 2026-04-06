@@ -31,6 +31,7 @@ The project now includes a small Node.js toolchain for linting, formatting, and 
 ```bash
 npm run lint
 npm run lint:fix
+npm test
 npm run format
 npm run format:check
 npm run release:prepare

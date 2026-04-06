@@ -242,6 +242,14 @@ Technical metadata and classification.
 | `msg.meta.history.trendWindowSeconds`          | number | s     | Short trend-history window used for direction-change checks    | `statistical-averaging-of-house-load-and-solar.js` |
 | `msg.meta.history.trendSamples`                | number | count | Number of trend evaluations retained in the short trend window | `statistical-averaging-of-house-load-and-solar.js` |
 
+#### `msg.meta.sensorTiming`
+
+| Path                               | Type   | Meaning                                                                                  | Producer                                           |
+| ---------------------------------- | ------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `msg.meta.sensorTiming.thresholds` | object | Age and spread thresholds used to decide whether a snapshot is sufficiently synchronized | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.sensorTiming.demand`     | object | Timing diagnostics for the demand-balance inputs, including raw vs estimated demand      | `statistical-averaging-of-house-load-and-solar.js` |
+| `msg.meta.sensorTiming.solar`      | object | Timing diagnostics for the solar inputs, including raw vs estimated solar                | `statistical-averaging-of-house-load-and-solar.js` |
+
 #### `msg.meta.stability`
 
 | Path                                                 | Type   | Meaning                                                                                             | Producer                                           |

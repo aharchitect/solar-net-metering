@@ -41,6 +41,11 @@
         "path": "function-nodes/statistical-averaging-of-house-load-and-solar.js"
     },
     {
+        "id": "1ea042ca1244df90",
+        "name": "Normalize Home Assistant Data",
+        "path": "function-nodes/normalize-home-assistant-data.js"
+    },
+    {
         "id": "e431f5e11e9ac07a",
         "name": "Battery Budget",
         "path": "function-nodes/battery-budget.js"

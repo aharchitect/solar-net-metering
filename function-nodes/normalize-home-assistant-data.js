@@ -12,11 +12,47 @@ function getEntity(entityId) {
     return ha[entityId];
 }
 
+function getEntityTimeInfo(entity) {
+    const candidates = [
+        ["last_reported", entity?.last_reported],
+        ["last_updated", entity?.last_updated],
+        ["last_changed", entity?.last_changed],
+        ["attributes.last_reported", entity?.attributes?.last_reported],
+        ["attributes.last_updated", entity?.attributes?.last_updated],
+        ["attributes.last_changed", entity?.attributes?.last_changed]
+    ];
+
+    for (const [source, rawTimestamp] of candidates) {
+        if (!rawTimestamp) {
+            continue;
+        }
+
+        const timestampMs = new Date(rawTimestamp).getTime();
+        if (Number.isFinite(timestampMs)) {
+            return {
+                timestamp: String(rawTimestamp),
+                timestampMs,
+                ageMs: Math.max(0, now - timestampMs),
+                source
+            };
+        }
+    }
+
+    return {
+        timestamp: null,
+        timestampMs: null,
+        ageMs: null,
+        source: null
+    };
+}
+
 function readNumber(entityId, fallback = 0, options = {}) {
     const { remember = false, maxAgeMs = retainedReadingMs } = options;
-    const rawState = getEntity(entityId)?.state ?? null;
+    const entity = getEntity(entityId);
+    const rawState = entity?.state ?? null;
     const parsedValue = parseFloat(rawState);
     const isValid = Number.isFinite(parsedValue);
+    const timeInfo = getEntityTimeInfo(entity);
     let value = fallback;
     let usedLastValid = false;
     let lastValidAgeMs = null;
@@ -46,6 +82,10 @@ function readNumber(entityId, fallback = 0, options = {}) {
         parsedValue: isValid ? parsedValue : null,
         value,
         isValid,
+        sourceTimestamp: timeInfo.timestamp,
+        sourceTimestampMs: timeInfo.timestampMs,
+        sourceAgeMs: timeInfo.ageMs,
+        sourceTimestampField: timeInfo.source,
         usedLastValid,
         usedFallback: !isValid && !usedLastValid,
         lastValidAgeMs
@@ -72,6 +112,7 @@ function readWh(entityId, fallback = 0, options = {}) {
     const rawState = entity?.state ?? null;
     const parsedValue = parseFloat(rawState);
     const isValid = Number.isFinite(parsedValue);
+    const timeInfo = getEntityTimeInfo(entity);
     const unit = entity?.attributes?.unit_of_measurement;
     let value = fallback;
     let usedLastValid = false;
@@ -102,6 +143,10 @@ function readWh(entityId, fallback = 0, options = {}) {
         parsedValue: isValid ? value : null,
         value,
         isValid,
+        sourceTimestamp: timeInfo.timestamp,
+        sourceTimestampMs: timeInfo.timestampMs,
+        sourceAgeMs: timeInfo.ageMs,
+        sourceTimestampField: timeInfo.source,
         usedLastValid,
         usedFallback: !isValid && !usedLastValid,
         lastValidAgeMs
@@ -115,6 +160,10 @@ function summarizeReading(reading) {
         parsedValue: reading.parsedValue,
         value: reading.value,
         isValid: reading.isValid,
+        sourceTimestamp: reading.sourceTimestamp,
+        sourceTimestampMs: reading.sourceTimestampMs,
+        sourceAgeMs: reading.sourceAgeMs,
+        sourceTimestampField: reading.sourceTimestampField,
         usedLastValid: reading.usedLastValid,
         usedFallback: reading.usedFallback,
         lastValidAgeMs: reading.lastValidAgeMs
@@ -286,30 +335,40 @@ const telemetry = {
         gridState: gridPowerReading.rawState,
         gridParsedPower: gridPowerReading.parsedValue,
         gridPower: gridPowerReading.value,
+        gridTimestamp: gridPowerReading.sourceTimestamp,
+        gridAgeMs: gridPowerReading.sourceAgeMs,
         gridValid: gridPowerReading.isValid,
         gridUsedLastValid: gridPowerReading.usedLastValid,
         gridLastValidAgeMs: gridPowerReading.lastValidAgeMs,
         solarPrimaryState: solarPrimaryPowerReading.rawState,
         solarPrimaryParsedPower: solarPrimaryPowerReading.parsedValue,
         solarPrimaryPower: solarPrimaryPowerReading.value,
+        solarPrimaryTimestamp: solarPrimaryPowerReading.sourceTimestamp,
+        solarPrimaryAgeMs: solarPrimaryPowerReading.sourceAgeMs,
         solarPrimaryValid: solarPrimaryPowerReading.isValid,
         solarPrimaryUsedLastValid: solarPrimaryPowerReading.usedLastValid,
         solarPrimaryLastValidAgeMs: solarPrimaryPowerReading.lastValidAgeMs,
         solarSecondaryState: solarSecondaryPowerReading.rawState,
         solarSecondaryParsedPower: solarSecondaryPowerReading.parsedValue,
         solarSecondaryPower: solarSecondaryPowerReading.value,
+        solarSecondaryTimestamp: solarSecondaryPowerReading.sourceTimestamp,
+        solarSecondaryAgeMs: solarSecondaryPowerReading.sourceAgeMs,
         solarSecondaryValid: solarSecondaryPowerReading.isValid,
         solarSecondaryUsedLastValid: solarSecondaryPowerReading.usedLastValid,
         solarSecondaryLastValidAgeMs: solarSecondaryPowerReading.lastValidAgeMs,
         batteryChargeState: batteryChargePowerReading.rawState,
         batteryChargeParsedPower: batteryChargePowerReading.parsedValue,
         batteryChargePower: batteryChargePowerReading.value,
+        batteryChargeTimestamp: batteryChargePowerReading.sourceTimestamp,
+        batteryChargeAgeMs: batteryChargePowerReading.sourceAgeMs,
         batteryChargeValid: batteryChargePowerReading.isValid,
         batteryChargeUsedLastValid: batteryChargePowerReading.usedLastValid,
         batteryChargeLastValidAgeMs: batteryChargePowerReading.lastValidAgeMs,
         batteryDischargeState: batteryDischargePowerReading.rawState,
         batteryDischargeParsedPower: batteryDischargePowerReading.parsedValue,
         batteryDischargePower: batteryDischargePowerReading.value,
+        batteryDischargeTimestamp: batteryDischargePowerReading.sourceTimestamp,
+        batteryDischargeAgeMs: batteryDischargePowerReading.sourceAgeMs,
         batteryDischargeValid: batteryDischargePowerReading.isValid,
         batteryDischargeUsedLastValid: batteryDischargePowerReading.usedLastValid,
         batteryDischargeLastValidAgeMs: batteryDischargePowerReading.lastValidAgeMs,
