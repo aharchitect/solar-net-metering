@@ -17,6 +17,10 @@ function isoSecondsAgo(secondsAgo) {
     return new Date(Date.parse(NOW) - secondsAgo * 1000).toISOString();
 }
 
+function secondsBefore(timestamp, seconds) {
+    return new Date(Date.parse(timestamp) - seconds * 1000).toISOString();
+}
+
 function entity(state, options = {}) {
     const attributes = options.attributes ? structuredClone(options.attributes) : {};
     return {
@@ -280,6 +284,308 @@ test("clamps negative net house demand while keeping raw telemetry for diagnosis
             text: "Demand 0W | negative demand clamped"
         }
     ]);
+});
+
+[
+    {
+        title: "normalize.data 2026-04-05T12:56:03.317Z keeps a 20s stale solarPrimary value and drops house demand below the 40W baseline",
+        now: "2026-04-05T12:56:03.317Z",
+        stalePrimaryPower: 525.5,
+        gridPower: -16.6,
+        secondaryPower: 225.0,
+        chargePower: 704,
+        expectedRawDemand: 29.9,
+        expectedRoundedRawDemand: 30,
+        expectedRoundedClampedDemand: 30
+    },
+    {
+        title: "normalize.data 2026-04-05T13:00:23.491Z keeps a 20s stale solarPrimary value and drives house demand negative",
+        now: "2026-04-05T13:00:23.491Z",
+        stalePrimaryPower: 439.1,
+        gridPower: -67.01,
+        secondaryPower: 292.8,
+        chargePower: 800,
+        expectedRawDemand: -135.11,
+        expectedRoundedRawDemand: -135,
+        expectedRoundedClampedDemand: 0
+    },
+    {
+        title: "normalize.data 2026-04-05T13:15:04.007Z keeps a 20s stale solarPrimary value and produces a strongly negative demand estimate",
+        now: "2026-04-05T13:15:04.007Z",
+        stalePrimaryPower: 361.9,
+        gridPower: -1.7,
+        secondaryPower: 199.1,
+        chargePower: 705,
+        expectedRawDemand: -145.7,
+        expectedRoundedRawDemand: -146,
+        expectedRoundedClampedDemand: 0
+    }
+].forEach((scenario) => {
+    test(scenario.title, () => {
+        const payload = createPayload({
+            "sensor.smartmeter_keller_sml_watt_summe": entity(scenario.gridPower, {
+                last_updated: scenario.now
+            }),
+            "sensor.wechselrichter_ac_leistung": entity(scenario.stalePrimaryPower, {
+                last_updated: secondsBefore(scenario.now, 20)
+            }),
+            "sensor.hoymiles600_power": entity(scenario.secondaryPower, {
+                last_updated: scenario.now
+            }),
+            "sensor.solarflow_800_pro_grid_input_power": entity(scenario.chargePower, {
+                last_updated: scenario.now
+            }),
+            "sensor.solarflow_800_pro_output_home_power": entity(0, {
+                last_updated: scenario.now
+            })
+        });
+
+        const { normalizedMsg, telemetry } = executeNormalize({
+            payload,
+            now: scenario.now
+        });
+
+        assert.equal(
+            normalizedMsg.meta.normalization.readings.solarPrimaryPower.sourceAgeMs,
+            20000
+        );
+        assert.equal(
+            normalizedMsg.meta.normalization.readings.solarPrimaryPower.usedLastValid,
+            false
+        );
+        assert.equal(normalizedMsg.meta.normalization.readings.solarPrimaryPower.isValid, true);
+        assert.deepEqual(
+            Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs),
+            []
+        );
+        assert.deepEqual(
+            Array.from(normalizedMsg.meta.normalization.houseDemand.retainedInputs),
+            []
+        );
+        assert.equal(telemetry.payload.solarPrimaryAgeMs, 20000);
+        assert.ok(
+            Math.abs(
+                normalizedMsg.meta.normalization.houseDemand.rawPower - scenario.expectedRawDemand
+            ) < 1e-9
+        );
+        assert.equal(telemetry.payload.demandPowerRaw, scenario.expectedRoundedRawDemand);
+        assert.equal(telemetry.payload.demandPower, scenario.expectedRoundedClampedDemand);
+
+        if (scenario.expectedRoundedRawDemand < 0) {
+            assert.equal(normalizedMsg.data.house.demandPower, 0);
+            assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, true);
+            assert.equal(telemetry.payload.demandPowerClamped, true);
+        } else {
+            assert.ok(
+                Math.abs(normalizedMsg.data.house.demandPower - scenario.expectedRawDemand) < 1e-9
+            );
+            assert.ok(normalizedMsg.data.house.demandPowerRaw < 40);
+            assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, false);
+            assert.equal(telemetry.payload.demandPowerClamped, false);
+        }
+    });
+});
+
+[
+    {
+        title: "a 20s stale grid reading can drive daytime demand negative even while all other inputs are fresh",
+        now: "2026-04-05T13:05:00.000Z",
+        staleField: "gridPower",
+        payloadOverrides: {
+            "sensor.smartmeter_keller_sml_watt_summe": entity(-120, {
+                last_updated: secondsBefore("2026-04-05T13:05:00.000Z", 20)
+            }),
+            "sensor.wechselrichter_ac_leistung": entity(520, {
+                last_updated: "2026-04-05T13:05:00.000Z"
+            }),
+            "sensor.hoymiles600_power": entity(220, {
+                last_updated: "2026-04-05T13:05:00.000Z"
+            }),
+            "sensor.solarflow_800_pro_grid_input_power": entity(660, {
+                last_updated: "2026-04-05T13:05:00.000Z"
+            }),
+            "sensor.solarflow_800_pro_output_home_power": entity(0, {
+                last_updated: "2026-04-05T13:05:00.000Z"
+            })
+        },
+        expectedRawDemand: -40,
+        expectedTelemetryDemand: -40,
+        expectedClampedDemand: 0
+    },
+    {
+        title: "a 20s stale secondary solar reading can push daytime demand below the physical house baseline",
+        now: "2026-04-05T13:06:00.000Z",
+        staleField: "solarSecondaryPower",
+        payloadOverrides: {
+            "sensor.smartmeter_keller_sml_watt_summe": entity(-30, {
+                last_updated: "2026-04-05T13:06:00.000Z"
+            }),
+            "sensor.wechselrichter_ac_leistung": entity(520, {
+                last_updated: "2026-04-05T13:06:00.000Z"
+            }),
+            "sensor.hoymiles600_power": entity(180, {
+                last_updated: secondsBefore("2026-04-05T13:06:00.000Z", 20)
+            }),
+            "sensor.solarflow_800_pro_grid_input_power": entity(690, {
+                last_updated: "2026-04-05T13:06:00.000Z"
+            }),
+            "sensor.solarflow_800_pro_output_home_power": entity(0, {
+                last_updated: "2026-04-05T13:06:00.000Z"
+            })
+        },
+        expectedRawDemand: -20,
+        expectedTelemetryDemand: -20,
+        expectedClampedDemand: 0
+    },
+    {
+        title: "a 20s stale charge-power reading can make daytime demand look strongly positive even though charging already increased",
+        now: "2026-04-05T13:07:00.000Z",
+        staleField: "batteryChargePower",
+        payloadOverrides: {
+            "sensor.smartmeter_keller_sml_watt_summe": entity(40, {
+                last_updated: "2026-04-05T13:07:00.000Z"
+            }),
+            "sensor.wechselrichter_ac_leistung": entity(480, {
+                last_updated: "2026-04-05T13:07:00.000Z"
+            }),
+            "sensor.hoymiles600_power": entity(210, {
+                last_updated: "2026-04-05T13:07:00.000Z"
+            }),
+            "sensor.solarflow_800_pro_grid_input_power": entity(500, {
+                last_updated: secondsBefore("2026-04-05T13:07:00.000Z", 20)
+            }),
+            "sensor.solarflow_800_pro_output_home_power": entity(0, {
+                last_updated: "2026-04-05T13:07:00.000Z"
+            }),
+            "number.solarflow_800_pro_input_limit": entity(800, {
+                last_updated: "2026-04-05T13:07:00.000Z"
+            })
+        },
+        expectedRawDemand: 230,
+        expectedTelemetryDemand: 230,
+        expectedClampedDemand: 230
+    }
+].forEach((scenario) => {
+    test(scenario.title, () => {
+        const payload = createPayload(scenario.payloadOverrides);
+        const { normalizedMsg, telemetry } = executeNormalize({
+            payload,
+            now: scenario.now
+        });
+
+        const reading = normalizedMsg.meta.normalization.readings[scenario.staleField];
+        assert.equal(reading.sourceAgeMs, 20000);
+        assert.equal(reading.usedLastValid, false);
+        assert.equal(reading.isValid, true);
+        assert.deepEqual(
+            Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs),
+            []
+        );
+        assert.deepEqual(
+            Array.from(normalizedMsg.meta.normalization.houseDemand.retainedInputs),
+            []
+        );
+        assert.ok(
+            Math.abs(
+                normalizedMsg.meta.normalization.houseDemand.rawPower - scenario.expectedRawDemand
+            ) < 1e-9
+        );
+        assert.equal(telemetry.payload.demandPowerRaw, scenario.expectedTelemetryDemand);
+        assert.equal(normalizedMsg.data.house.demandPower, scenario.expectedClampedDemand);
+
+        if (scenario.expectedRawDemand <= 0) {
+            assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, true);
+            assert.equal(telemetry.payload.demandPowerClamped, true);
+        } else {
+            assert.equal(normalizedMsg.meta.normalization.houseDemand.isClamped, false);
+            assert.equal(telemetry.payload.demandPowerClamped, false);
+        }
+    });
+});
+
+test("at night a 20s stale grid reading together with fresh high discharge overstates house demand", () => {
+    const now = "2026-04-05T22:10:00.000Z";
+    const payload = createPayload({
+        "sensor.smartmeter_keller_sml_watt_summe": entity(150, {
+            last_updated: secondsBefore(now, 20)
+        }),
+        "sensor.wechselrichter_ac_leistung": entity(0, {
+            last_updated: now
+        }),
+        "sensor.hoymiles600_power": entity(0, {
+            last_updated: now
+        }),
+        "sensor.solarflow_800_pro_grid_input_power": entity(0, {
+            last_updated: now
+        }),
+        "sensor.solarflow_800_pro_output_home_power": entity(220, {
+            last_updated: now
+        }),
+        "number.solarflow_800_pro_output_limit": entity(300, {
+            last_updated: now
+        }),
+        "sun.sun": entity("below_horizon", {
+            attributes: { next_rising: "2026-04-06T04:35:00.000Z" }
+        })
+    });
+
+    const { normalizedMsg, telemetry } = executeNormalize({ payload, now });
+
+    assert.equal(normalizedMsg.data.sun.aboveHorizon, false);
+    assert.equal(normalizedMsg.meta.normalization.readings.gridPower.sourceAgeMs, 20000);
+    assert.equal(normalizedMsg.meta.normalization.readings.gridPower.isValid, true);
+    assert.equal(normalizedMsg.data.battery.dischargePower, 220);
+    assert.equal(normalizedMsg.data.battery.dischargeSetpoint, 300);
+    assert.equal(normalizedMsg.data.house.demandPowerRaw, 370);
+    assert.equal(normalizedMsg.data.house.demandPower, 370);
+    assert.deepEqual(Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.equal(telemetry.payload.gridAgeMs, 20000);
+    assert.equal(telemetry.payload.demandPowerRaw, 370);
+    assert.equal(telemetry.payload.demandPowerClamped, false);
+});
+
+test("at night a stale discharge reading can hide an increasing discharge setpoint and collapse demand toward zero", () => {
+    const now = "2026-04-05T22:11:00.000Z";
+    const payload = createPayload({
+        "sensor.smartmeter_keller_sml_watt_summe": entity(-40, {
+            last_updated: now
+        }),
+        "sensor.wechselrichter_ac_leistung": entity(0, {
+            last_updated: now
+        }),
+        "sensor.hoymiles600_power": entity(0, {
+            last_updated: now
+        }),
+        "sensor.solarflow_800_pro_grid_input_power": entity(0, {
+            last_updated: now
+        }),
+        "sensor.solarflow_800_pro_output_home_power": entity(20, {
+            last_updated: secondsBefore(now, 20)
+        }),
+        "number.solarflow_800_pro_output_limit": entity(350, {
+            last_updated: now
+        }),
+        "sun.sun": entity("below_horizon", {
+            attributes: { next_rising: "2026-04-06T04:35:00.000Z" }
+        })
+    });
+
+    const { normalizedMsg, telemetry } = executeNormalize({ payload, now });
+
+    assert.equal(normalizedMsg.data.sun.aboveHorizon, false);
+    assert.equal(
+        normalizedMsg.meta.normalization.readings.batteryDischargePower.sourceAgeMs,
+        20000
+    );
+    assert.equal(normalizedMsg.meta.normalization.readings.batteryDischargePower.isValid, true);
+    assert.equal(normalizedMsg.data.battery.dischargePower, 20);
+    assert.equal(normalizedMsg.data.battery.dischargeSetpoint, 350);
+    assert.equal(normalizedMsg.data.house.demandPowerRaw, -20);
+    assert.equal(normalizedMsg.data.house.demandPower, 0);
+    assert.deepEqual(Array.from(normalizedMsg.meta.normalization.houseDemand.invalidInputs), []);
+    assert.equal(telemetry.payload.batteryDischargeAgeMs, 20000);
+    assert.equal(telemetry.payload.demandPowerRaw, -20);
+    assert.equal(telemetry.payload.demandPowerClamped, true);
 });
 
 test("falls back safely when Home Assistant does not respond at all", () => {
