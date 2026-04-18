@@ -15,6 +15,7 @@ const sunAbove = data.sun?.aboveHorizon === true;
 const soc = getFirstFinite([data.battery?.soc], 0);
 const minimalCharge = getFirstFinite([data.battery?.minSoc], 0);
 const totalSolarRemaining = getFirstFinite([data.forecast?.solarRemainingWh], 0);
+const nextHourSolar = getFirstFinite([data.forecast?.nextHourWh], 0);
 const solarPower = getFirstFinite([derived.solar?.livePower], 0);
 
 let toCharge = null;
@@ -26,8 +27,9 @@ let toDischarge = null;
  * - Sun is down OR the total remaining forecast is negligible (< 50Wh)
  * - AND we aren't in a "Low Battery" state where we should strictly wait for sun.
  */
-const isSolarDayOver = !sunAbove || totalSolarRemaining < 50;
 const batteryHasReserve = soc > minimalCharge;
+const lowSocWithoutUsableNearTermSolar = !batteryHasReserve && nextHourSolar < 50;
+const isSolarDayOver = !sunAbove || totalSolarRemaining < 50 || lowSocWithoutUsableNearTermSolar;
 const nightLowSocBlock = isSolarDayOver && !batteryHasReserve;
 
 msg.action = msg.action || {};
@@ -42,7 +44,13 @@ msg.action.battery.discharge = msg.action.battery.discharge || {};
 msg.action.battery.discharge.stopRequested = nightLowSocBlock;
 msg.action.battery.discharge.blockedByLowSoc = nightLowSocBlock;
 
-if (isSolarDayOver && batteryHasReserve) {
+if (nightLowSocBlock) {
+    node.status({
+        fill: "red",
+        shape: "dot",
+        text: `Empty Battery, no solar power: ${solarPower}W, solar forecast ${totalSolarRemaining}Wh, battery soc: ${soc}`
+    });
+} else if (isSolarDayOver && batteryHasReserve) {
     toDischarge = msg;
     node.status({
         fill: "blue",

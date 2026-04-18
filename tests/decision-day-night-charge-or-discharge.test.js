@@ -22,7 +22,8 @@ function createData(overrides = {}) {
             minSoc: 15
         },
         forecast: {
-            solarRemainingWh: 1000
+            solarRemainingWh: 1000,
+            nextHourWh: 300
         },
         ...overrides
     };
@@ -164,6 +165,96 @@ test("does not discharge at night when the battery is at the minimum reserve", (
             fill: "red",
             shape: "dot",
             text: "Empty Battery, no solar power: 0W, solar forecast 1000Wh, battery soc: 15"
+        }
+    ]);
+});
+
+test("does not charge before sunrise when SoC is below minimum even if the daily forecast is high", () => {
+    const { toCharge, toDischarge, statuses, msg } = executeDecision({
+        now: "2026-04-06T03:31:00.000Z",
+        data: createData({
+            sun: {
+                aboveHorizon: false,
+                nextRising: "2026-04-06T04:33:00.000Z"
+            },
+            battery: {
+                soc: 4,
+                minSoc: 5
+            },
+            forecast: {
+                solarRemainingWh: 6000,
+                nextHourWh: 0
+            }
+        }),
+        derived: createDerived({
+            solar: {
+                livePower: 120
+            }
+        })
+    });
+
+    assert.equal(toCharge, null);
+    assert.equal(toDischarge, null);
+    assert.deepEqual(toPlain(msg.action.decision), {
+        isSolarDayOver: true,
+        batteryHasReserve: false,
+        nightLowSocBlock: true,
+        dischargeStopThreshold: 5
+    });
+    assert.deepEqual(toPlain(msg.action.battery.discharge), {
+        stopRequested: true,
+        blockedByLowSoc: true
+    });
+    assert.deepEqual(statuses, [
+        {
+            fill: "red",
+            shape: "dot",
+            text: "Empty Battery, no solar power: 120W, solar forecast 6000Wh, battery soc: 4"
+        }
+    ]);
+});
+
+test("does not charge low SoC from daily forecast when next-hour solar is not usable yet", () => {
+    const { toCharge, toDischarge, statuses, msg } = executeDecision({
+        now: "2026-04-06T03:31:00.000Z",
+        data: createData({
+            sun: {
+                aboveHorizon: true,
+                nextRising: "2026-04-06T04:33:00.000Z"
+            },
+            battery: {
+                soc: 4,
+                minSoc: 5
+            },
+            forecast: {
+                solarRemainingWh: 6000,
+                nextHourWh: 0
+            }
+        }),
+        derived: createDerived({
+            solar: {
+                livePower: 120
+            }
+        })
+    });
+
+    assert.equal(toCharge, null);
+    assert.equal(toDischarge, null);
+    assert.deepEqual(toPlain(msg.action.decision), {
+        isSolarDayOver: true,
+        batteryHasReserve: false,
+        nightLowSocBlock: true,
+        dischargeStopThreshold: 5
+    });
+    assert.deepEqual(toPlain(msg.action.battery.discharge), {
+        stopRequested: true,
+        blockedByLowSoc: true
+    });
+    assert.deepEqual(statuses, [
+        {
+            fill: "red",
+            shape: "dot",
+            text: "Empty Battery, no solar power: 120W, solar forecast 6000Wh, battery soc: 4"
         }
     ]);
 });
