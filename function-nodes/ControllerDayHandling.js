@@ -64,12 +64,12 @@ let clampReason = "None";
 let ruleApplied = "None";
 const isExporting = gridPower < -exportTolerance;
 let lastCommand = context.get("lastCommand") || 0;
+const lastDemandEstimate = context.get("lastDemandEstimate");
 
 const demandSnapshotReliable =
     !Number.isFinite(demandConfidence) || demandConfidence >= reliableDemandConfidence;
 const gridSnapshotReliable = gridTimingReading?.isValid !== false;
-const shouldFreezeCommand =
-    !demandSnapshotReliable || !gridSnapshotReliable || !Number.isFinite(gridPower);
+const shouldFreezeCommand = !gridSnapshotReliable || !Number.isFinite(gridPower);
 
 if (shouldFreezeCommand) {
     const holdCommand = Math.round(Math.max(lastCommand, currentSetInflow, batteryInflow, 0));
@@ -79,6 +79,130 @@ if (shouldFreezeCommand) {
         text: `Stable @ ${holdCommand}W`
     });
     return null;
+}
+
+function clampChargeCommand(value) {
+    let clampedValue = value;
+
+    if (clampedValue > maxInverterPower) {
+        clampedValue = maxInverterPower;
+        clampReason = "Inverter Max";
+    }
+    if (clampedValue > maxChargePower) {
+        clampedValue = maxChargePower;
+        clampReason = "Battery Max";
+    }
+    if (clampedValue < 0) {
+        clampedValue = 0;
+        ruleApplied = "Floor (0W)";
+    }
+
+    return clampedValue;
+}
+
+function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, statusText }) {
+    const roundedCommand = Math.round(command);
+    const roundedTarget = Math.round(targetCharge);
+    const roundedSurplus = Math.round(theoreticalSurplus);
+    const delta = Math.abs(command - lastCommand);
+
+    msg.adjustment.command = roundedCommand;
+    msg.adjustment.grid = gridPower;
+    msg.derived = msg.derived || {};
+    msg.derived.solar = msg.derived.solar || {};
+    msg.derived.energy = msg.derived.energy || {};
+    msg.derived.solar.effectivePower = Math.round(effectiveSolarPower);
+    msg.derived.energy.theoreticalSurplus = roundedSurplus;
+    msg.action = msg.action || {};
+    msg.action.charge = msg.action.charge || {};
+    msg.action.charge.targetPower = roundedTarget;
+    msg.action.charge.commandPower = roundedCommand;
+    msg.action.charge.ruleApplied = ruleApplied;
+    msg.action.charge.clampReason = clampReason;
+    context.set("lastCommand", command);
+    context.set("lastGridPower", gridPower);
+    context.set(
+        "lastDemandEstimate",
+        getFirstFinite([demandTiming?.currentEstimate, msg.adjustment?.currentDemandEstimate], 0)
+    );
+
+    const insights = {
+        payload: {
+            timestamp: new Date().toISOString(),
+            efficiency: {
+                gridExport: gridPower < 0 ? Math.abs(gridPower) : 0,
+                isLeaking: isExporting
+            },
+            calculation: {
+                theoreticalSurplus: roundedSurplus,
+                targetCharge: roundedTarget,
+                finalCommand: roundedCommand
+            },
+            constraints: {
+                clamp: clampReason,
+                rule: ruleApplied,
+                delta: Math.round(delta)
+            },
+            sensors: {
+                solarLive: liveSolarPower,
+                solarStable: stableSolarPower,
+                solarEffective: Math.round(effectiveSolarPower),
+                demand: calculatedDemand,
+                grid: gridPower,
+                soc: soc
+            }
+        }
+    };
+
+    node.status({
+        fill: statusFill,
+        shape: "dot",
+        text: statusText
+    });
+
+    return [msg, insights];
+}
+
+if (!demandSnapshotReliable) {
+    ruleApplied = "Low-Confidence Grid Steering";
+
+    const baseCommand = Math.max(lastCommand, currentSetInflow, 0);
+    const currentDemandEstimate = getFirstFinite(
+        [demandTiming?.currentEstimate, msg.adjustment?.currentDemandEstimate],
+        0
+    );
+    const demandDelta = Number.isFinite(lastDemandEstimate)
+        ? currentDemandEstimate - lastDemandEstimate
+        : null;
+    let targetCharge = baseCommand;
+
+    if (isExporting) {
+        const exportCorrection = Math.abs(gridPower) + targetBuffer;
+        const commandAlreadyAheadOfMeasuredInflow = currentSetInflow > batteryInflow + targetBuffer;
+
+        if (commandAlreadyAheadOfMeasuredInflow && Math.abs(gridPower) <= targetBuffer) {
+            targetCharge = baseCommand;
+        } else if (maxChargePower > 800 || Math.abs(gridPower) <= targetBuffer * 2) {
+            targetCharge = baseCommand + exportCorrection;
+        }
+    } else if (gridPower > targetBuffer) {
+        const importCorrection = gridPower - targetBuffer;
+        const demandCorrection =
+            demandDelta !== null && demandDelta > 0 ? demandDelta * 2 : importCorrection;
+
+        targetCharge = baseCommand - Math.max(importCorrection, demandCorrection);
+    }
+
+    const smoothedCommand = clampChargeCommand(targetCharge);
+    return emitCommand({
+        command: smoothedCommand,
+        targetCharge,
+        theoreticalSurplus: effectiveSolarPower - calculatedDemand,
+        statusFill: isExporting ? "yellow" : "green",
+        statusText: `Cmd: ${Math.round(smoothedCommand)}W | Rule: ${ruleApplied} | Grid: ${Math.round(
+            gridPower
+        )}W`
+    });
 }
 
 // 3. THE CALCULATION (Grid-Anchor)
@@ -154,20 +278,7 @@ if (soc <= minSoc && totalProduced >= 150) {
     }
 }
 
-// Clamp to Hardware Limits
-if (smoothedCommand > maxInverterPower) {
-    smoothedCommand = maxInverterPower;
-    clampReason = "Inverter Max";
-}
-if (smoothedCommand > maxChargePower) {
-    smoothedCommand = maxChargePower;
-    clampReason = "Battery Max";
-}
-// Rule: Hard Floor
-if (smoothedCommand < 0) {
-    smoothedCommand = 0;
-    ruleApplied = "Floor (0W)";
-}
+smoothedCommand = clampChargeCommand(smoothedCommand);
 
 // 7. CYCLE GUARD (Deadband)
 // If we are stable and not exporting, don't update if change is tiny
@@ -178,50 +289,12 @@ if (delta < 5 && gridPower >= 0 && batteryInflow === 0) {
 }
 
 // 8. OUTPUTS & PERSISTENCE
-const roundedCommand = Math.round(smoothedCommand);
-
-// Store the results in their own property, keeping the map safe
-msg.adjustment.command = roundedCommand;
-msg.adjustment.grid = gridPower;
-msg.derived = msg.derived || {};
-msg.derived.solar = msg.derived.solar || {};
-msg.derived.energy = msg.derived.energy || {};
-msg.derived.solar.effectivePower = Math.round(effectiveSolarPower);
-msg.derived.energy.theoreticalSurplus = Math.round(theoreticalSurplus);
-msg.action = msg.action || {};
-msg.action.charge = msg.action.charge || {};
-msg.action.charge.targetPower = Math.round(targetCharge);
-msg.action.charge.commandPower = roundedCommand;
-msg.action.charge.ruleApplied = ruleApplied;
-msg.action.charge.clampReason = clampReason;
-context.set("lastCommand", smoothedCommand);
-
-const insights = {
-    payload: {
-        timestamp: new Date().toISOString(),
-        efficiency: { gridExport: gridPower < 0 ? Math.abs(gridPower) : 0, isLeaking: isExporting },
-        calculation: {
-            theoreticalSurplus: Math.round(theoreticalSurplus),
-            targetCharge: Math.round(targetCharge),
-            finalCommand: roundedCommand
-        },
-        constraints: { clamp: clampReason, rule: ruleApplied, delta: Math.round(delta) },
-        sensors: {
-            solarLive: liveSolarPower,
-            solarStable: stableSolarPower,
-            solarEffective: Math.round(effectiveSolarPower),
-            demand: calculatedDemand,
-            grid: gridPower,
-            soc: soc
-        }
-    }
-};
-
-// Update node status to show the most important "Why"
-node.status({
-    fill: isExporting ? "red" : "green",
-    shape: "dot",
-    text: `Cmd: ${roundedCommand}W | Clamp: ${clampReason} | Export: ${Math.round(gridPower)}W`
+return emitCommand({
+    command: smoothedCommand,
+    targetCharge,
+    theoreticalSurplus,
+    statusFill: isExporting ? "red" : "green",
+    statusText: `Cmd: ${Math.round(smoothedCommand)}W | Clamp: ${clampReason} | Export: ${Math.round(
+        gridPower
+    )}W`
 });
-
-return [msg, insights];
