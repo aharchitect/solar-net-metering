@@ -111,11 +111,6 @@ function getString(entityId, fallback = "") {
     return value !== undefined && value !== null ? String(value) : fallback;
 }
 
-function getAttributeNumber(entityId, attributeName, fallback = 0) {
-    const value = parseFloat(getEntity(entityId)?.attributes?.[attributeName]);
-    return Number.isFinite(value) ? value : fallback;
-}
-
 function readWh(entityId, fallback = 0, options = {}) {
     const { remember = false, maxAgeMs = retainedReadingMs } = options;
     const entity = getEntity(entityId);
@@ -322,11 +317,9 @@ const batteryDischargeSetpoint = getNumber("number.solarflow_800_pro_output_limi
 const batteryChargeMaxPower = getNumber("sensor.solarflow_800_pro_charge_max_limit", 800, {
     remember: true
 });
-const batteryChargeHardwareMaxPower = getAttributeNumber(
-    "sensor.solarflow_800_pro_charge_max_limit",
-    "max",
-    800
-);
+const batteryChargeHardwareMaxPower = getNumber("sensor.solarflow_800_pro_charge_max_limit", 800, {
+    remember: true
+});
 const chargeSetpointMismatch =
     batteryChargePowerReading.isStale &&
     batteryChargeSetpoint >
