@@ -1,22 +1,48 @@
-// 1. DATA RETRIEVAL (Using the Map in the input message)
-const ha = msg.payload;
-const gridPower = parseFloat(ha["sensor.smartmeter_keller_sml_watt_summe"]?.state) || 0;
-const maxChargePower = parseFloat(ha["sensor.solarflow_800_pro_charge_max_limit"]?.state) || 800;
-const batteryInflow = parseFloat(ha["sensor.solarflow_800_pro_grid_input_power"]?.state) || 0;
-const calculatedDemand = msg.adjustment.defensiveTarget;
-const liveSolarPower = msg.adjustment.solarPower;
-const stableSolarPower = msg.adjustment.solarAveragePower ?? liveSolarPower;
+// 1. DATA RETRIEVAL
+function getFirstFinite(values, fallback = 0) {
+    for (const value of values) {
+        if (Number.isFinite(value)) {
+            return value;
+        }
+    }
+
+    return fallback;
+}
+
+const gridPower = getFirstFinite([msg.data?.grid?.power], 0);
+const maxChargePower = getFirstFinite(
+    [msg.data?.battery?.chargeHardwareMaxPower, msg.data?.battery?.chargeMaxPower],
+    800
+);
+const batteryInflow = getFirstFinite([msg.data?.battery?.chargePower], 0);
+const calculatedDemand = getFirstFinite(
+    [msg.derived?.demand?.defensiveTarget, msg.adjustment?.defensiveTarget],
+    0
+);
+const liveSolarPower = getFirstFinite(
+    [msg.derived?.solar?.livePower, msg.adjustment?.solarPower, msg.data?.solar?.totalPower],
+    0
+);
+const stableSolarPower = getFirstFinite(
+    [msg.derived?.solar?.averagePower, msg.adjustment?.solarAveragePower, liveSolarPower],
+    liveSolarPower
+);
 const solarLiveBlend = 0.35; // Pull part of the live solar into the stable value on cloudy days
 const effectiveSolarPower = Math.max(
     stableSolarPower,
     liveSolarPower * solarLiveBlend + stableSolarPower * (1 - solarLiveBlend)
 );
-const soc = parseFloat(ha["sensor.solarflow_800_pro_electric_level"]?.state) || 0;
-const minSoc = parseFloat(ha["number.solarflow_800_pro_min_soc"]?.state) || 15;
-const currentSetInflow = parseFloat(ha["number.solarflow_800_pro_input_limit"]?.state) || 0;
-const totalProduced =
-    (parseFloat(ha["sensor.hoymiles600_power"]?.state) || 0) +
-    (parseFloat(ha["sensor.wechselrichter_ac_leistung"]?.state) || 0);
+const soc = getFirstFinite([msg.data?.battery?.soc], 0);
+const minSoc = getFirstFinite([msg.data?.battery?.minSoc], 15);
+const currentSetInflow = getFirstFinite([msg.data?.battery?.chargeSetpoint], 0);
+const totalProduced = getFirstFinite([msg.data?.solar?.totalPower], 0);
+const demandTiming = msg.meta?.sensorTiming?.demand;
+const demandTimingThresholds = msg.meta?.sensorTiming?.thresholds || {};
+const demandConfidence = demandTiming?.confidence;
+const reliableDemandConfidence = Number.isFinite(demandTimingThresholds.reliableConfidence)
+    ? demandTimingThresholds.reliableConfidence
+    : 0.7;
+const gridTimingReading = demandTiming?.sensors?.grid;
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
@@ -37,6 +63,23 @@ const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when ex
 let clampReason = "None";
 let ruleApplied = "None";
 const isExporting = gridPower < -exportTolerance;
+let lastCommand = context.get("lastCommand") || 0;
+
+const demandSnapshotReliable =
+    !Number.isFinite(demandConfidence) || demandConfidence >= reliableDemandConfidence;
+const gridSnapshotReliable = gridTimingReading?.isValid !== false;
+const shouldFreezeCommand =
+    !demandSnapshotReliable || !gridSnapshotReliable || !Number.isFinite(gridPower);
+
+if (shouldFreezeCommand) {
+    const holdCommand = Math.round(Math.max(lastCommand, currentSetInflow, batteryInflow, 0));
+    node.status({
+        fill: "green",
+        shape: "ring",
+        text: `Stable @ ${holdCommand}W`
+    });
+    return null;
+}
 
 // 3. THE CALCULATION (Grid-Anchor)
 const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
@@ -88,7 +131,6 @@ if (theoreticalSurplus > 10 && targetCharge < minSustain) {
 if (targetCharge < 0) targetCharge = 0;
 
 // 5. DYNAMIC SMOOTHING (Slew Rate)
-let lastCommand = context.get("lastCommand") || 0;
 // Instead of a fixed Alpha, we use a "Fast-Up, Slow-Down" approach.
 let finalAlpha;
 if (isExporting) {
@@ -141,6 +183,17 @@ const roundedCommand = Math.round(smoothedCommand);
 // Store the results in their own property, keeping the map safe
 msg.adjustment.command = roundedCommand;
 msg.adjustment.grid = gridPower;
+msg.derived = msg.derived || {};
+msg.derived.solar = msg.derived.solar || {};
+msg.derived.energy = msg.derived.energy || {};
+msg.derived.solar.effectivePower = Math.round(effectiveSolarPower);
+msg.derived.energy.theoreticalSurplus = Math.round(theoreticalSurplus);
+msg.action = msg.action || {};
+msg.action.charge = msg.action.charge || {};
+msg.action.charge.targetPower = Math.round(targetCharge);
+msg.action.charge.commandPower = roundedCommand;
+msg.action.charge.ruleApplied = ruleApplied;
+msg.action.charge.clampReason = clampReason;
 context.set("lastCommand", smoothedCommand);
 
 const insights = {

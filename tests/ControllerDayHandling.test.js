@@ -565,9 +565,9 @@ test("holds the current charge command when the smartmeter is unavailable and on
         now: "2026-04-06T14:47:04.645Z"
     });
 
-    assert.notEqual(result, null);
-    assert.notEqual(outputMsg, null);
-    assert.notEqual(insights, null);
+    assert.equal(result, null);
+    assert.equal(outputMsg, null);
+    assert.equal(insights, null);
     assert.equal(contextState.lastCommand, 800);
     assert.deepEqual(statuses, [
         {
