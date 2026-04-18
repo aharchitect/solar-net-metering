@@ -473,6 +473,69 @@ test("uses the corrected statistical estimates in the stale-snapshot export case
     ]);
 });
 
+test("keeps at least half of solar power as charge command to avoid battery switch cycling", () => {
+    const payload = createPayload({
+        gridPower: 650,
+        solarPrimaryPower: 250,
+        solarSecondaryPower: 150,
+        batteryInflow: 500,
+        maxChargePower: 800,
+        currentSetInflow: 500
+    });
+
+    const { outputMsg, insights, statuses, contextState } = executeController({
+        payload,
+        adjustment: {
+            defensiveTarget: 1050,
+            solarPower: 400,
+            solarAveragePower: 400
+        },
+        contextState: {
+            lastCommand: 0
+        },
+        now: "2026-04-06T15:05:00.000Z"
+    });
+
+    assert.equal(outputMsg.adjustment.command, 200);
+    assert.equal(outputMsg.action.charge.commandPower, 200);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Solar Floor (Switch Guard)");
+    assert.equal(Math.round(contextState.lastCommand), 200);
+    assert.deepEqual(toPlain(insights), {
+        payload: {
+            timestamp: "2026-04-06T15:05:00.000Z",
+            efficiency: {
+                gridExport: 0,
+                isLeaking: false
+            },
+            calculation: {
+                theoreticalSurplus: -650,
+                targetCharge: 200,
+                finalCommand: 200
+            },
+            constraints: {
+                clamp: "None",
+                rule: "Solar Floor (Switch Guard)",
+                delta: 200
+            },
+            sensors: {
+                solarLive: 400,
+                solarStable: 400,
+                solarEffective: 400,
+                demand: 1050,
+                grid: 650,
+                soc: 64
+            }
+        }
+    });
+    assert.deepEqual(statuses, [
+        {
+            fill: "green",
+            shape: "dot",
+            text: "Cmd: 200W | Clamp: None | Export: 650W"
+        }
+    ]);
+});
+
 test("holds the current charge command when the smartmeter is unavailable and only a retained grid value exists", () => {
     const payload = createPayload({
         gridPower: "unavailable",

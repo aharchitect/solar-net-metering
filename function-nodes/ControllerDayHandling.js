@@ -51,6 +51,7 @@ const maxInverterPower = 1200; // the Inverter limit
 const minSustain = 50; // Keep charging circuit active
 const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
 const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting
+const solarSwitchGuardFactor = 0.5; // Avoid charge relay cycling while solar is still available
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -265,6 +266,17 @@ if (theoreticalSurplus > 10 && targetCharge < minSustain) {
 // Hard floor
 if (targetCharge < 0) targetCharge = 0;
 
+const chargingWasActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 0;
+const solarSwitchGuardFloor = totalProduced * solarSwitchGuardFactor;
+if (
+    chargingWasActive &&
+    totalProduced > productionThreshold &&
+    targetCharge < solarSwitchGuardFloor
+) {
+    targetCharge = solarSwitchGuardFloor;
+    ruleApplied = "Solar Floor (Switch Guard)";
+}
+
 // 5. DYNAMIC SMOOTHING (Slew Rate)
 // Instead of a fixed Alpha, we use a "Fast-Up, Slow-Down" approach.
 let finalAlpha;
@@ -287,6 +299,15 @@ if (soc <= minSoc && totalProduced >= 150) {
         smoothedCommand = recoveryCharge;
         ruleApplied = "SoC Recovery";
     }
+}
+
+if (
+    chargingWasActive &&
+    totalProduced > productionThreshold &&
+    smoothedCommand < solarSwitchGuardFloor
+) {
+    smoothedCommand = solarSwitchGuardFloor;
+    ruleApplied = "Solar Floor (Switch Guard)";
 }
 
 smoothedCommand = clampChargeCommand(smoothedCommand);
