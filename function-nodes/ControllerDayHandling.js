@@ -187,10 +187,21 @@ if (!demandSnapshotReliable) {
         }
     } else if (gridPower > targetBuffer) {
         const importCorrection = gridPower - targetBuffer;
-        const demandCorrection =
-            demandDelta !== null && demandDelta > 0 ? demandDelta * 2 : importCorrection;
+        const demandSpike = currentDemandEstimate - calculatedDemand;
+        const isShortDemandPeak =
+            demandDelta !== null &&
+            demandDelta > 0 &&
+            demandSpike > 100 &&
+            calculatedDemand <= lastDemandEstimate + targetBuffer &&
+            gridPower <= targetBuffer * 2;
+        if (isShortDemandPeak) {
+            targetCharge = baseCommand;
+        } else {
+            const demandCorrection =
+                demandDelta !== null && demandDelta > 0 ? demandDelta * 2 : importCorrection;
 
-        targetCharge = baseCommand - Math.max(importCorrection, demandCorrection);
+            targetCharge = baseCommand - Math.max(importCorrection, demandCorrection);
+        }
     }
 
     const smoothedCommand = clampChargeCommand(targetCharge);

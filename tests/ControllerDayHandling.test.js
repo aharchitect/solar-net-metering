@@ -1015,6 +1015,72 @@ test("holds the current charge command when the smartmeter is unavailable and on
         },
         now: "2026-04-05T13:09:00.000Z",
         expectedCommand: 540
+    },
+    {
+        title: "keeps charge steady on low confidence when demand has a short peak but solar stays stable",
+        payload: createPayload({
+            gridPower: 60,
+            solarPrimaryPower: 500,
+            solarSecondaryPower: 250,
+            batteryInflow: 600,
+            maxChargePower: 800,
+            currentSetInflow: 600
+        }),
+        adjustment: {
+            defensiveTarget: 220,
+            currentDemandEstimate: 420,
+            solarPower: 750,
+            solarAveragePower: 750
+        },
+        meta: createDemandTimingMeta({
+            confidence: 0.2,
+            currentRaw: 420,
+            currentEstimate: 420,
+            maxAgeMs: 20000,
+            spreadMs: 20000,
+            gridIsValid: true,
+            gridAgeMs: 0
+        }),
+        contextState: {
+            lastCommand: 600,
+            lastGridPower: 30,
+            lastDemandEstimate: 220
+        },
+        now: "2026-04-05T13:10:00.000Z",
+        expectedCommand: 600
+    },
+    {
+        title: "keeps charge steady on low confidence when demand has a short fall but solar stays stable",
+        payload: createPayload({
+            gridPower: -10,
+            solarPrimaryPower: 500,
+            solarSecondaryPower: 250,
+            batteryInflow: 600,
+            maxChargePower: 800,
+            currentSetInflow: 600
+        }),
+        adjustment: {
+            defensiveTarget: 220,
+            currentDemandEstimate: 120,
+            solarPower: 750,
+            solarAveragePower: 750
+        },
+        meta: createDemandTimingMeta({
+            confidence: 0.2,
+            currentRaw: 420,
+            currentEstimate: 420,
+            maxAgeMs: 20000,
+            spreadMs: 20000,
+            gridIsValid: true,
+            gridAgeMs: 0
+        }),
+        contextState: {
+            lastCommand: 600,
+            lastGridPower: 30,
+            lastDemandEstimate: 220
+        },
+        now: "2026-04-05T13:10:00.000Z",
+        expectedCommand: 640
     }
 ].forEach((scenario) => {
     test(scenario.title, () => {
