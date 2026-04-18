@@ -148,6 +148,44 @@ function createDerivedFromAdjustment(adjustment = {}) {
     };
 }
 
+function createDemandTimingMeta({
+    confidence = 1,
+    currentRaw = 0,
+    currentEstimate = currentRaw,
+    minAgeMs = 0,
+    maxAgeMs = 0,
+    spreadMs = 0,
+    gridIsValid = true,
+    gridAgeMs = 0
+} = {}) {
+    return {
+        sensorTiming: {
+            thresholds: {
+                maxSensorAgeMs: 45000,
+                maxSensorSpreadMs: 25000,
+                reliableConfidence: 0.7
+            },
+            demand: {
+                confidence,
+                currentRaw,
+                currentEstimate,
+                minAgeMs,
+                maxAgeMs,
+                spreadMs,
+                sensors: {
+                    grid: {
+                        entityId: "sensor.smartmeter_keller_sml_watt_summe",
+                        rawState: null,
+                        value: 0,
+                        isValid: gridIsValid,
+                        ageMs: gridAgeMs
+                    }
+                }
+            }
+        }
+    };
+}
+
 function executeController({ payload, adjustment, contextState, now, meta, data, derived } = {}) {
     const effectiveAdjustment = {
         defensiveTarget: 0,
@@ -576,4 +614,122 @@ test("holds the current charge command when the smartmeter is unavailable and on
             text: "Stable @ 800W"
         }
     ]);
+});
+
+[
+    {
+        title: "holds the current charge command when a stale grid reading makes the daytime demand snapshot unreliable",
+        payload: createPayload({
+            gridPower: -120,
+            solarPrimaryPower: 520,
+            solarSecondaryPower: 220,
+            batteryInflow: 660,
+            maxChargePower: 800,
+            currentSetInflow: 660
+        }),
+        adjustment: {
+            defensiveTarget: 0,
+            currentDemandEstimate: 0,
+            solarPower: 740,
+            solarAveragePower: 740
+        },
+        meta: createDemandTimingMeta({
+            confidence: 0.2,
+            currentRaw: -40,
+            currentEstimate: 0,
+            maxAgeMs: 20000,
+            spreadMs: 20000,
+            gridIsValid: true,
+            gridAgeMs: 20000
+        }),
+        contextState: {
+            lastCommand: 660
+        },
+        now: "2026-04-05T13:05:00.000Z",
+        expectedHold: 660
+    },
+    {
+        title: "holds the current charge command when stale secondary solar lags behind the live export situation",
+        payload: createPayload({
+            gridPower: -30,
+            solarPrimaryPower: 520,
+            solarSecondaryPower: 180,
+            batteryInflow: 690,
+            maxChargePower: 800,
+            currentSetInflow: 690
+        }),
+        adjustment: {
+            defensiveTarget: 0,
+            currentDemandEstimate: 0,
+            solarPower: 700,
+            solarAveragePower: 700
+        },
+        meta: createDemandTimingMeta({
+            confidence: 0.2,
+            currentRaw: -20,
+            currentEstimate: 0,
+            maxAgeMs: 20000,
+            spreadMs: 20000,
+            gridIsValid: true,
+            gridAgeMs: 0
+        }),
+        contextState: {
+            lastCommand: 690
+        },
+        now: "2026-04-05T13:06:00.000Z",
+        expectedHold: 690
+    },
+    {
+        title: "holds the current charge command when stale charge-power telemetry conflicts with the new higher charge setpoint",
+        payload: createPayload({
+            gridPower: 40,
+            solarPrimaryPower: 480,
+            solarSecondaryPower: 210,
+            batteryInflow: 500,
+            maxChargePower: 800,
+            currentSetInflow: 800
+        }),
+        adjustment: {
+            defensiveTarget: 210,
+            currentDemandEstimate: 230,
+            solarPower: 690,
+            solarAveragePower: 690
+        },
+        meta: createDemandTimingMeta({
+            confidence: 0.2,
+            currentRaw: 230,
+            currentEstimate: 230,
+            maxAgeMs: 20000,
+            spreadMs: 20000,
+            gridIsValid: true,
+            gridAgeMs: 0
+        }),
+        contextState: {
+            lastCommand: 800
+        },
+        now: "2026-04-05T13:07:00.000Z",
+        expectedHold: 800
+    }
+].forEach((scenario) => {
+    test(scenario.title, () => {
+        const { result, outputMsg, insights, statuses, contextState } = executeController({
+            payload: scenario.payload,
+            adjustment: scenario.adjustment,
+            meta: scenario.meta,
+            contextState: scenario.contextState,
+            now: scenario.now
+        });
+
+        assert.equal(result, null);
+        assert.equal(outputMsg, null);
+        assert.equal(insights, null);
+        assert.equal(contextState.lastCommand, scenario.expectedHold);
+        assert.deepEqual(statuses, [
+            {
+                fill: "green",
+                shape: "ring",
+                text: `Stable @ ${scenario.expectedHold}W`
+            }
+        ]);
+    });
 });
