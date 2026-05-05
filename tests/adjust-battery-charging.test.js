@@ -16,6 +16,9 @@ function createData(overrides = {}) {
         grid: {
             power: -120
         },
+        solar: {
+            totalPower: 0
+        },
         battery: {
             soc: 64,
             socLimit: 100,
@@ -77,8 +80,9 @@ test("emits a hardware charge command from msg.action.charge.commandPower", () =
     });
 
     assert.deepEqual(toPlain(hardwareCmd), { payload: 650 });
-    assert.deepEqual(toPlain(reasonMsg), { payload: "Adjusting normally" });
+    assert.deepEqual(toPlain(reasonMsg), { payload: "Adjusting normally", gridExport: 120 });
     assert.equal(logMsg.payload.grid, -120);
+    assert.equal(logMsg.payload.gridExport, 120);
     assert.equal(logMsg.payload.soc, 64);
     assert.equal(logMsg.payload.targetCharge, 650);
     assert.equal(logMsg.payload.reason, "Adjusting normally");
@@ -108,7 +112,10 @@ test("does not emit hardware command when the setpoint change is inside the dead
     });
 
     assert.equal(hardwareCmd, null);
-    assert.deepEqual(toPlain(reasonMsg), { payload: "No change - no need to adjust" });
+    assert.deepEqual(toPlain(reasonMsg), {
+        payload: "No change - no need to adjust",
+        gridExport: 120
+    });
     assert.equal(logMsg.payload.targetCharge, 600);
     assert.equal(logMsg.payload.reason, "Adjusting normally");
     assert.deepEqual(statuses, [
@@ -137,7 +144,7 @@ test("clamps command to hardware maximum", () => {
     });
 
     assert.deepEqual(toPlain(hardwareCmd), { payload: 800 });
-    assert.deepEqual(toPlain(reasonMsg), { payload: "MAX_CHARGE_OVERFLOW" });
+    assert.deepEqual(toPlain(reasonMsg), { payload: "MAX_CHARGE_OVERFLOW", gridExport: 120 });
     assert.equal(logMsg.payload.targetCharge, 800);
     assert.equal(logMsg.payload.reason, "MAX_CHARGE_OVERFLOW");
     assert.deepEqual(statuses, [
@@ -167,7 +174,7 @@ test("allows a 1000W charge command when both normalized charge limits are 1000W
     });
 
     assert.deepEqual(toPlain(hardwareCmd), { payload: 1000 });
-    assert.deepEqual(toPlain(reasonMsg), { payload: "Adjusting normally" });
+    assert.deepEqual(toPlain(reasonMsg), { payload: "Adjusting normally", gridExport: 120 });
     assert.equal(logMsg.payload.targetCharge, 1000);
     assert.equal(logMsg.payload.reason, "Adjusting normally");
     assert.deepEqual(statuses, [
@@ -196,10 +203,49 @@ test("stops charging when battery is effectively full", () => {
     });
 
     assert.deepEqual(toPlain(hardwareCmd), { payload: 0 });
-    assert.deepEqual(toPlain(reasonMsg), { payload: "BATTERY_FULL_OVERFLOW" });
+    assert.deepEqual(toPlain(reasonMsg), { payload: "BATTERY_FULL_OVERFLOW", gridExport: 120 });
     assert.equal(logMsg.payload.soc, 99.2);
     assert.equal(logMsg.payload.targetCharge, 0);
     assert.equal(logMsg.payload.reason, "BATTERY_FULL_OVERFLOW");
+    assert.deepEqual(statuses, [
+        {
+            fill: "green",
+            shape: "dot",
+            text: "0W (BATTERY_FULL_OVERFLOW)"
+        }
+    ]);
+});
+
+test("triggers the load sequencer when battery is full and solar export cannot be stored", () => {
+    const { hardwareCmd, reasonMsg, logMsg, statuses } = executeAdjustCharging({
+        data: createData({
+            grid: {
+                power: -1050
+            },
+            solar: {
+                totalPower: 1200
+            },
+            battery: {
+                soc: 100,
+                socLimit: 100,
+                chargePower: 0,
+                chargeSetpoint: 500,
+                chargeHardwareMaxPower: 1000
+            }
+        }),
+        actionCharge: createActionCharge({
+            commandPower: 1000
+        }),
+        now: "2026-07-06T13:00:00.000Z"
+    });
+
+    assert.deepEqual(toPlain(hardwareCmd), { payload: 0 });
+    assert.deepEqual(toPlain(reasonMsg), {
+        payload: "BATTERY_FULL_OVERFLOW",
+        gridExport: 1050
+    });
+    assert.equal(logMsg.payload.gridExport, 1050);
+    assert.equal(logMsg.payload.targetCharge, 0);
     assert.deepEqual(statuses, [
         {
             fill: "green",

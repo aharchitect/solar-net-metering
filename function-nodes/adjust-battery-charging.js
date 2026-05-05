@@ -19,6 +19,7 @@ const maxChargeHardware = getFirstFinite(
     800
 );
 const gridPower = getFirstFinite([data.grid?.power], 0);
+const gridExport = Math.max(0, -gridPower);
 
 let targetCharge = Math.abs(getFirstFinite([chargeAction.commandPower], 0));
 let reason = "Adjusting normally";
@@ -36,6 +37,7 @@ const logMsg = {
     payload: {
         time: new Date().toLocaleString("de-DE"),
         grid: gridPower,
+        gridExport,
         soc: soc,
         targetCharge: Math.round(targetCharge),
         reason: reason
@@ -49,6 +51,11 @@ if (Math.abs(targetCharge - currentSetInflow) > 10) {
     reason = "No change - no need to adjust";
 }
 
+const sequencerTrigger = {
+    payload: reason,
+    gridExport
+};
+
 node.status({ fill: "green", shape: "dot", text: `${Math.round(targetCharge)}W (${reason})` });
 
-return [hardwareCmd, { payload: reason }, logMsg];
+return [hardwareCmd, sequencerTrigger, logMsg];
