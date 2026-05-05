@@ -1,16 +1,47 @@
-const map = msg.payload;
+function hasMessageValue(root, path) {
+    let current = root;
+    for (const segment of path.split(".")) {
+        if (
+            current === null ||
+            current === undefined ||
+            !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+            return false;
+        }
+        current = current[segment];
+    }
+    return current !== undefined && current !== null;
+}
+
+function abortForMissing(requiredPaths) {
+    const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
+    if (missing.length === 0) {
+        return false;
+    }
+
+    const errorMessage = `Missing mandatory message fields: ${missing.join(", ")}`;
+    node.status({ fill: "red", shape: "ring", text: `Missing data: ${missing.join(", ")}` });
+    node.error(errorMessage, msg);
+    return true;
+}
+
+if (
+    abortForMissing(["data.battery.availableWh", "data.forecast.nextHourWh", "data.sun.nextRising"])
+) {
+    return null;
+}
+
+const data = msg.data;
 
 // 1. DATA EXTRACTION
-const availableWh = (parseFloat(map["sensor.solarflow_800_pro_available_kwh"]?.state) || 0) * 1000;
+const availableWh = data.battery.availableWh;
 
 // 2. NEXT HOUR FORECAST (Wh expected in the next 60 mins)
-const nextH1 = parseFloat(map["sensor.energy_next_hour"]?.state) || 0;
-const nextH2 = parseFloat(map["sensor.energy_next_hour_2"]?.state) || 0;
-const totalNextHourWh = nextH1 + nextH2;
+const totalNextHourWh = data.forecast.nextHourWh;
 
 // 3. TIME CALCULATION
 const now = new Date().getTime();
-const sunrise = new Date(map["sun.sun"]?.attributes?.next_rising).getTime();
+const sunrise = new Date(data.sun.nextRising).getTime();
 
 // 4. DYNAMIC WINDOW ADJUSTMENT
 let hoursToUsableSolar = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));
@@ -39,9 +70,15 @@ const usableWh = Math.max(0, availableWh);
 const forcedRate = Math.round(usableWh / hoursToUsableSolar);
 
 // 4. PASS IT FORWARD
-msg.adjustment.forcedRate = forcedRate;
-msg.adjustment.hoursToSunrise = hoursToSunrise.toFixed(1);
-msg.adjustment.nextHourSolar = totalNextHourWh;
+msg.derived = msg.derived || {};
+msg.derived.forecast = msg.derived.forecast || {};
+msg.derived.forecast.nextHourWh = totalNextHourWh;
+msg.derived.forecast.hoursToUsableSolar = Math.round(hoursToUsableSolar);
+msg.derived.forecast.hoursToSunrise = hoursToSunrise.toFixed(1);
+msg.action = msg.action || {};
+msg.action.battery = msg.action.battery || {};
+msg.action.battery.discharge = msg.action.battery.discharge || {};
+msg.action.battery.discharge.forcedRate = forcedRate;
 
 node.status({ fill: "blue", shape: "ring", text: `Budget: forced ${forcedRate}W until sunrise` });
 
