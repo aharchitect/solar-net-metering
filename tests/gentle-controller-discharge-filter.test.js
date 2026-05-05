@@ -40,6 +40,13 @@ function createMsg(overrides = {}) {
                 }
             }
         },
+        meta: {
+            stability: {
+                mode: "demand_unstable",
+                demand: "unstable",
+                solar: "stable"
+            }
+        },
         ...overrides
     };
 }
@@ -411,4 +418,185 @@ test("starts discharging after evening solar drop was routed to the discharge pa
             text: "Calculated Power (smoothed): 35W"
         }
     ]);
+});
+
+[
+    {
+        title: "uses a 10W import buffer for stable-stable flat night demand",
+        trendDirection: "flat",
+        trend: 0,
+        gridPower: 120,
+        dischargePower: 0,
+        lastCommand: 0,
+        expectedRequiredChange: -170,
+        expectedCommand: 51
+    },
+    {
+        title: "uses a 10W import buffer for stable-stable slowly rising night demand",
+        trendDirection: "up",
+        trend: 8,
+        gridPower: 120,
+        dischargePower: 0,
+        lastCommand: 0,
+        expectedRequiredChange: -170,
+        expectedCommand: 51
+    },
+    {
+        title: "uses a 10W import buffer for stable-stable slowly falling night demand",
+        trendDirection: "down",
+        trend: -8,
+        gridPower: 120,
+        dischargePower: 0,
+        lastCommand: 0,
+        expectedRequiredChange: -170,
+        expectedCommand: 51
+    },
+    {
+        title: "nudges active discharge slightly upward near the 10W buffer when stable demand is slowly rising",
+        trendDirection: "up",
+        trend: 8,
+        gridPower: 9,
+        dischargePower: 50,
+        lastCommand: 50,
+        demandPower: 60,
+        lowerBound: 30,
+        expectedRequiredChange: -50,
+        expectedCommand: 52
+    },
+    {
+        title: "nudges active discharge slightly downward near the 10W buffer when stable demand is slowly falling",
+        trendDirection: "down",
+        trend: -8,
+        gridPower: 9,
+        dischargePower: 50,
+        lastCommand: 50,
+        demandPower: 60,
+        lowerBound: 30,
+        expectedRequiredChange: -50,
+        expectedCommand: 47
+    },
+    {
+        title: "increases active discharge when stable flat demand still imports 50W",
+        trendDirection: "flat",
+        trend: 0,
+        gridPower: 50,
+        dischargePower: 50,
+        lastCommand: 50,
+        demandPower: 100,
+        lowerBound: 30,
+        expectedRequiredChange: -90,
+        expectedCommand: 62
+    },
+    {
+        title: "increases active discharge more when stable rising demand still imports 50W",
+        trendDirection: "up",
+        trend: 8,
+        gridPower: 50,
+        dischargePower: 50,
+        lastCommand: 50,
+        demandPower: 100,
+        lowerBound: 30,
+        expectedRequiredChange: -90,
+        expectedCommand: 64
+    },
+    {
+        title: "increases active discharge more cautiously when stable falling demand still imports 50W",
+        trendDirection: "down",
+        trend: -8,
+        gridPower: 50,
+        dischargePower: 50,
+        lastCommand: 50,
+        demandPower: 100,
+        lowerBound: 30,
+        expectedRequiredChange: -90,
+        expectedCommand: 62
+    }
+].forEach((scenario) => {
+    test(scenario.title, () => {
+        const { outputMsg, contextState } = executeDischargeFilter({
+            msg: createMsg({
+                data: {
+                    grid: {
+                        power: scenario.gridPower
+                    },
+                    battery: {
+                        dischargePower: scenario.dischargePower
+                    }
+                },
+                derived: {
+                    demand: {
+                        defensiveTarget: scenario.demandPower ?? 180,
+                        lowerBound: scenario.lowerBound ?? 160,
+                        longTermMinimum: scenario.lowerBound ?? 160,
+                        trend: scenario.trend,
+                        trendDirection: scenario.trendDirection,
+                        trendChanges: 0,
+                        stdDev: 12
+                    },
+                    solar: {
+                        livePower: 0
+                    }
+                },
+                meta: {
+                    stability: {
+                        mode: "stable_stable",
+                        demand: "stable",
+                        solar: "stable"
+                    }
+                }
+            }),
+            contextState: {
+                lastCommand: scenario.lastCommand
+            }
+        });
+
+        assert.equal(outputMsg.action.battery.discharge.targetImportBuffer, 10);
+        assert.equal(outputMsg.action.battery.discharge.requiredChange, scenario.expectedRequiredChange);
+        assert.equal(outputMsg.action.battery.discharge.commandPower, scenario.expectedCommand);
+        assert.equal(Math.round(contextState.lastCommand), scenario.expectedCommand);
+    });
+});
+
+test("keeps the conservative 50W import buffer when demand is unstable", () => {
+    const { outputMsg, contextState } = executeDischargeFilter({
+        msg: createMsg({
+            data: {
+                grid: {
+                    power: 120
+                },
+                battery: {
+                    dischargePower: 0
+                }
+            },
+            derived: {
+                demand: {
+                    defensiveTarget: 180,
+                    lowerBound: 160,
+                    longTermMinimum: 160,
+                    trend: 40,
+                    trendDirection: "up",
+                    trendChanges: 3,
+                    stdDev: 95
+                },
+                solar: {
+                    livePower: 0
+                }
+            },
+            meta: {
+                stability: {
+                    mode: "demand_unstable",
+                    demand: "unstable",
+                    solar: "stable"
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 0
+        }
+    });
+
+    assert.equal(outputMsg.action.battery.discharge.targetImportBuffer, 50);
+    assert.equal(outputMsg.action.battery.discharge.requiredChange, -130);
+    assert.equal(outputMsg.action.battery.discharge.commandPower, 39);
+    assert.equal(Math.round(contextState.lastCommand), 39);
 });
