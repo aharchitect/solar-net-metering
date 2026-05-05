@@ -330,3 +330,85 @@ test("emits no command when an idle system is inside the demand deadband", () =>
         }
     ]);
 });
+
+test("starts discharging after weak morning solar was routed to the discharge path", () => {
+    const { outputMsg, contextState, statuses } = executeDischargeFilter({
+        msg: createMsg({
+            data: {
+                grid: {
+                    power: 109
+                },
+                battery: {
+                    dischargePower: 0
+                }
+            },
+            derived: {
+                demand: {
+                    defensiveTarget: 180,
+                    lowerBound: 160,
+                    longTermMinimum: 160
+                },
+                solar: {
+                    livePower: 71
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 0
+        },
+        now: "2026-04-06T09:00:00.000"
+    });
+
+    assert.equal(outputMsg.action.battery.discharge.commandPower, 18);
+    assert.equal(outputMsg.action.battery.discharge.requiredChange, -59);
+    assert.equal(outputMsg.action.battery.discharge.importHoldActive, false);
+    assert.equal(Math.round(contextState.lastCommand), 18);
+    assert.deepEqual(statuses, [
+        {
+            fill: "green",
+            shape: "dot",
+            text: "Calculated Power (smoothed): 18W"
+        }
+    ]);
+});
+
+test("starts discharging after evening solar drop was routed to the discharge path", () => {
+    const { outputMsg, contextState, statuses } = executeDischargeFilter({
+        msg: createMsg({
+            data: {
+                grid: {
+                    power: 165
+                },
+                battery: {
+                    dischargePower: 0
+                }
+            },
+            derived: {
+                demand: {
+                    defensiveTarget: 260,
+                    lowerBound: 220,
+                    longTermMinimum: 220
+                },
+                solar: {
+                    livePower: 95
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 0
+        },
+        now: "2026-04-06T18:30:00.000"
+    });
+
+    assert.equal(outputMsg.action.battery.discharge.commandPower, 35);
+    assert.equal(outputMsg.action.battery.discharge.requiredChange, -115);
+    assert.equal(outputMsg.action.battery.discharge.importHoldActive, false);
+    assert.equal(Math.round(contextState.lastCommand), 35);
+    assert.deepEqual(statuses, [
+        {
+            fill: "green",
+            shape: "dot",
+            text: "Calculated Power (smoothed): 35W"
+        }
+    ]);
+});
