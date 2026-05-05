@@ -43,7 +43,11 @@ const weakMorningSolar =
     solarPower > 50 &&
     solarPower < demandPower;
 const eveningSolarDrop =
-    sunAbove && localHour >= 17 && batteryNearMaxReserve && solarPower > 0 && solarPower < demandPower;
+    sunAbove &&
+    localHour >= 17 &&
+    batteryNearMaxReserve &&
+    solarPower > 0 &&
+    solarPower < demandPower;
 
 msg.action = msg.action || {};
 msg.action.decision = {

@@ -4,12 +4,7 @@ const test = require("node:test");
 
 const { runFunctionNode } = require("./helpers/run-function-node");
 
-const loadSequencerScriptPath = path.join(
-    __dirname,
-    "..",
-    "function-nodes",
-    "load-sequencer.js"
-);
+const loadSequencerScriptPath = path.join(__dirname, "..", "function-nodes", "load-sequencer.js");
 
 function executeLoadSequencer({ payload, gridExport = 0, contextState, now } = {}) {
     return runFunctionNode(loadSequencerScriptPath, {

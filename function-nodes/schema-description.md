@@ -48,22 +48,22 @@ One older side branch still uses its own custom `msg.payload` structure and is n
 
 `msg.payload` is intentionally not normalized. Its meaning depends on where in the flow the message is.
 
-| Path          | Type          | Meaning                                               | Producer                                                      |
-| ------------- | ------------- | ----------------------------------------------------- | ------------------------------------------------------------- |
-| `msg.payload` | object        | Raw Home Assistant entity map                         | upstream HA collector                                         |
-| `msg.payload` | number/string | Trigger interval in seconds                           | trigger input before `trigger-timer.js`                       |
-| `msg.payload` | boolean       | Trigger pulse (`true`)                                | `trigger-timer.js`                                            |
-| `msg.payload` | number        | Hardware charge/discharge command                     | `adjust-battery-charging.js`, `adjust-battery-discharging.js` |
-| `msg.payload` | object        | Flat telemetry/log row on controller debug/log output | second output of `ControllerDayHandling.js`                   |
-| `msg.payload` | string        | Load-sequencer action reason, e.g. `BATTERY_FULL_OVERFLOW` | second output of `adjust-battery-charging.js`             |
+| Path          | Type          | Meaning                                                    | Producer                                                      |
+| ------------- | ------------- | ---------------------------------------------------------- | ------------------------------------------------------------- |
+| `msg.payload` | object        | Raw Home Assistant entity map                              | upstream HA collector                                         |
+| `msg.payload` | number/string | Trigger interval in seconds                                | trigger input before `trigger-timer.js`                       |
+| `msg.payload` | boolean       | Trigger pulse (`true`)                                     | `trigger-timer.js`                                            |
+| `msg.payload` | number        | Hardware charge/discharge command                          | `adjust-battery-charging.js`, `adjust-battery-discharging.js` |
+| `msg.payload` | object        | Flat telemetry/log row on controller debug/log output      | second output of `ControllerDayHandling.js`                   |
+| `msg.payload` | string        | Load-sequencer action reason, e.g. `BATTERY_FULL_OVERFLOW` | second output of `adjust-battery-charging.js`                 |
 
 ### `msg.gridExport`
 
 `msg.gridExport` is currently used by the load-sequencer side path.
 
-| Path             | Type   | Unit | Meaning                                                        | Producer                       |
-| ---------------- | ------ | ---- | -------------------------------------------------------------- | ------------------------------ |
-| `msg.gridExport` | number | W    | Positive export watts that cannot currently be stored safely   | `adjust-battery-charging.js`   |
+| Path             | Type   | Unit | Meaning                                                      | Producer                     |
+| ---------------- | ------ | ---- | ------------------------------------------------------------ | ---------------------------- |
+| `msg.gridExport` | number | W    | Positive export watts that cannot currently be stored safely | `adjust-battery-charging.js` |
 
 ### `msg.data`
 
@@ -226,29 +226,29 @@ Known `ruleApplied` values include `Anti-Export`, `Sustain (Production)`, `Susta
 
 The second output of `adjust-battery-charging.js` is intended for the load sequencer.
 
-| Path             | Type   | Unit | Meaning                                                                 | Producer                       |
-| ---------------- | ------ | ---- | ----------------------------------------------------------------------- | ------------------------------ |
+| Path             | Type   | Unit | Meaning                                                                           | Producer                     |
+| ---------------- | ------ | ---- | --------------------------------------------------------------------------------- | ---------------------------- |
 | `msg.payload`    | string | -    | Charge-adjustment reason such as `BATTERY_FULL_OVERFLOW` or `MAX_CHARGE_OVERFLOW` | `adjust-battery-charging.js` |
-| `msg.gridExport` | number | W    | Positive grid export at the time of the charge adjustment               | `adjust-battery-charging.js`   |
+| `msg.gridExport` | number | W    | Positive grid export at the time of the charge adjustment                         | `adjust-battery-charging.js` |
 
 When the battery is effectively full, `adjust-battery-charging.js` clamps the hardware charge command to `0W`, emits `BATTERY_FULL_OVERFLOW`, and forwards `gridExport` so controllable loads can consume surplus solar. `load-sequencer.js` currently starts `switch.dehumidifier` first when overflow export is greater than the dehumidifier load plus safety margin.
 
 #### `msg.action.battery.discharge`
 
-| Path                                               | Type    | Unit | Meaning                                                          | Producer                                    |
-| -------------------------------------------------- | ------- | ---- | ---------------------------------------------------------------- | ------------------------------------------- |
-| `msg.action.battery.discharge.forcedRate`          | number  | W    | Maximum desired discharge rate based on budget until sunrise     | `battery-budget.js`                         |
-| `msg.action.battery.discharge.commandPower`        | number  | W    | Final discharge command after smoothing and safety rules         | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.requiredChange`      | number  | W    | Raw discharge gap before smoothing                               | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.isStable`            | boolean | -    | Whether the current discharge situation is inside deadband       | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.gridPower`           | number  | W    | Grid power snapshot used by discharge controller                 | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.targetImportBuffer`  | number  | W    | Desired positive grid import buffer, `10W` in stable-stable mode and `50W` otherwise | `gentle-controller-discharge-filter.js` |
-| `msg.action.battery.discharge.baselineDemandFloor` | number  | W    | Combined short/long-term demand floor used for discharge sustain | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.sustainFloor`        | number  | W    | Sustained minimum discharge floor while discharge stays active   | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.sustainActive`       | boolean | -    | Indicates that the discharge sustain floor is currently applied  | `gentle-controller-discharge-filter.js`     |
-| `msg.action.battery.discharge.importHoldActive`    | boolean | -    | Indicates active discharge was held steady because live grid import is at or above the target buffer | `gentle-controller-discharge-filter.js` |
-| `msg.action.battery.discharge.stopRequested`       | boolean | -    | Explicit request to send a `0W` discharge command                | `decision-day-night-charge-or-discharge.js` |
-| `msg.action.battery.discharge.blockedByLowSoc`     | boolean | -    | Indicates night discharge is blocked due to low SoC              | `decision-day-night-charge-or-discharge.js` |
+| Path                                               | Type    | Unit | Meaning                                                                                              | Producer                                    |
+| -------------------------------------------------- | ------- | ---- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `msg.action.battery.discharge.forcedRate`          | number  | W    | Maximum desired discharge rate based on budget until sunrise                                         | `battery-budget.js`                         |
+| `msg.action.battery.discharge.commandPower`        | number  | W    | Final discharge command after smoothing and safety rules                                             | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.requiredChange`      | number  | W    | Raw discharge gap before smoothing                                                                   | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.isStable`            | boolean | -    | Whether the current discharge situation is inside deadband                                           | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.gridPower`           | number  | W    | Grid power snapshot used by discharge controller                                                     | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.targetImportBuffer`  | number  | W    | Desired positive grid import buffer, `10W` in stable-stable mode and `50W` otherwise                 | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.baselineDemandFloor` | number  | W    | Combined short/long-term demand floor used for discharge sustain                                     | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.sustainFloor`        | number  | W    | Sustained minimum discharge floor while discharge stays active                                       | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.sustainActive`       | boolean | -    | Indicates that the discharge sustain floor is currently applied                                      | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.importHoldActive`    | boolean | -    | Indicates active discharge was held steady because live grid import is at or above the target buffer | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.stopRequested`       | boolean | -    | Explicit request to send a `0W` discharge command                                                    | `decision-day-night-charge-or-discharge.js` |
+| `msg.action.battery.discharge.blockedByLowSoc`     | boolean | -    | Indicates night discharge is blocked due to low SoC                                                  | `decision-day-night-charge-or-discharge.js` |
 
 In `stable_stable` mode, active discharge also applies a small grid/trend correction around the target import buffer. Grid import above the buffer nudges discharge upward, and demand trend modifies that nudge so slowly rising demand reacts a little stronger while slowly falling demand eases down near the buffer.
 
@@ -326,18 +326,18 @@ Technical metadata and classification.
 
 ## Node Read/Write Overview
 
-| Node                                               | Reads                                                                | Writes                                                                                           |
-| -------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `trigger-timer.js`                                 | `msg.payload`                                                        | `msg.payload`, `msg.meta.trigger`                                                                |
-| `normalize-home-assistant-data.js`                 | `msg.payload`                                                        | `msg.data`, `msg.meta.source`, `msg.meta.normalization`                                          |
-| `statistical-averaging-of-house-load-and-solar.js` | `msg.data`, `msg.meta.trigger`                                       | `msg.derived.demand`, `msg.derived.solar`, `msg.meta.history`, `msg.meta.stability`              |
-| `battery-budget.js`                                | `msg.data`                                                           | `msg.derived.forecast`, `msg.action.battery.discharge.forcedRate`                                |
-| `decision-day-night-charge-or-discharge.js`        | `msg.data`, `msg.derived.solar.livePower`, `msg.derived.demand`       | `msg.action.decision`, discharge route selection                                                  |
+| Node                                               | Reads                                                                     | Writes                                                                                           |
+| -------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `trigger-timer.js`                                 | `msg.payload`                                                             | `msg.payload`, `msg.meta.trigger`                                                                |
+| `normalize-home-assistant-data.js`                 | `msg.payload`                                                             | `msg.data`, `msg.meta.source`, `msg.meta.normalization`                                          |
+| `statistical-averaging-of-house-load-and-solar.js` | `msg.data`, `msg.meta.trigger`                                            | `msg.derived.demand`, `msg.derived.solar`, `msg.meta.history`, `msg.meta.stability`              |
+| `battery-budget.js`                                | `msg.data`                                                                | `msg.derived.forecast`, `msg.action.battery.discharge.forcedRate`                                |
+| `decision-day-night-charge-or-discharge.js`        | `msg.data`, `msg.derived.solar.livePower`, `msg.derived.demand`           | `msg.action.decision`, discharge route selection                                                 |
 | `ControllerDayHandling.js`                         | `msg.data`, `msg.derived`, `msg.meta.stability`, `msg.meta.normalization` | `msg.derived.solar.effectivePower`, `msg.derived.energy.theoreticalSurplus`, `msg.action.charge` |
-| `gentle-controller-discharge-filter.js`            | `msg.data`, `msg.derived`, `msg.action.battery.discharge.forcedRate` | `msg.action.battery.discharge.commandPower` and related discharge fields                         |
-| `adjust-battery-charging.js`                       | `msg.data`, `msg.action.charge`                                      | hardware output `msg.payload`, sequencer reason and `msg.gridExport`                             |
-| `adjust-battery-discharging.js`                    | `msg.data`, `msg.action.battery.discharge`                           | hardware output `msg.payload`                                                                    |
-| `load-sequencer.js`                                | `msg.payload`, `msg.gridExport`                                      | Home Assistant switch commands via `node.send`                                                   |
+| `gentle-controller-discharge-filter.js`            | `msg.data`, `msg.derived`, `msg.action.battery.discharge.forcedRate`      | `msg.action.battery.discharge.commandPower` and related discharge fields                         |
+| `adjust-battery-charging.js`                       | `msg.data`, `msg.action.charge`                                           | hardware output `msg.payload`, sequencer reason and `msg.gridExport`                             |
+| `adjust-battery-discharging.js`                    | `msg.data`, `msg.action.battery.discharge`                                | hardware output `msg.payload`                                                                    |
+| `load-sequencer.js`                                | `msg.payload`, `msg.gridExport`                                           | Home Assistant switch commands via `node.send`                                                   |
 
 ## Controller Telemetry Output
 

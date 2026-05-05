@@ -551,7 +551,10 @@ test("starts discharging after evening solar drop was routed to the discharge pa
         });
 
         assert.equal(outputMsg.action.battery.discharge.targetImportBuffer, 10);
-        assert.equal(outputMsg.action.battery.discharge.requiredChange, scenario.expectedRequiredChange);
+        assert.equal(
+            outputMsg.action.battery.discharge.requiredChange,
+            scenario.expectedRequiredChange
+        );
         assert.equal(outputMsg.action.battery.discharge.commandPower, scenario.expectedCommand);
         assert.equal(Math.round(contextState.lastCommand), scenario.expectedCommand);
     });

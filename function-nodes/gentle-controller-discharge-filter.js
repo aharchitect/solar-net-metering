@@ -173,7 +173,9 @@ if (stableStableMode && isDischargingActive && gridPower >= 0) {
 }
 
 const importHoldActive =
-    isDischargingActive && gridPower >= importHoldThreshold && smoothedCommand < activeDischargeReference;
+    isDischargingActive &&
+    gridPower >= importHoldThreshold &&
+    smoothedCommand < activeDischargeReference;
 
 if (importHoldActive) {
     smoothedCommand = activeDischargeReference;
