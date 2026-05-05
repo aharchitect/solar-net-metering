@@ -19,7 +19,8 @@ function createData(overrides = {}) {
         },
         battery: {
             soc: 64,
-            minSoc: 15
+            minSoc: 15,
+            socLimit: 100
         },
         forecast: {
             solarRemainingWh: 1000,
@@ -264,7 +265,7 @@ test("does not charge low SoC from daily forecast when next-hour solar is not us
 
 test("routes to discharge during weak morning solar when battery has 30 percent reserve above minimum", () => {
     const { toCharge, toDischarge, statuses } = executeDecision({
-        now: "2026-04-06T09:00:00.000Z",
+        now: "2026-04-06T09:00:00.000",
         data: createData({
             sun: {
                 aboveHorizon: true,
@@ -302,7 +303,7 @@ test("routes to discharge during weak morning solar when battery has 30 percent 
 
 test("routes to charge during weak morning solar when battery reserve is not 30 percent above minimum", () => {
     const { toCharge, toDischarge, statuses } = executeDecision({
-        now: "2026-04-06T09:00:00.000Z",
+        now: "2026-04-06T09:00:00.000",
         data: createData({
             sun: {
                 aboveHorizon: true,
@@ -334,6 +335,84 @@ test("routes to charge during weak morning solar when battery reserve is not 30 
             fill: "yellow",
             shape: "dot",
             text: "Charge - Day/Solar: remaing solar 6000Wh"
+        }
+    ]);
+});
+
+test("routes to discharge after 6PM when solar is weak and battery is within 20 percent of max SoC", () => {
+    const { toCharge, toDischarge, statuses } = executeDecision({
+        now: "2026-04-06T18:30:00.000",
+        data: createData({
+            sun: {
+                aboveHorizon: true,
+                nextRising: null
+            },
+            battery: {
+                soc: 82,
+                minSoc: 5,
+                socLimit: 100
+            },
+            forecast: {
+                solarRemainingWh: 1200,
+                nextHourWh: 120
+            }
+        }),
+        derived: createDerived({
+            solar: {
+                livePower: 95
+            },
+            demand: {
+                defensiveTarget: 260
+            }
+        })
+    });
+
+    assert.equal(toCharge, null);
+    assert.ok(toDischarge);
+    assert.deepEqual(statuses, [
+        {
+            fill: "blue",
+            shape: "dot",
+            text: "Discharge - Evening solar drop, solar 95W, demand 260W, battery soc: 82"
+        }
+    ]);
+});
+
+test("keeps charging after 6PM when battery is below the evening high-SoC threshold", () => {
+    const { toCharge, toDischarge, statuses } = executeDecision({
+        now: "2026-04-06T18:30:00.000",
+        data: createData({
+            sun: {
+                aboveHorizon: true,
+                nextRising: null
+            },
+            battery: {
+                soc: 79,
+                minSoc: 5,
+                socLimit: 100
+            },
+            forecast: {
+                solarRemainingWh: 600,
+                nextHourWh: 120
+            }
+        }),
+        derived: createDerived({
+            solar: {
+                livePower: 95
+            },
+            demand: {
+                defensiveTarget: 260
+            }
+        })
+    });
+
+    assert.ok(toCharge);
+    assert.equal(toDischarge, null);
+    assert.deepEqual(statuses, [
+        {
+            fill: "yellow",
+            shape: "dot",
+            text: "Charge - Day/Solar: remaing solar 600Wh"
         }
     ]);
 });
