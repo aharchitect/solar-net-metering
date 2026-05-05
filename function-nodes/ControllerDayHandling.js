@@ -36,6 +36,7 @@ const soc = getFirstFinite([msg.data?.battery?.soc], 0);
 const minSoc = getFirstFinite([msg.data?.battery?.minSoc], 15);
 const currentSetInflow = getFirstFinite([msg.data?.battery?.chargeSetpoint], 0);
 const totalProduced = getFirstFinite([msg.data?.solar?.totalPower], 0);
+const solarSecondaryPower = getFirstFinite([msg.data?.solar?.secondaryPower], 0);
 const demandTiming = msg.meta?.sensorTiming?.demand;
 const demandTimingThresholds = msg.meta?.sensorTiming?.thresholds || {};
 const demandConfidence = demandTiming?.confidence;
@@ -43,6 +44,26 @@ const reliableDemandConfidence = Number.isFinite(demandTimingThresholds.reliable
     ? demandTimingThresholds.reliableConfidence
     : 0.7;
 const gridTimingReading = demandTiming?.sensors?.grid;
+const normalization = msg.meta?.normalization;
+const normalizationReadings = normalization?.readings || {};
+const gridNormalizationReading = normalizationReadings.gridPower;
+const solarNormalizationReadings = [
+    normalizationReadings.solarPrimaryPower,
+    normalizationReadings.solarSecondaryPower
+];
+
+function readingHasLowConfidence(reading) {
+    if (!reading) {
+        return false;
+    }
+
+    return (
+        reading.isValid === false ||
+        reading.isStale === true ||
+        reading.usedLastValid === true ||
+        reading.usedFallback === true
+    );
+}
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
@@ -68,11 +89,36 @@ let lastCommand = context.get("lastCommand") || 0;
 const lastDemandEstimate = context.get("lastDemandEstimate");
 
 const demandSnapshotReliable =
-    !Number.isFinite(demandConfidence) || demandConfidence >= reliableDemandConfidence;
-const gridSnapshotReliable = gridTimingReading?.isValid !== false;
+    (!Number.isFinite(demandConfidence) || demandConfidence >= reliableDemandConfidence) &&
+    normalization?.plausibility?.isConsistent !== false &&
+    !solarNormalizationReadings.some(readingHasLowConfidence);
+const gridSnapshotReliable =
+    gridTimingReading?.isValid !== false && !readingHasLowConfidence(gridNormalizationReading);
 const shouldFreezeCommand = !gridSnapshotReliable || !Number.isFinite(gridPower);
 
 if (shouldFreezeCommand) {
+    const lastSolarSecondaryPower = context.get("lastSolarSecondaryPower");
+    const solarSecondaryIncrease = Number.isFinite(lastSolarSecondaryPower)
+        ? solarSecondaryPower - lastSolarSecondaryPower
+        : 0;
+    const secondarySolarSnapshotReliable = !readingHasLowConfidence(
+        normalizationReadings.solarSecondaryPower
+    );
+
+    if (secondarySolarSnapshotReliable && solarSecondaryIncrease > targetBuffer) {
+        ruleApplied = "Low-Confidence Solar Increase";
+        const holdCommand = Math.round(Math.max(lastCommand, currentSetInflow, batteryInflow, 0));
+        const targetCharge = holdCommand + solarSecondaryIncrease * 0.5;
+        const smoothedCommand = clampChargeCommand(targetCharge);
+        return emitCommand({
+            command: smoothedCommand,
+            targetCharge,
+            theoreticalSurplus: effectiveSolarPower - calculatedDemand,
+            statusFill: "yellow",
+            statusText: `Cmd: ${Math.round(smoothedCommand)}W | Rule: ${ruleApplied} | Grid: stale`
+        });
+    }
+
     const holdCommand = Math.round(Math.max(lastCommand, currentSetInflow, batteryInflow, 0));
     node.status({
         fill: "green",
@@ -122,6 +168,7 @@ function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, st
     msg.action.charge.clampReason = clampReason;
     context.set("lastCommand", command);
     context.set("lastGridPower", gridPower);
+    context.set("lastSolarSecondaryPower", solarSecondaryPower);
     context.set(
         "lastDemandEstimate",
         getFirstFinite([demandTiming?.currentEstimate, msg.adjustment?.currentDemandEstimate], 0)

@@ -186,6 +186,92 @@ function createDemandTimingMeta({
     };
 }
 
+function createNormalizationReading(overrides = {}) {
+    return {
+        entityId: "sensor.example",
+        rawState: "0",
+        parsedValue: 0,
+        value: 0,
+        isValid: true,
+        sourceTimestamp: "2026-04-18T11:59:55.000Z",
+        sourceTimestampMs: Date.parse("2026-04-18T11:59:55.000Z"),
+        sourceAgeMs: 5000,
+        sourceTimestampField: "last_updated",
+        isStale: false,
+        staleAgeThresholdMs: 45000,
+        usedLastValid: false,
+        usedFallback: false,
+        lastValidAgeMs: null,
+        ...overrides
+    };
+}
+
+function createNormalizationMeta({ readings = {}, plausibility = {} } = {}) {
+    return {
+        normalization: {
+            triggerIntervalSeconds: 20,
+            retainedReadingMs: 120000,
+            readings: {
+                gridPower: createNormalizationReading({
+                    entityId: "sensor.smartmeter_keller_sml_watt_summe",
+                    ...readings.gridPower
+                }),
+                solarPrimaryPower: createNormalizationReading({
+                    entityId: "sensor.wechselrichter_ac_leistung",
+                    ...readings.solarPrimaryPower
+                }),
+                solarSecondaryPower: createNormalizationReading({
+                    entityId: "sensor.hoymiles600_power",
+                    ...readings.solarSecondaryPower
+                }),
+                batteryChargePower: createNormalizationReading({
+                    entityId: "sensor.solarflow_800_pro_grid_input_power",
+                    ...readings.batteryChargePower
+                }),
+                batteryDischargePower: createNormalizationReading({
+                    entityId: "sensor.solarflow_800_pro_output_home_power",
+                    ...readings.batteryDischargePower
+                })
+            },
+            houseDemand: {
+                power: 0,
+                rawPower: 0,
+                zeroFallbackPower: 0,
+                isClamped: false,
+                invalidInputs: [],
+                retainedInputs: [],
+                staleInputs: [],
+                wouldBeNegativeWithZeroFallback: false
+            },
+            plausibility: {
+                isConsistent: true,
+                issues: [],
+                details: [],
+                invalidInputs: [],
+                retainedInputs: [],
+                staleInputs: [],
+                thresholds: {
+                    maxSensorAgeMs: 45000,
+                    maxSensorSpreadMs: 45000,
+                    minimumHouseDemandW: 40,
+                    setpointToleranceW: 40
+                },
+                timing: {
+                    minInputAgeMs: 0,
+                    maxInputAgeMs: 5000,
+                    inputAgeSpreadMs: 5000,
+                    exceedsSpreadThreshold: false
+                },
+                houseDemand: {
+                    rawPower: 0,
+                    clampedPower: 0
+                },
+                ...plausibility
+            }
+        }
+    };
+}
+
 function executeController({ payload, adjustment, contextState, now, meta, data, derived } = {}) {
     const effectiveAdjustment = {
         defensiveTarget: 0,
@@ -789,6 +875,296 @@ test("holds the current charge command when the smartmeter is unavailable and on
             }
         ]);
     });
+});
+
+test("uses low-confidence grid steering when normalized primary solar is stale", () => {
+    const payload = createPayload({
+        gridPower: 80,
+        solarPrimaryPower: 700,
+        solarSecondaryPower: 200,
+        batteryInflow: 500,
+        maxChargePower: 1000,
+        currentSetInflow: 500
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        adjustment: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 900,
+            solarAveragePower: 900
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                solarPrimaryPower: {
+                    value: 700,
+                    sourceAgeMs: 60000,
+                    isStale: true
+                },
+                solarSecondaryPower: {
+                    value: 200
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 500,
+            lastDemandEstimate: 300
+        },
+        now: "2026-04-18T12:00:00.000Z"
+    });
+
+    assert.equal(outputMsg.adjustment.command, 450);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
+    assert.equal(insights.payload.constraints.rule, "Low-Confidence Grid Steering");
+    assert.equal(Math.round(contextState.lastCommand), 450);
+});
+
+test("uses low-confidence grid steering when normalized secondary solar is retained", () => {
+    const payload = createPayload({
+        gridPower: -80,
+        solarPrimaryPower: 520,
+        solarSecondaryPower: 180,
+        batteryInflow: 400,
+        maxChargePower: 1000,
+        currentSetInflow: 400
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        adjustment: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 700,
+            solarAveragePower: 700
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                solarPrimaryPower: {
+                    value: 520
+                },
+                solarSecondaryPower: {
+                    value: 180,
+                    isValid: false,
+                    parsedValue: null,
+                    usedLastValid: true,
+                    lastValidAgeMs: 30000
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 400,
+            lastDemandEstimate: 300
+        },
+        now: "2026-04-18T12:01:00.000Z"
+    });
+
+    assert.equal(outputMsg.adjustment.command, 510);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
+    assert.equal(insights.payload.efficiency.isLeaking, true);
+    assert.equal(Math.round(contextState.lastCommand), 510);
+});
+
+test("uses low-confidence grid steering when normalized demand plausibility is inconsistent", () => {
+    const payload = createPayload({
+        gridPower: 100,
+        solarPrimaryPower: 700,
+        solarSecondaryPower: 200,
+        batteryInflow: 700,
+        maxChargePower: 1000,
+        currentSetInflow: 700
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        adjustment: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 360,
+            solarPower: 900,
+            solarAveragePower: 900
+        },
+        meta: createNormalizationMeta({
+            plausibility: {
+                isConsistent: false,
+                issues: ["stale_inputs", "timing_spread"],
+                details: ["stale solarSecondaryPower", "age spread 60000ms"],
+                staleInputs: ["solarSecondaryPower"],
+                timing: {
+                    minInputAgeMs: 0,
+                    maxInputAgeMs: 60000,
+                    inputAgeSpreadMs: 60000,
+                    exceedsSpreadThreshold: true
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 700,
+            lastDemandEstimate: 300
+        },
+        now: "2026-04-18T12:02:00.000Z"
+    });
+
+    assert.equal(outputMsg.adjustment.command, 580);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
+    assert.equal(insights.payload.constraints.rule, "Low-Confidence Grid Steering");
+    assert.equal(Math.round(contextState.lastCommand), 580);
+});
+
+test("increases charge from a valid export signal when both normalized solar readings are low confidence", () => {
+    const payload = createPayload({
+        gridPower: -400,
+        solarPrimaryPower: 350,
+        solarSecondaryPower: 350,
+        batteryInflow: 500,
+        maxChargePower: 1000,
+        currentSetInflow: 500
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        adjustment: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 700,
+            solarAveragePower: 700
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                solarPrimaryPower: {
+                    value: 350,
+                    isStale: true,
+                    sourceAgeMs: 60000
+                },
+                solarSecondaryPower: {
+                    value: 350,
+                    isValid: false,
+                    parsedValue: null,
+                    usedLastValid: true,
+                    lastValidAgeMs: 60000
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 500,
+            lastDemandEstimate: 300
+        },
+        now: "2026-04-18T12:03:00.000Z"
+    });
+
+    assert.equal(outputMsg.adjustment.command, 930);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
+    assert.equal(insights.payload.efficiency.gridExport, 400);
+    assert.equal(Math.round(contextState.lastCommand), 930);
+});
+
+test("holds charge when normalized primary solar and grid readings are stale", () => {
+    const payload = createPayload({
+        gridPower: 80,
+        solarPrimaryPower: 700,
+        solarSecondaryPower: 200,
+        batteryInflow: 400,
+        maxChargePower: 1000,
+        currentSetInflow: 400
+    });
+
+    const { result, outputMsg, insights, statuses, contextState } = executeController({
+        payload,
+        adjustment: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 900,
+            solarAveragePower: 900
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                gridPower: {
+                    value: 80,
+                    isStale: true,
+                    sourceAgeMs: 30000,
+                    staleAgeThresholdMs: 20000
+                },
+                solarPrimaryPower: {
+                    value: 700,
+                    isStale: true,
+                    sourceAgeMs: 60000
+                },
+                solarSecondaryPower: {
+                    value: 200
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 400,
+            lastDemandEstimate: 300,
+            lastSolarSecondaryPower: 200
+        },
+        now: "2026-04-18T12:04:00.000Z"
+    });
+
+    assert.equal(result, null);
+    assert.equal(outputMsg, null);
+    assert.equal(insights, null);
+    assert.equal(contextState.lastCommand, 400);
+    assert.deepEqual(statuses, [
+        {
+            fill: "green",
+            shape: "ring",
+            text: "Stable @ 400W"
+        }
+    ]);
+});
+
+test("raises charge from fresh secondary solar increase when normalized grid and primary solar are stale", () => {
+    const payload = createPayload({
+        gridPower: 80,
+        solarPrimaryPower: 700,
+        solarSecondaryPower: 400,
+        batteryInflow: 400,
+        maxChargePower: 1000,
+        currentSetInflow: 400
+    });
+
+    const { outputMsg, insights, statuses, contextState } = executeController({
+        payload,
+        adjustment: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 1100,
+            solarAveragePower: 900
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                gridPower: {
+                    value: 80,
+                    isStale: true,
+                    sourceAgeMs: 30000,
+                    staleAgeThresholdMs: 20000
+                },
+                solarPrimaryPower: {
+                    value: 700,
+                    isStale: true,
+                    sourceAgeMs: 60000
+                },
+                solarSecondaryPower: {
+                    value: 400,
+                    sourceAgeMs: 5000
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 400,
+            lastDemandEstimate: 300,
+            lastSolarSecondaryPower: 200
+        },
+        now: "2026-04-18T12:05:00.000Z"
+    });
+
+    assert.equal(outputMsg.adjustment.command, 500);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Solar Increase");
+    assert.equal(insights.payload.constraints.rule, "Low-Confidence Solar Increase");
+    assert.equal(statuses[0].text, "Cmd: 500W | Rule: Low-Confidence Solar Increase | Grid: stale");
+    assert.equal(Math.round(contextState.lastCommand), 500);
+    assert.equal(contextState.lastSolarSecondaryPower, 400);
 });
 
 [
