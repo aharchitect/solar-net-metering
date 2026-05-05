@@ -52,6 +52,8 @@ const solarPower = derived.solar.livePower;
 const forcedDischarge = action.battery.discharge.forcedRate;
 const stopRequested = action.battery.discharge.stopRequested === true;
 const blockedByLowSoc = action.battery.discharge.blockedByLowSoc === true;
+const stability = msg.meta?.stability || {};
+const demandTrend = Number.isFinite(derived.demand.trend) ? derived.demand.trend : 0;
 
 if (stopRequested || blockedByLowSoc) {
     context.set("lastCommand", 0);
@@ -87,10 +89,17 @@ if (stopRequested || blockedByLowSoc) {
 //                            overshooting, the battery "slides" toward the new value. This reduces the
 //                            chemical stress on the LiFePO4 cells.
 
-const targetBuffer = -50; // Aim for 50W import to prevent feed-in
+const conservativeImportBuffer = 50; // Aim for 50W import when statistics are unstable
+const efficientImportBuffer = 10; // Use a tighter buffer when stable-stable statistics are available
+const stableStableMode =
+    stability.mode === "stable_stable" ||
+    (stability.demand === "stable" && stability.solar === "stable");
+const targetImportBuffer = stableStableMode ? efficientImportBuffer : conservativeImportBuffer;
+const targetBuffer = -targetImportBuffer;
 const deadband = 50; // Ignore fluctuations smaller than 50W
 const alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
 const sustainTolerance = 30; // Treat demand near the lower bound as baseline night load
+const importHoldThreshold = targetImportBuffer; // Do not reduce active discharge while import is above target
 
 // 3. CALCULATION
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
@@ -147,6 +156,31 @@ if (sustainDischargeActive && smoothedCommand < dischargeSustainFloor) {
     smoothedCommand = dischargeSustainFloor;
 }
 
+if (stableStableMode && isDischargingActive && gridPower >= 0) {
+    const gridError = gridPower - targetImportBuffer;
+    const gridTrendCorrection = gridError + demandTrend;
+    const gridTrendCommand = activeDischargeReference + gridTrendCorrection * alpha;
+
+    if (gridTrendCorrection > 0) {
+        smoothedCommand = Math.max(smoothedCommand, gridTrendCommand);
+    } else if (gridTrendCorrection < 0) {
+        smoothedCommand = Math.min(smoothedCommand, gridTrendCommand);
+    }
+
+    if (sustainDischargeActive && smoothedCommand < dischargeSustainFloor) {
+        smoothedCommand = dischargeSustainFloor;
+    }
+}
+
+const importHoldActive =
+    isDischargingActive &&
+    gridPower >= importHoldThreshold &&
+    smoothedCommand < activeDischargeReference;
+
+if (importHoldActive) {
+    smoothedCommand = activeDischargeReference;
+}
+
 // 5. THE ZERO-EXPORT DEFENSE (The "No-Penalty" Guard)
 // --> EMERGENCY BRAKE
 if (gridPower < 0) {
@@ -178,12 +212,16 @@ msg.action.battery.discharge.gridPower = Math.round(gridPower);
 msg.action.battery.discharge.baselineDemandFloor = Math.round(baselineDemandFloor);
 msg.action.battery.discharge.sustainFloor = Math.round(dischargeSustainFloor);
 msg.action.battery.discharge.sustainActive = sustainDischargeActive;
+msg.action.battery.discharge.importHoldActive = importHoldActive;
+msg.action.battery.discharge.targetImportBuffer = targetImportBuffer;
 
 node.status({
     fill: "green",
     shape: "dot",
-    text: sustainDischargeActive
-        ? `Discharge sustain @ ${Math.round(smoothedCommand)}W`
-        : `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
+    text: importHoldActive
+        ? `Discharge import hold @ ${Math.round(smoothedCommand)}W`
+        : sustainDischargeActive
+          ? `Discharge sustain @ ${Math.round(smoothedCommand)}W`
+          : `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
 });
 return msg;

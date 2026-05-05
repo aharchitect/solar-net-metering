@@ -34,6 +34,19 @@ module.exports = [
         }
     },
     {
+        files: ["tests/**/*.js"],
+        languageOptions: {
+            ecmaVersion: "latest",
+            sourceType: "commonjs",
+            globals: {
+                ...globals.node
+            }
+        },
+        rules: {
+            "no-console": "off"
+        }
+    },
+    {
         files: ["function-nodes/**/*.js"],
         languageOptions: {
             ecmaVersion: "latest",
