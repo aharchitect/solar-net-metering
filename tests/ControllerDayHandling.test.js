@@ -1167,6 +1167,59 @@ test("raises charge from fresh secondary solar increase when normalized grid and
     assert.equal(contextState.lastSolarSecondaryPower, 400);
 });
 
+test("keeps morning charge modest when forecast rises but measured solar is still weak", () => {
+    const payload = createPayload({
+        gridPower: 270,
+        solarPrimaryPower: 39,
+        solarSecondaryPower: 32,
+        batteryInflow: 0,
+        maxChargePower: 1000,
+        currentSetInflow: 0
+    });
+    const data = createDataFromPayload(payload, {
+        defensiveTarget: 56,
+        currentDemandEstimate: 56,
+        solarPower: 71,
+        solarAveragePower: 71
+    });
+    data.forecast = {
+        nextHourWh: 200,
+        solarRemainingWh: 2000
+    };
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        data,
+        adjustment: {
+            defensiveTarget: 56,
+            currentDemandEstimate: 56,
+            solarPower: 71,
+            solarAveragePower: 71
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                solarPrimaryPower: {
+                    value: 39
+                },
+                solarSecondaryPower: {
+                    value: 32
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 0
+        },
+        now: "2026-04-18T09:00:00.000Z"
+    });
+
+    assert.equal(outputMsg.adjustment.command, 45);
+    assert.equal(outputMsg.action.charge.targetPower, 50);
+    assert.equal(insights.payload.sensors.solarLive, 71);
+    assert.equal(insights.payload.sensors.solarEffective, 71);
+    assert.equal(insights.payload.calculation.theoreticalSurplus, 15);
+    assert.equal(Math.round(contextState.lastCommand), 45);
+});
+
 [
     {
         title: "increases charge on low confidence when the valid grid signal still shows export",
