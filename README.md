@@ -2,6 +2,13 @@
 
 This repository offers a solar net metering program for Node-Red in conjunction with Home Assistant.
 
+## Controller Contract
+
+The normalized message contract for the main controller flow is documented in
+[docs/message-schema.md](/home/andreas/git/solar-net-metering/docs/message-schema.md).
+
+It covers the normalization quality metadata, day/night charge-or-discharge routing, low-confidence charge control, and the battery-full overflow path that can trigger controllable loads such as the dehumidifier.
+
 ## Function Node Sources
 
 The Node-RED `function` nodes are maintained as standalone JavaScript files and synced back into the flow export.
