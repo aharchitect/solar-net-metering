@@ -245,6 +245,7 @@ When the battery is effectively full, `adjust-battery-charging.js` clamps the ha
 | `msg.action.battery.discharge.baselineDemandFloor` | number  | W    | Combined short/long-term demand floor used for discharge sustain | `gentle-controller-discharge-filter.js`     |
 | `msg.action.battery.discharge.sustainFloor`        | number  | W    | Sustained minimum discharge floor while discharge stays active   | `gentle-controller-discharge-filter.js`     |
 | `msg.action.battery.discharge.sustainActive`       | boolean | -    | Indicates that the discharge sustain floor is currently applied  | `gentle-controller-discharge-filter.js`     |
+| `msg.action.battery.discharge.importHoldActive`    | boolean | -    | Indicates active discharge was held steady because live grid import is at or above the target buffer | `gentle-controller-discharge-filter.js` |
 | `msg.action.battery.discharge.stopRequested`       | boolean | -    | Explicit request to send a `0W` discharge command                | `decision-day-night-charge-or-discharge.js` |
 | `msg.action.battery.discharge.blockedByLowSoc`     | boolean | -    | Indicates night discharge is blocked due to low SoC              | `decision-day-night-charge-or-discharge.js` |
 
