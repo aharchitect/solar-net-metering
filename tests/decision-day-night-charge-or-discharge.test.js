@@ -34,6 +34,9 @@ function createDerived(overrides = {}) {
         solar: {
             livePower: 0
         },
+        demand: {
+            defensiveTarget: 0
+        },
         ...overrides
     };
 }
@@ -255,6 +258,82 @@ test("does not charge low SoC from daily forecast when next-hour solar is not us
             fill: "red",
             shape: "dot",
             text: "Empty Battery, no solar power: 120W, solar forecast 6000Wh, battery soc: 4"
+        }
+    ]);
+});
+
+test("routes to discharge during weak morning solar when battery has 30 percent reserve above minimum", () => {
+    const { toCharge, toDischarge, statuses } = executeDecision({
+        now: "2026-04-06T09:00:00.000Z",
+        data: createData({
+            sun: {
+                aboveHorizon: true,
+                nextRising: null
+            },
+            battery: {
+                soc: 38,
+                minSoc: 5
+            },
+            forecast: {
+                solarRemainingWh: 6000,
+                nextHourWh: 200
+            }
+        }),
+        derived: createDerived({
+            solar: {
+                livePower: 71
+            },
+            demand: {
+                defensiveTarget: 180
+            }
+        })
+    });
+
+    assert.equal(toCharge, null);
+    assert.ok(toDischarge);
+    assert.deepEqual(statuses, [
+        {
+            fill: "blue",
+            shape: "dot",
+            text: "Discharge - Weak morning solar, solar 71W, demand 180W, battery soc: 38"
+        }
+    ]);
+});
+
+test("routes to charge during weak morning solar when battery reserve is not 30 percent above minimum", () => {
+    const { toCharge, toDischarge, statuses } = executeDecision({
+        now: "2026-04-06T09:00:00.000Z",
+        data: createData({
+            sun: {
+                aboveHorizon: true,
+                nextRising: null
+            },
+            battery: {
+                soc: 34,
+                minSoc: 5
+            },
+            forecast: {
+                solarRemainingWh: 6000,
+                nextHourWh: 200
+            }
+        }),
+        derived: createDerived({
+            solar: {
+                livePower: 71
+            },
+            demand: {
+                defensiveTarget: 180
+            }
+        })
+    });
+
+    assert.ok(toCharge);
+    assert.equal(toDischarge, null);
+    assert.deepEqual(statuses, [
+        {
+            fill: "yellow",
+            shape: "dot",
+            text: "Charge - Day/Solar: remaing solar 6000Wh"
         }
     ]);
 });

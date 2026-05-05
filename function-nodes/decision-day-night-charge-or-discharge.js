@@ -17,6 +17,7 @@ const minimalCharge = getFirstFinite([data.battery?.minSoc], 0);
 const totalSolarRemaining = getFirstFinite([data.forecast?.solarRemainingWh], 0);
 const nextHourSolar = getFirstFinite([data.forecast?.nextHourWh], 0);
 const solarPower = getFirstFinite([derived.solar?.livePower], 0);
+const demandPower = getFirstFinite([derived.demand?.defensiveTarget, derived.demand?.current], 0);
 
 let toCharge = null;
 let toDischarge = null;
@@ -28,9 +29,12 @@ let toDischarge = null;
  * - AND we aren't in a "Low Battery" state where we should strictly wait for sun.
  */
 const batteryHasReserve = soc > minimalCharge;
+const batteryHasMorningReserve = soc >= minimalCharge + 30;
 const lowSocWithoutUsableNearTermSolar = !batteryHasReserve && nextHourSolar < 50;
 const isSolarDayOver = !sunAbove || totalSolarRemaining < 50 || lowSocWithoutUsableNearTermSolar;
 const nightLowSocBlock = isSolarDayOver && !batteryHasReserve;
+const weakMorningSolar =
+    sunAbove && batteryHasMorningReserve && solarPower > 50 && solarPower < demandPower;
 
 msg.action = msg.action || {};
 msg.action.decision = {
@@ -56,6 +60,13 @@ if (nightLowSocBlock) {
         fill: "blue",
         shape: "dot",
         text: `Discharge - Night, remaing solar ${totalSolarRemaining}Wh, Solar Day is Over: ${isSolarDayOver}, battery has res: ${batteryHasReserve}`
+    });
+} else if (weakMorningSolar) {
+    toDischarge = msg;
+    node.status({
+        fill: "blue",
+        shape: "dot",
+        text: `Discharge - Weak morning solar, solar ${solarPower}W, demand ${demandPower}W, battery soc: ${soc}`
     });
 } else if (solarPower > 0) {
     toCharge = msg;
