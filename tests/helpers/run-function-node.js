@@ -65,6 +65,7 @@ function runFunctionNode(scriptPath, options = {}) {
     const globalStore = createStore(options.globalState);
     const statuses = [];
     const sentMessages = [];
+    const errors = [];
     const sandbox = {
         msg: clone(options.msg) || {},
         context: contextStore.api,
@@ -77,6 +78,12 @@ function runFunctionNode(scriptPath, options = {}) {
             },
             send(value) {
                 sentMessages.push(clone(value));
+            },
+            error(message, value) {
+                errors.push({
+                    message: clone(message),
+                    msg: clone(value)
+                });
             }
         },
         RED: options.RED || {},
@@ -98,6 +105,7 @@ function runFunctionNode(scriptPath, options = {}) {
         msg: sandbox.msg,
         statuses,
         sentMessages,
+        errors,
         contextState: contextStore.state,
         flowState: flowStore.state,
         globalState: globalStore.state
