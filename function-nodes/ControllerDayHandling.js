@@ -15,16 +15,13 @@ const maxChargePower = getFirstFinite(
     800
 );
 const batteryInflow = getFirstFinite([msg.data?.battery?.chargePower], 0);
-const calculatedDemand = getFirstFinite(
-    [msg.derived?.demand?.defensiveTarget, msg.adjustment?.defensiveTarget],
-    0
-);
+const calculatedDemand = getFirstFinite([msg.derived?.demand?.defensiveTarget], 0);
 const liveSolarPower = getFirstFinite(
-    [msg.derived?.solar?.livePower, msg.adjustment?.solarPower, msg.data?.solar?.totalPower],
+    [msg.derived?.solar?.livePower, msg.data?.solar?.totalPower],
     0
 );
 const stableSolarPower = getFirstFinite(
-    [msg.derived?.solar?.averagePower, msg.adjustment?.solarAveragePower, liveSolarPower],
+    [msg.derived?.solar?.averagePower, liveSolarPower],
     liveSolarPower
 );
 const solarLiveBlend = 0.35; // Pull part of the live solar into the stable value on cloudy days
@@ -153,8 +150,6 @@ function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, st
     const roundedSurplus = Math.round(theoreticalSurplus);
     const delta = Math.abs(command - lastCommand);
 
-    msg.adjustment.command = roundedCommand;
-    msg.adjustment.grid = gridPower;
     msg.derived = msg.derived || {};
     msg.derived.solar = msg.derived.solar || {};
     msg.derived.energy = msg.derived.energy || {};
@@ -171,7 +166,7 @@ function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, st
     context.set("lastSolarSecondaryPower", solarSecondaryPower);
     context.set(
         "lastDemandEstimate",
-        getFirstFinite([demandTiming?.currentEstimate, msg.adjustment?.currentDemandEstimate], 0)
+        getFirstFinite([demandTiming?.currentEstimate, msg.derived?.demand?.current], 0)
     );
 
     const insights = {
@@ -216,7 +211,7 @@ if (!demandSnapshotReliable) {
 
     const baseCommand = Math.max(lastCommand, currentSetInflow, 0);
     const currentDemandEstimate = getFirstFinite(
-        [demandTiming?.currentEstimate, msg.adjustment?.currentDemandEstimate],
+        [demandTiming?.currentEstimate, msg.derived?.demand?.current],
         0
     );
     const demandDelta = Number.isFinite(lastDemandEstimate)

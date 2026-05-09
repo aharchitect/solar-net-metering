@@ -29,6 +29,8 @@ function createPayload({
     solarSecondaryPower,
     batteryChargePower,
     batteryDischargePower = 0,
+    batteryChargeSetpoint = 0,
+    batteryDischargeSetpoint = 0,
     gridTimestamp = now,
     solarPrimaryTimestamp = now,
     solarSecondaryTimestamp = now,
@@ -46,7 +48,9 @@ function createPayload({
         "sensor.solarflow_800_pro_output_home_power": entity(
             batteryDischargePower,
             batteryDischargeTimestamp
-        )
+        ),
+        "number.solarflow_800_pro_input_limit": entity(batteryChargeSetpoint, now),
+        "number.solarflow_800_pro_output_limit": entity(batteryDischargeSetpoint, now)
     };
 }
 
@@ -91,13 +95,35 @@ test("uses live values directly when all sensor timestamps are aligned", () => {
 
     const { outputMsg, contextState, statuses } = executeStats({ payload, now });
 
-    assert.equal(outputMsg.adjustment.currentDemandRaw, 260);
-    assert.equal(outputMsg.adjustment.currentDemandEstimate, 260);
-    assert.equal(outputMsg.adjustment.demandConfidence, 1);
-    assert.equal(outputMsg.adjustment.solarRawPower, 1249);
-    assert.equal(outputMsg.adjustment.solarPower, 1249);
-    assert.equal(outputMsg.adjustment.solarConfidence, 1);
-    assert.equal(outputMsg.adjustment.sensorTiming.snapshotLagging, false);
+    assert.equal(outputMsg.derived.demand.raw, 260);
+    assert.equal(outputMsg.derived.demand.current, 260);
+    assert.equal(outputMsg.meta.sensorTiming.demand.confidence, 1);
+    assert.equal(outputMsg.derived.solar.rawPower, 1249);
+    assert.equal(outputMsg.derived.solar.livePower, 1249);
+    assert.equal(outputMsg.meta.sensorTiming.solar.confidence, 1);
+    assert.deepEqual(structuredClone(outputMsg.derived.demand), {
+        current: 260,
+        raw: 260,
+        average: 260,
+        median: 260,
+        lowerBound: 260,
+        longTermMinimum: 260,
+        defensiveTarget: 240,
+        stdDev: 0,
+        trend: 0,
+        trendDirection: "flat",
+        trendChanges: 0
+    });
+    assert.deepEqual(structuredClone(outputMsg.derived.solar), {
+        livePower: 1249,
+        rawPower: 1249,
+        averagePower: 1249,
+        stdDev: 0,
+        trend: 0,
+        trendDirection: "flat",
+        trendChanges: 0
+    });
+    assert.equal(outputMsg.meta.stability.mode, "stable_stable");
     assert.equal(outputMsg.meta.sensorTiming.demand.maxAgeMs, 0);
     assert.equal(outputMsg.meta.sensorTiming.demand.spreadMs, 0);
     assertApprox(contextState.lastReliableDemand, 259.8399999999999);
@@ -137,13 +163,12 @@ test("detects stale solar-primary timestamps from the April 6 sample rows and fa
         contextState: initialRun.contextState
     });
 
-    assert.equal(staleRun.outputMsg.adjustment.currentDemandRaw, 238);
-    assert.equal(staleRun.outputMsg.adjustment.currentDemandEstimate, 260);
-    assert.equal(staleRun.outputMsg.adjustment.demandConfidence, 0);
-    assert.equal(staleRun.outputMsg.adjustment.solarRawPower, 1248);
-    assert.equal(staleRun.outputMsg.adjustment.solarPower, 1249);
-    assert.equal(staleRun.outputMsg.adjustment.solarConfidence, 0);
-    assert.equal(staleRun.outputMsg.adjustment.sensorTiming.snapshotLagging, true);
+    assert.equal(staleRun.outputMsg.derived.demand.raw, 238);
+    assert.equal(staleRun.outputMsg.derived.demand.current, 260);
+    assert.equal(staleRun.outputMsg.meta.sensorTiming.demand.confidence, 0);
+    assert.equal(staleRun.outputMsg.derived.solar.rawPower, 1248);
+    assert.equal(staleRun.outputMsg.derived.solar.livePower, 1249);
+    assert.equal(staleRun.outputMsg.meta.sensorTiming.solar.confidence, 0);
     assert.equal(staleRun.outputMsg.meta.sensorTiming.demand.maxAgeMs, 60035);
     assert.equal(staleRun.outputMsg.meta.sensorTiming.demand.spreadMs, 60035);
     assert.equal(
@@ -183,10 +208,9 @@ test("pins the negative-demand case by reusing the last reliable demand when a s
         }
     });
 
-    assert.equal(outputMsg.adjustment.currentDemandRaw, -135);
-    assert.equal(outputMsg.adjustment.currentDemandEstimate, 160);
-    assert.equal(outputMsg.adjustment.demandConfidence, 0);
-    assert.equal(outputMsg.adjustment.sensorTiming.snapshotLagging, true);
+    assert.equal(outputMsg.derived.demand.raw, -135);
+    assert.equal(outputMsg.derived.demand.current, 160);
+    assert.equal(outputMsg.meta.sensorTiming.demand.confidence, 0);
     assert.equal(outputMsg.meta.sensorTiming.demand.currentRaw, -135);
     assert.equal(outputMsg.meta.sensorTiming.demand.currentEstimate, 160);
     assert.equal(outputMsg.meta.sensorTiming.demand.maxAgeMs, 60000);
@@ -204,6 +228,65 @@ test("pins the negative-demand case by reusing the last reliable demand when a s
             text: "Solar: 900W | Demand: 158W | sync 0%"
         }
     ]);
+});
+
+test("keeps demand confidence high when idle zero-power components have old timestamps", () => {
+    const now = "2026-04-06T23:20:00.000Z";
+    const staleTimestamp = secondsBefore(now, 15 * 60);
+    const payload = createPayload({
+        now,
+        gridPower: 120,
+        solarPrimaryPower: 0,
+        solarSecondaryPower: 0,
+        batteryChargePower: 0,
+        batteryDischargePower: 0,
+        solarPrimaryTimestamp: staleTimestamp,
+        solarSecondaryTimestamp: staleTimestamp,
+        batteryChargeTimestamp: staleTimestamp,
+        batteryDischargeTimestamp: staleTimestamp
+    });
+
+    const { outputMsg, statuses } = executeStats({ payload, now });
+
+    assert.equal(outputMsg.derived.demand.raw, 120);
+    assert.equal(outputMsg.derived.demand.current, 120);
+    assert.equal(outputMsg.meta.sensorTiming.demand.confidence, 1);
+    assert.equal(outputMsg.meta.sensorTiming.demand.maxAgeMs, 0);
+    assert.equal(outputMsg.meta.sensorTiming.demand.spreadMs, 0);
+    assert.equal(outputMsg.meta.sensorTiming.solar.confidence, 1);
+    assert.equal(outputMsg.meta.sensorTiming.solar.maxAgeMs, null);
+    assert.deepEqual(statuses, [
+        {
+            fill: "blue",
+            shape: "dot",
+            text: "Solar: 0W | Demand: 120W | sync 100%"
+        }
+    ]);
+});
+
+test("ignores stale zero battery-power timestamps even when battery setpoints are nonzero", () => {
+    const now = "2026-04-06T12:20:00.000Z";
+    const staleTimestamp = secondsBefore(now, 15 * 60);
+    const payload = createPayload({
+        now,
+        gridPower: -80,
+        solarPrimaryPower: 500,
+        solarSecondaryPower: 180,
+        batteryChargePower: 0,
+        batteryDischargePower: 0,
+        batteryChargeSetpoint: 800,
+        batteryDischargeSetpoint: 800,
+        batteryChargeTimestamp: staleTimestamp,
+        batteryDischargeTimestamp: staleTimestamp
+    });
+
+    const { outputMsg } = executeStats({ payload, now });
+
+    assert.equal(outputMsg.derived.demand.raw, 600);
+    assert.equal(outputMsg.derived.demand.current, 600);
+    assert.equal(outputMsg.meta.sensorTiming.demand.confidence, 1);
+    assert.equal(outputMsg.meta.sensorTiming.demand.maxAgeMs, 0);
+    assert.equal(outputMsg.meta.sensorTiming.demand.spreadMs, 0);
 });
 
 [
@@ -256,13 +339,12 @@ test("pins the negative-demand case by reusing the last reliable demand when a s
             now: scenario.now
         });
 
-        assert.equal(outputMsg.adjustment.currentDemandRaw, scenario.expectedDemand);
-        assert.equal(outputMsg.adjustment.currentDemandEstimate, scenario.expectedDemand);
-        assert.equal(outputMsg.adjustment.demandConfidence, 1);
-        assert.equal(outputMsg.adjustment.solarRawPower, scenario.expectedSolar);
-        assert.equal(outputMsg.adjustment.solarPower, scenario.expectedSolar);
-        assert.equal(outputMsg.adjustment.solarConfidence, 1);
-        assert.equal(outputMsg.adjustment.sensorTiming.snapshotLagging, false);
+        assert.equal(outputMsg.derived.demand.raw, scenario.expectedDemand);
+        assert.equal(outputMsg.derived.demand.current, scenario.expectedDemand);
+        assert.equal(outputMsg.meta.sensorTiming.demand.confidence, 1);
+        assert.equal(outputMsg.derived.solar.rawPower, scenario.expectedSolar);
+        assert.equal(outputMsg.derived.solar.livePower, scenario.expectedSolar);
+        assert.equal(outputMsg.meta.sensorTiming.solar.confidence, 1);
         assert.equal(outputMsg.meta.sensorTiming.demand.maxAgeMs, 0);
         assert.equal(outputMsg.meta.sensorTiming.demand.spreadMs, 0);
         assert.equal(outputMsg.meta.sensorTiming.solar.sensors.solarSecondary.isValid, false);
@@ -317,14 +399,13 @@ test("pins the negative-demand case by reusing the last reliable demand when a s
             now: scenario.now
         });
 
-        assert.equal(outputMsg.adjustment.currentDemandRaw, scenario.expectedDemand);
-        assert.equal(outputMsg.adjustment.currentDemandEstimate, scenario.expectedDemand);
-        assert.equal(outputMsg.adjustment.defensiveTarget, scenario.expectedDefensiveTarget);
-        assert.equal(outputMsg.adjustment.demandConfidence, 1);
-        assert.equal(outputMsg.adjustment.solarRawPower, scenario.expectedSolarRaw);
-        assert.equal(outputMsg.adjustment.solarPower, scenario.expectedSolar);
-        assert.equal(outputMsg.adjustment.solarConfidence, 1);
-        assert.equal(outputMsg.adjustment.sensorTiming.snapshotLagging, false);
+        assert.equal(outputMsg.derived.demand.raw, scenario.expectedDemand);
+        assert.equal(outputMsg.derived.demand.current, scenario.expectedDemand);
+        assert.equal(outputMsg.derived.demand.defensiveTarget, scenario.expectedDefensiveTarget);
+        assert.equal(outputMsg.meta.sensorTiming.demand.confidence, 1);
+        assert.equal(outputMsg.derived.solar.rawPower, scenario.expectedSolarRaw);
+        assert.equal(outputMsg.derived.solar.livePower, scenario.expectedSolar);
+        assert.equal(outputMsg.meta.sensorTiming.solar.confidence, 1);
         assert.equal(outputMsg.meta.sensorTiming.demand.maxAgeMs, 0);
         assert.equal(outputMsg.meta.sensorTiming.solar.maxAgeMs, 0);
         assert.deepEqual(statuses, [
@@ -360,13 +441,12 @@ test("keeps using measured morning solar when forecast is optimistic but local s
         }
     });
 
-    assert.equal(outputMsg.adjustment.currentDemandRaw, 163);
-    assert.equal(outputMsg.adjustment.currentDemandEstimate, 163);
-    assert.equal(outputMsg.adjustment.defensiveTarget, 143);
-    assert.equal(outputMsg.adjustment.solarRawPower, 90);
-    assert.equal(outputMsg.adjustment.solarPower, 90);
-    assert.equal(outputMsg.adjustment.solarConfidence, 1);
-    assert.equal(outputMsg.adjustment.sensorTiming.snapshotLagging, false);
+    assert.equal(outputMsg.derived.demand.raw, 163);
+    assert.equal(outputMsg.derived.demand.current, 163);
+    assert.equal(outputMsg.derived.demand.defensiveTarget, 143);
+    assert.equal(outputMsg.derived.solar.rawPower, 90);
+    assert.equal(outputMsg.derived.solar.livePower, 90);
+    assert.equal(outputMsg.meta.sensorTiming.solar.confidence, 1);
     assert.equal(outputMsg.data.forecast.nextHourWh, 300);
     assert.equal(outputMsg.data.forecast.solarRemainingWh, 3000);
     assert.deepEqual(statuses, [

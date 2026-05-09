@@ -55,7 +55,7 @@ function createPayload({
     };
 }
 
-function createDataFromPayload(payload, adjustment = {}) {
+function createDataFromPayload(payload, stats = {}) {
     const gridPower = parseNumericState(
         payload["sensor.smartmeter_keller_sml_watt_summe"]?.state,
         0
@@ -112,10 +112,9 @@ function createDataFromPayload(payload, adjustment = {}) {
             chargeHardwareMaxPower: chargeHardwareMaxPower
         },
         house: {
-            demandPower: adjustment.currentDemandEstimate ?? adjustment.defensiveTarget ?? 0,
-            demandPowerRaw: adjustment.currentDemandEstimate ?? adjustment.defensiveTarget ?? 0,
-            demandPowerZeroFallback:
-                adjustment.currentDemandEstimate ?? adjustment.defensiveTarget ?? 0
+            demandPower: stats.currentDemandEstimate ?? stats.defensiveTarget ?? 0,
+            demandPowerRaw: stats.currentDemandEstimate ?? stats.defensiveTarget ?? 0,
+            demandPowerZeroFallback: stats.currentDemandEstimate ?? stats.defensiveTarget ?? 0
         },
         forecast: {
             solarRemainingWh: 0,
@@ -135,15 +134,15 @@ function createDataFromPayload(payload, adjustment = {}) {
     };
 }
 
-function createDerivedFromAdjustment(adjustment = {}) {
+function createDerivedFromStats(stats = {}) {
     return {
         demand: {
-            current: adjustment.currentDemandEstimate ?? 0,
-            defensiveTarget: adjustment.defensiveTarget ?? 0
+            current: stats.currentDemandEstimate ?? 0,
+            defensiveTarget: stats.defensiveTarget ?? 0
         },
         solar: {
-            livePower: adjustment.solarPower ?? 0,
-            averagePower: adjustment.solarAveragePower ?? adjustment.solarPower ?? 0
+            livePower: stats.solarPower ?? 0,
+            averagePower: stats.solarAveragePower ?? stats.solarPower ?? 0
         }
     };
 }
@@ -272,23 +271,22 @@ function createNormalizationMeta({ readings = {}, plausibility = {} } = {}) {
     };
 }
 
-function executeController({ payload, adjustment, contextState, now, meta, data, derived } = {}) {
-    const effectiveAdjustment = {
+function executeController({ payload, stats, contextState, now, meta, data, derived } = {}) {
+    const effectiveStats = {
         defensiveTarget: 0,
         currentDemandEstimate: 0,
         solarPower: 0,
         solarAveragePower: 0,
-        ...adjustment
+        ...stats
     };
     const execution = runFunctionNode(controllerScriptPath, {
         now: now || "2026-04-18T12:00:00.000Z",
         contextState,
         msg: {
             payload,
-            data: data || createDataFromPayload(payload, effectiveAdjustment),
-            derived: derived || createDerivedFromAdjustment(effectiveAdjustment),
-            meta: meta || {},
-            adjustment: effectiveAdjustment
+            data: data || createDataFromPayload(payload, effectiveStats),
+            derived: derived || createDerivedFromStats(effectiveStats),
+            meta: meta || {}
         }
     });
 
@@ -323,7 +321,7 @@ test("holds steady on the morning row when demand exceeds small sunrise solar", 
 
     const { result, outputMsg, insights, statuses, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 143,
             solarPower: 90,
             solarAveragePower: 90
@@ -359,7 +357,7 @@ test("charges at battery max on the midday export row after anti-export correcti
 
     const { outputMsg, insights, statuses, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 240,
             solarPower: 1249,
             solarAveragePower: 1249
@@ -370,8 +368,8 @@ test("charges at battery max on the midday export row after anti-export correcti
         now: "2026-04-06T13:30:21.142Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 1000);
-    assert.equal(outputMsg.adjustment.grid, -190.46);
+    assert.equal(outputMsg.action.charge.commandPower, 1000);
+    assert.equal(insights.payload.sensors.grid, -190.46);
     assert.equal(Math.round(contextState.lastCommand), 1000);
     assert.deepEqual(toPlain(insights), {
         payload: {
@@ -421,7 +419,7 @@ test("clamps to the reported 800W battery limit on the 2026-04-06T14:21:43 expor
 
     const { outputMsg, insights, statuses, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 202,
             solarPower: 1034,
             solarAveragePower: 1034
@@ -432,8 +430,8 @@ test("clamps to the reported 800W battery limit on the 2026-04-06T14:21:43 expor
         now: "2026-04-06T14:21:43.782Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 800);
-    assert.equal(outputMsg.adjustment.grid, -832.16);
+    assert.equal(outputMsg.action.charge.commandPower, 800);
+    assert.equal(insights.payload.sensors.grid, -832.16);
     assert.equal(Math.round(contextState.lastCommand), 800);
     assert.deepEqual(toPlain(insights), {
         payload: {
@@ -483,7 +481,7 @@ test("should honor a 1000W hardware charge limit", () => {
 
     const { outputMsg } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 202,
             solarPower: 1034,
             solarAveragePower: 1034
@@ -494,7 +492,7 @@ test("should honor a 1000W hardware charge limit", () => {
         now: "2026-04-06T14:21:43.782Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 1000);
+    assert.equal(outputMsg.action.charge.commandPower, 1000);
 });
 
 test("uses the corrected statistical estimates in the stale-snapshot export case instead of the impossible raw balance", () => {
@@ -509,7 +507,7 @@ test("uses the corrected statistical estimates in the stale-snapshot export case
 
     const { outputMsg, insights, statuses, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 138,
             solarPower: 900,
             solarAveragePower: 900
@@ -520,8 +518,8 @@ test("uses the corrected statistical estimates in the stale-snapshot export case
         now: "2026-04-05T13:00:23.491Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 800);
-    assert.equal(outputMsg.adjustment.grid, -67.01);
+    assert.equal(outputMsg.action.charge.commandPower, 800);
+    assert.equal(insights.payload.sensors.grid, -67.01);
     assert.equal(Math.round(contextState.lastCommand), 800);
     assert.deepEqual(toPlain(insights), {
         payload: {
@@ -571,7 +569,7 @@ test("keeps at least half of solar power as charge command to avoid battery swit
 
     const { outputMsg, insights, statuses, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 1050,
             solarPower: 400,
             solarAveragePower: 400
@@ -582,7 +580,7 @@ test("keeps at least half of solar power as charge command to avoid battery swit
         now: "2026-04-06T15:05:00.000Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 200);
+    assert.equal(outputMsg.action.charge.commandPower, 200);
     assert.equal(outputMsg.action.charge.commandPower, 200);
     assert.equal(outputMsg.action.charge.ruleApplied, "Solar Floor (Switch Guard)");
     assert.equal(Math.round(contextState.lastCommand), 200);
@@ -740,7 +738,7 @@ test("holds the current charge command when the smartmeter is unavailable and on
                 }
             }
         },
-        adjustment: {
+        stats: {
             defensiveTarget: 176,
             currentDemandEstimate: 176,
             solarPower: 925,
@@ -776,7 +774,7 @@ test("holds the current charge command when the smartmeter is unavailable and on
             batteryDischargePower: 268,
             currentSetInflow: 0
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 526,
             currentDemandEstimate: 526,
             solarPower: 0,
@@ -802,7 +800,7 @@ test("holds the current charge command when the smartmeter is unavailable and on
             batteryDischargePower: 82,
             currentSetInflow: 0
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 136,
             currentDemandEstimate: 136,
             solarPower: 0,
@@ -827,7 +825,7 @@ test("holds the current charge command when the smartmeter is unavailable and on
             batteryInflow: 0,
             currentSetInflow: 0
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 143,
             currentDemandEstimate: 163,
             solarPower: 90,
@@ -851,12 +849,12 @@ test("holds the current charge command when the smartmeter is unavailable and on
     }
 ].forEach((scenario) => {
     test(scenario.title, () => {
-        const data = createDataFromPayload(scenario.payload, scenario.adjustment);
+        const data = createDataFromPayload(scenario.payload, scenario.stats);
         Object.assign(data, scenario.dataOverrides || {});
 
         const { result, outputMsg, insights, statuses, contextState } = executeController({
             payload: scenario.payload,
-            adjustment: scenario.adjustment,
+            stats: scenario.stats,
             meta: scenario.meta,
             data,
             contextState: scenario.contextState,
@@ -889,7 +887,7 @@ test("uses low-confidence grid steering when normalized primary solar is stale",
 
     const { outputMsg, insights, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 300,
             currentDemandEstimate: 300,
             solarPower: 900,
@@ -914,7 +912,7 @@ test("uses low-confidence grid steering when normalized primary solar is stale",
         now: "2026-04-18T12:00:00.000Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 450);
+    assert.equal(outputMsg.action.charge.commandPower, 450);
     assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
     assert.equal(insights.payload.constraints.rule, "Low-Confidence Grid Steering");
     assert.equal(Math.round(contextState.lastCommand), 450);
@@ -932,7 +930,7 @@ test("uses low-confidence grid steering when normalized secondary solar is retai
 
     const { outputMsg, insights, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 300,
             currentDemandEstimate: 300,
             solarPower: 700,
@@ -959,7 +957,7 @@ test("uses low-confidence grid steering when normalized secondary solar is retai
         now: "2026-04-18T12:01:00.000Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 510);
+    assert.equal(outputMsg.action.charge.commandPower, 510);
     assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
     assert.equal(insights.payload.efficiency.isLeaking, true);
     assert.equal(Math.round(contextState.lastCommand), 510);
@@ -977,7 +975,7 @@ test("uses low-confidence grid steering when normalized demand plausibility is i
 
     const { outputMsg, insights, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 300,
             currentDemandEstimate: 360,
             solarPower: 900,
@@ -1004,7 +1002,7 @@ test("uses low-confidence grid steering when normalized demand plausibility is i
         now: "2026-04-18T12:02:00.000Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 580);
+    assert.equal(outputMsg.action.charge.commandPower, 580);
     assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
     assert.equal(insights.payload.constraints.rule, "Low-Confidence Grid Steering");
     assert.equal(Math.round(contextState.lastCommand), 580);
@@ -1022,7 +1020,7 @@ test("increases charge from a valid export signal when both normalized solar rea
 
     const { outputMsg, insights, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 300,
             currentDemandEstimate: 300,
             solarPower: 700,
@@ -1051,7 +1049,7 @@ test("increases charge from a valid export signal when both normalized solar rea
         now: "2026-04-18T12:03:00.000Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 930);
+    assert.equal(outputMsg.action.charge.commandPower, 930);
     assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
     assert.equal(insights.payload.efficiency.gridExport, 400);
     assert.equal(Math.round(contextState.lastCommand), 930);
@@ -1069,7 +1067,7 @@ test("holds charge when normalized primary solar and grid readings are stale", (
 
     const { result, outputMsg, insights, statuses, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 300,
             currentDemandEstimate: 300,
             solarPower: 900,
@@ -1126,7 +1124,7 @@ test("raises charge from fresh secondary solar increase when normalized grid and
 
     const { outputMsg, insights, statuses, contextState } = executeController({
         payload,
-        adjustment: {
+        stats: {
             defensiveTarget: 300,
             currentDemandEstimate: 300,
             solarPower: 1100,
@@ -1159,7 +1157,7 @@ test("raises charge from fresh secondary solar increase when normalized grid and
         now: "2026-04-18T12:05:00.000Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 500);
+    assert.equal(outputMsg.action.charge.commandPower, 500);
     assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Solar Increase");
     assert.equal(insights.payload.constraints.rule, "Low-Confidence Solar Increase");
     assert.equal(statuses[0].text, "Cmd: 500W | Rule: Low-Confidence Solar Increase | Grid: stale");
@@ -1190,7 +1188,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
     const { outputMsg, insights, contextState } = executeController({
         payload,
         data,
-        adjustment: {
+        stats: {
             defensiveTarget: 56,
             currentDemandEstimate: 56,
             solarPower: 71,
@@ -1212,7 +1210,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
         now: "2026-04-18T09:00:00.000Z"
     });
 
-    assert.equal(outputMsg.adjustment.command, 45);
+    assert.equal(outputMsg.action.charge.commandPower, 45);
     assert.equal(outputMsg.action.charge.targetPower, 50);
     assert.equal(insights.payload.sensors.solarLive, 71);
     assert.equal(insights.payload.sensors.solarEffective, 71);
@@ -1231,7 +1229,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 800,
             currentSetInflow: 660
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 0,
             currentDemandEstimate: 0,
             solarPower: 740,
@@ -1262,7 +1260,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 1000,
             currentSetInflow: 799
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 240,
             currentDemandEstimate: 260,
             solarPower: 1247,
@@ -1295,7 +1293,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 1000,
             currentSetInflow: 799
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 158,
             currentDemandEstimate: 160,
             solarPower: 900,
@@ -1328,7 +1326,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 1000,
             currentSetInflow: 800
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 0,
             currentDemandEstimate: 0,
             solarPower: 940,
@@ -1359,7 +1357,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 1000,
             currentSetInflow: 660
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 0,
             currentDemandEstimate: 0,
             solarPower: 1040,
@@ -1390,7 +1388,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 1000,
             currentSetInflow: 690
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 0,
             currentDemandEstimate: 0,
             solarPower: 700,
@@ -1421,7 +1419,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 800,
             currentSetInflow: 800
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 210,
             currentDemandEstimate: 230,
             solarPower: 690,
@@ -1452,7 +1450,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 800,
             currentSetInflow: 600
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 140,
             currentDemandEstimate: 140,
             solarPower: 730,
@@ -1485,7 +1483,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 800,
             currentSetInflow: 700
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 80,
             currentDemandEstimate: 80,
             solarPower: 660,
@@ -1518,7 +1516,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 800,
             currentSetInflow: 600
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 220,
             currentDemandEstimate: 420,
             solarPower: 750,
@@ -1551,7 +1549,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             maxChargePower: 800,
             currentSetInflow: 600
         }),
-        adjustment: {
+        stats: {
             defensiveTarget: 220,
             currentDemandEstimate: 120,
             solarPower: 750,
@@ -1578,7 +1576,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
     test(scenario.title, () => {
         const { result, outputMsg, insights, statuses, contextState } = executeController({
             payload: scenario.payload,
-            adjustment: scenario.adjustment,
+            stats: scenario.stats,
             meta: scenario.meta,
             contextState: scenario.contextState,
             now: scenario.now
@@ -1600,8 +1598,8 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
         }
 
         assert.ok(outputMsg, "expected controller to emit a low-confidence adjusted command");
-        assert.ok(insights, "expected controller to emit low-confidence adjustment insights");
-        assert.equal(outputMsg.adjustment.command, scenario.expectedCommand);
+        assert.ok(insights, "expected controller to emit low-confidence control insights");
+        assert.equal(outputMsg.action.charge.commandPower, scenario.expectedCommand);
         assert.equal(outputMsg.action.charge.commandPower, scenario.expectedCommand);
         assert.equal(Math.round(contextState.lastCommand), scenario.expectedCommand);
     });
