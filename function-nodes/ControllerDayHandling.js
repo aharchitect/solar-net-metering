@@ -48,6 +48,7 @@ const solarNormalizationReadings = [
     normalizationReadings.solarPrimaryPower,
     normalizationReadings.solarSecondaryPower
 ];
+const stability = msg.meta?.stability || {};
 
 function readingHasLowConfidence(reading) {
     if (!reading) {
@@ -70,6 +71,12 @@ const minSustain = 50; // Keep charging circuit active
 const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
 const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting
 const solarSwitchGuardFactor = 0.5; // Avoid charge relay cycling while solar is still available
+const unstableSolarMaxIncreaseW = 250; // Cloud flicker: do not chase export spikes too hard
+const unstableSolarMaxDecreaseW = 250; // Cloud flicker: avoid relay/setpoint whiplash on brief shade
+const unstableSolarEmergencyImportW = 1500; // Still back off fast if we are clearly charging from grid
+const lowSocMildImportThresholdW = 200; // At minimum SoC, mild import is not enough reason to stop
+const lowSocPositiveSurplusImportThresholdW = 1000; // Positive solar surplus means imports may be lag
+const lowSocMaxDecreaseW = 250; // Keep minimum-SoC recovery from collapsing on one cloudy sample
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects that there is more solar power than demand,
@@ -82,6 +89,10 @@ const solarSwitchGuardFactor = 0.5; // Avoid charge relay cycling while solar is
 let clampReason = "None";
 let ruleApplied = "None";
 const isExporting = gridPower < -exportTolerance;
+const solarIsUnstable =
+    stability.solar === "unstable" ||
+    stability.mode === "solar_unstable" ||
+    stability.mode === "unstable_unstable";
 let lastCommand = context.get("lastCommand") || 0;
 const lastDemandEstimate = context.get("lastDemandEstimate");
 
@@ -142,6 +153,59 @@ function clampChargeCommand(value) {
     }
 
     return clampedValue;
+}
+
+function appendRule(ruleName) {
+    ruleApplied = ruleApplied === "None" ? ruleName : `${ruleApplied} + ${ruleName}`;
+}
+
+function limitUnstableSolarSlew(command) {
+    if (!solarIsUnstable) {
+        return command;
+    }
+
+    const activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0);
+    if (activeReference <= 0) {
+        return command;
+    }
+
+    const maxIncrease = activeReference + unstableSolarMaxIncreaseW;
+    const maxDecrease =
+        gridPower > unstableSolarEmergencyImportW
+            ? 0
+            : Math.max(0, activeReference - unstableSolarMaxDecreaseW);
+    const limitedCommand = Math.min(maxIncrease, Math.max(maxDecrease, command));
+
+    if (Math.round(limitedCommand) !== Math.round(command)) {
+        appendRule("Solar-Unstable Slew Limit");
+    }
+
+    return limitedCommand;
+}
+
+function limitLowSocMildImportDrop(command) {
+    const activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0);
+    const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
+    const lowSocImportShouldBeTreatedGently =
+        gridPower <= lowSocMildImportThresholdW ||
+        (theoreticalSurplus > targetBuffer && gridPower <= lowSocPositiveSurplusImportThresholdW);
+    const shouldLimitDrop =
+        soc <= minSoc &&
+        activeReference > 0 &&
+        gridPower >= 0 &&
+        lowSocImportShouldBeTreatedGently &&
+        command < activeReference - lowSocMaxDecreaseW;
+
+    if (!shouldLimitDrop) {
+        return command;
+    }
+
+    appendRule("Low-SoC Mild-Import Slew Limit");
+    return Math.max(0, activeReference - lowSocMaxDecreaseW);
+}
+
+function limitChargeSlew(command) {
+    return limitLowSocMildImportDrop(limitUnstableSolarSlew(command));
 }
 
 function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, statusText }) {
@@ -247,7 +311,7 @@ if (!demandSnapshotReliable) {
         }
     }
 
-    const smoothedCommand = clampChargeCommand(targetCharge);
+    const smoothedCommand = clampChargeCommand(limitChargeSlew(targetCharge));
     return emitCommand({
         command: smoothedCommand,
         targetCharge,
@@ -352,7 +416,7 @@ if (
     ruleApplied = "Solar Floor (Switch Guard)";
 }
 
-smoothedCommand = clampChargeCommand(smoothedCommand);
+smoothedCommand = clampChargeCommand(limitChargeSlew(smoothedCommand));
 
 // 7. CYCLE GUARD (Deadband)
 // If we are stable and not exporting, don't update if change is tiny

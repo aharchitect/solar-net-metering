@@ -620,6 +620,169 @@ test("keeps at least half of solar power as charge command to avoid battery swit
     ]);
 });
 
+test("limits charge increases from export spikes while solar is unstable", () => {
+    const payload = createPayload({
+        gridPower: -413.95,
+        solarPrimaryPower: 520,
+        solarSecondaryPower: 224,
+        batteryInflow: 579,
+        maxChargePower: 1000,
+        currentSetInflow: 579,
+        soc: 5,
+        minSoc: 5
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 200,
+            currentDemandEstimate: 200,
+            solarPower: 744,
+            solarAveragePower: 744
+        },
+        meta: {
+            stability: {
+                mode: "solar_unstable",
+                demand: "stable",
+                solar: "unstable"
+            }
+        },
+        contextState: {
+            lastCommand: 579
+        },
+        now: "2026-05-09T11:21:32.000Z"
+    });
+
+    assert.equal(outputMsg.action.charge.commandPower, 829);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Anti-Export + Solar-Unstable Slew Limit");
+    assert.equal(insights.payload.calculation.targetCharge, 1096);
+    assert.equal(insights.payload.constraints.rule, "Anti-Export + Solar-Unstable Slew Limit");
+    assert.equal(Math.round(contextState.lastCommand), 829);
+});
+
+test("limits charge decreases from import spikes while solar is unstable and charging is active", () => {
+    const payload = createPayload({
+        gridPower: 1069.95,
+        solarPrimaryPower: 520,
+        solarSecondaryPower: 224,
+        batteryInflow: 1000,
+        maxChargePower: 1000,
+        currentSetInflow: 1000,
+        soc: 5,
+        minSoc: 5
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 1650,
+            currentDemandEstimate: 1650,
+            solarPower: 744,
+            solarAveragePower: 744
+        },
+        meta: {
+            stability: {
+                mode: "solar_unstable",
+                demand: "stable",
+                solar: "unstable"
+            }
+        },
+        contextState: {
+            lastCommand: 0
+        },
+        now: "2026-05-09T11:21:52.000Z"
+    });
+
+    assert.equal(outputMsg.action.charge.commandPower, 750);
+    assert.equal(outputMsg.action.charge.ruleApplied, "SoC Recovery + Solar-Unstable Slew Limit");
+    assert.equal(insights.payload.calculation.targetCharge, 372);
+    assert.equal(insights.payload.constraints.rule, "SoC Recovery + Solar-Unstable Slew Limit");
+    assert.equal(Math.round(contextState.lastCommand), 750);
+});
+
+test("does not stop charging at minimum SoC on a mild import sample after an active setpoint", () => {
+    const payload = createPayload({
+        gridPower: 52.85,
+        solarPrimaryPower: 70,
+        solarSecondaryPower: 30,
+        batteryInflow: 393,
+        maxChargePower: 1000,
+        currentSetInflow: 393,
+        soc: 5,
+        minSoc: 5
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 100,
+            solarAveragePower: 100
+        },
+        contextState: {
+            lastCommand: 0
+        },
+        now: "2026-05-09T11:27:02.000Z"
+    });
+
+    assert.equal(outputMsg.action.charge.commandPower, 143);
+    assert.equal(outputMsg.action.charge.ruleApplied, "Low-SoC Mild-Import Slew Limit");
+    assert.equal(insights.payload.calculation.targetCharge, 0);
+    assert.equal(insights.payload.constraints.rule, "Low-SoC Mild-Import Slew Limit");
+    assert.equal(Math.round(contextState.lastCommand), 143);
+});
+
+test("does not stop charging at minimum SoC when import conflicts with positive solar surplus", () => {
+    const payload = createPayload({
+        gridPower: 498.71,
+        solarPrimaryPower: 360,
+        solarSecondaryPower: 200,
+        batteryInflow: 700,
+        maxChargePower: 1000,
+        currentSetInflow: 700,
+        soc: 5,
+        minSoc: 5
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 37,
+            currentDemandEstimate: 396,
+            solarPower: 560,
+            solarAveragePower: 370
+        },
+        meta: createDemandTimingMeta({
+            confidence: 0.2,
+            currentRaw: 396,
+            currentEstimate: 396,
+            maxAgeMs: 20000,
+            spreadMs: 20000,
+            gridIsValid: true,
+            gridAgeMs: 0
+        }),
+        contextState: {
+            lastCommand: 700,
+            lastDemandEstimate: 37
+        },
+        now: "2026-05-09T11:27:36.059Z"
+    });
+
+    assert.equal(outputMsg.action.charge.commandPower, 450);
+    assert.equal(
+        outputMsg.action.charge.ruleApplied,
+        "Low-Confidence Grid Steering + Low-SoC Mild-Import Slew Limit"
+    );
+    assert.equal(insights.payload.calculation.theoreticalSurplus, 400);
+    assert.equal(insights.payload.calculation.targetCharge, -18);
+    assert.equal(
+        insights.payload.constraints.rule,
+        "Low-Confidence Grid Steering + Low-SoC Mild-Import Slew Limit"
+    );
+    assert.equal(Math.round(contextState.lastCommand), 450);
+});
+
 test("holds the current charge command when the smartmeter is unavailable and only a retained grid value exists", () => {
     const payload = createPayload({
         gridPower: "unavailable",
