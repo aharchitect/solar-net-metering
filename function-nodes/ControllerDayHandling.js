@@ -76,6 +76,7 @@ const unstableSolarMaxDecreaseW = 250; // Cloud flicker: avoid relay/setpoint wh
 const unstableSolarEmergencyImportW = 1500; // Still back off fast if we are clearly charging from grid
 const lowSocMildImportThresholdW = 200; // At minimum SoC, mild import is not enough reason to stop
 const lowSocPositiveSurplusImportThresholdW = 1000; // Positive solar surplus means imports may be lag
+const lowSocReserveMargin = 2; // Treat the first percent points above min SoC as fragile recovery
 const lowSocMaxDecreaseW = 250; // Keep minimum-SoC recovery from collapsing on one cloudy sample
 
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
@@ -186,22 +187,28 @@ function limitUnstableSolarSlew(command) {
 function limitLowSocMildImportDrop(command) {
     const activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0);
     const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
+    const hasPositiveSurplus = theoreticalSurplus > targetBuffer;
     const lowSocImportShouldBeTreatedGently =
         gridPower <= lowSocMildImportThresholdW ||
-        (theoreticalSurplus > targetBuffer && gridPower <= lowSocPositiveSurplusImportThresholdW);
+        (hasPositiveSurplus && gridPower <= lowSocPositiveSurplusImportThresholdW);
+    const stepDownFloor = Math.max(0, activeReference - lowSocMaxDecreaseW);
+    const positiveSurplusFloor = hasPositiveSurplus
+        ? Math.min(activeReference, theoreticalSurplus * 0.5)
+        : 0;
+    const commandFloor = Math.max(stepDownFloor, positiveSurplusFloor);
     const shouldLimitDrop =
-        soc <= minSoc &&
+        soc <= minSoc + lowSocReserveMargin &&
         activeReference > 0 &&
         gridPower >= 0 &&
         lowSocImportShouldBeTreatedGently &&
-        command < activeReference - lowSocMaxDecreaseW;
+        command < commandFloor;
 
     if (!shouldLimitDrop) {
         return command;
     }
 
     appendRule("Low-SoC Mild-Import Slew Limit");
-    return Math.max(0, activeReference - lowSocMaxDecreaseW);
+    return commandFloor;
 }
 
 function limitChargeSlew(command) {

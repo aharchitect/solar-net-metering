@@ -783,6 +783,63 @@ test("does not stop charging at minimum SoC when import conflicts with positive 
     assert.equal(Math.round(contextState.lastCommand), 450);
 });
 
+test("does not ratchet near-minimum SoC recovery to zero while positive surplus remains", () => {
+    const payload = createPayload({
+        gridPower: 233.59,
+        solarPrimaryPower: 430,
+        solarSecondaryPower: 248,
+        batteryInflow: 157,
+        maxChargePower: 1000,
+        currentSetInflow: 157,
+        soc: 6,
+        minSoc: 5
+    });
+
+    const { outputMsg, insights, contextState } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 295,
+            currentDemandEstimate: 595,
+            solarPower: 678,
+            solarAveragePower: 586
+        },
+        meta: {
+            ...createDemandTimingMeta({
+                confidence: 0.2,
+                currentRaw: 595,
+                currentEstimate: 595,
+                maxAgeMs: 20000,
+                spreadMs: 20000,
+                gridIsValid: true,
+                gridAgeMs: 0
+            }),
+            stability: {
+                mode: "solar_unstable",
+                demand: "stable",
+                solar: "unstable"
+            }
+        },
+        contextState: {
+            lastCommand: 157,
+            lastDemandEstimate: 247
+        },
+        now: "2026-05-09T11:34:20.073Z"
+    });
+
+    assert.equal(outputMsg.action.charge.commandPower, 157);
+    assert.equal(
+        outputMsg.action.charge.ruleApplied,
+        "Low-Confidence Grid Steering + Solar-Unstable Slew Limit + Low-SoC Mild-Import Slew Limit"
+    );
+    assert.equal(insights.payload.calculation.theoreticalSurplus, 323);
+    assert.equal(insights.payload.calculation.targetCharge, -539);
+    assert.equal(
+        insights.payload.constraints.rule,
+        "Low-Confidence Grid Steering + Solar-Unstable Slew Limit + Low-SoC Mild-Import Slew Limit"
+    );
+    assert.equal(Math.round(contextState.lastCommand), 157);
+});
+
 test("holds the current charge command when the smartmeter is unavailable and only a retained grid value exists", () => {
     const payload = createPayload({
         gridPower: "unavailable",
