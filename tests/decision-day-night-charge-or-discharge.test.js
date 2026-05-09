@@ -263,6 +263,46 @@ test("does not charge low SoC from daily forecast when next-hour solar is not us
     ]);
 });
 
+test("charges at minimum SoC when live solar and normalized next-hour forecast are usable", () => {
+    const { toCharge, toDischarge, statuses, msg } = executeDecision({
+        data: createData({
+            sun: {
+                aboveHorizon: true,
+                nextRising: null
+            },
+            battery: {
+                soc: 5,
+                minSoc: 5
+            },
+            forecast: {
+                solarRemainingWh: 6000,
+                nextHourWh: 526
+            }
+        }),
+        derived: createDerived({
+            solar: {
+                livePower: 744
+            }
+        })
+    });
+
+    assert.ok(toCharge);
+    assert.equal(toDischarge, null);
+    assert.deepEqual(toPlain(msg.action.decision), {
+        isSolarDayOver: false,
+        batteryHasReserve: false,
+        nightLowSocBlock: false,
+        dischargeStopThreshold: 5
+    });
+    assert.deepEqual(statuses, [
+        {
+            fill: "yellow",
+            shape: "dot",
+            text: "Charge - Day/Solar: remaing solar 6000Wh"
+        }
+    ]);
+});
+
 test("routes to discharge during weak morning solar when battery has 30 percent reserve above minimum", () => {
     const { toCharge, toDischarge, statuses } = executeDecision({
         now: "2026-04-06T09:00:00.000",

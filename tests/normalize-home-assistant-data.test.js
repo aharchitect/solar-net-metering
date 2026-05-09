@@ -123,7 +123,7 @@ test("normalizes a daytime happy path with timestamp and age logging", () => {
     assert.equal(normalizedMsg.data.house.demandPowerRaw, 720);
     assert.equal(normalizedMsg.data.house.demandPower, 720);
     assert.equal(normalizedMsg.data.forecast.solarRemainingWh, 1500);
-    assert.equal(normalizedMsg.data.forecast.nextHourWh, 100.4);
+    assert.equal(normalizedMsg.data.forecast.nextHourWh, 500);
     assert.equal(normalizedMsg.data.sun.aboveHorizon, true);
     assert.equal(
         normalizedMsg.meta.normalization.readings.gridPower.sourceTimestamp,

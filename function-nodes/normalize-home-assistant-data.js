@@ -306,8 +306,8 @@ const solarRemainingWhPrimaryReading = readWh("sensor.energy_production_today_re
 const solarRemainingWhSecondaryReading = readWh("sensor.energy_production_today_remaining_2", 0, {
     remember: true
 });
-const nextHourPrimaryReading = readNumber("sensor.energy_next_hour", 0, { remember: true });
-const nextHourSecondaryReading = readNumber("sensor.energy_next_hour_2", 0, { remember: true });
+const nextHourPrimaryReading = readWh("sensor.energy_next_hour", 0, { remember: true });
+const nextHourSecondaryReading = readWh("sensor.energy_next_hour_2", 0, { remember: true });
 const batteryChargeSetpoint = getNumber("number.solarflow_800_pro_input_limit", 0, {
     remember: true
 });
