@@ -163,11 +163,12 @@ Intermediate calculated values. These fields are reusable helper values, not dir
 
 #### `msg.derived.forecast`
 
-| Path                                      | Type   | Unit | Meaning                                         | Producer            |
-| ----------------------------------------- | ------ | ---- | ----------------------------------------------- | ------------------- |
-| `msg.derived.forecast.nextHourWh`         | number | Wh   | Next-hour forecast copied for derived logic     | `battery-budget.js` |
-| `msg.derived.forecast.hoursToUsableSolar` | number | h    | Estimated hours until usable solar is available | `battery-budget.js` |
-| `msg.derived.forecast.hoursToSunrise`     | string | h    | Hours until sunrise as formatted decimal string | `battery-budget.js` |
+| Path                                      | Type   | Unit | Meaning                                                                                     | Producer            |
+| ----------------------------------------- | ------ | ---- | ------------------------------------------------------------------------------------------- | ------------------- |
+| `msg.derived.forecast.nextHourWh`         | number | Wh   | Next-hour forecast copied for derived logic                                                 | `battery-budget.js` |
+| `msg.derived.forecast.hoursToUsableSolar` | number | h    | Estimated hours until usable solar is available                                             | `battery-budget.js` |
+| `msg.derived.forecast.hoursToSunrise`     | string | h    | Hours until sunrise as formatted decimal string                                             | `battery-budget.js` |
+| `msg.derived.forecast.budgetWindowReason` | string | -    | Reason for the discharge budget window, such as `sunrise`, `early solar`, or `usable solar` | `battery-budget.js` |
 
 #### `msg.derived.houseDemandPlausibility`
 

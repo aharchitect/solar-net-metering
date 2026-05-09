@@ -25,6 +25,15 @@ function abortForMissing(requiredPaths) {
     return true;
 }
 
+function parseTimestampMs(value) {
+    if (typeof value !== "string" || value.trim() === "") {
+        return null;
+    }
+
+    const timestampMs = new Date(value).getTime();
+    return Number.isFinite(timestampMs) ? timestampMs : null;
+}
+
 if (
     abortForMissing(["data.battery.availableWh", "data.forecast.nextHourWh", "data.sun.nextRising"])
 ) {
@@ -41,29 +50,35 @@ const totalNextHourWh = data.forecast.nextHourWh;
 
 // 3. TIME CALCULATION
 const now = new Date().getTime();
-const sunrise = new Date(data.sun.nextRising).getTime();
+const sunrise = parseTimestampMs(data.sun.nextRising);
+
+if (sunrise === null) {
+    const errorMessage = `Invalid sunrise timestamp: ${data.sun.nextRising}`;
+    node.status({ fill: "red", shape: "ring", text: "Invalid sunrise timestamp" });
+    node.error(errorMessage, msg);
+    return null;
+}
 
 // 4. DYNAMIC WINDOW ADJUSTMENT
 let hoursToUsableSolar = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));
+let budgetWindowReason = "sunrise";
 
-// If the Next Hour forecast is already > 50Wh, the sun is effectively "up"
+// If the Next Hour forecast is already > 100Wh, the sun is effectively "up"
 // for the battery logic, even if the clock says it's early.
 if (totalNextHourWh > 100) {
     // Sun is strong! Shorten the window to 1 hour to empty the battery faster.
     hoursToUsableSolar = 1.0;
+    budgetWindowReason = "usable solar";
 } else if (totalNextHourWh > 20) {
     // Sun is starting to peek through.
     hoursToUsableSolar = Math.min(hoursToUsableSolar, 2.0);
+    budgetWindowReason = hoursToUsableSolar === 2.0 ? "early solar" : "sunrise";
 }
 
 // Handle edge case: If it's 2 AM and sunrise is 6 AM, hoursToSunrise = 4.
-// If sunrise has already passed or is invalid, default to a small number to avoid division by zero.
-// Calculate hours only if we have a valid date
-let hoursToSunrise = 0.5; // Default safety
-if (!isNaN(sunrise)) {
-    // Math.max ensures we don't get negative numbers if sunrise just happened
-    hoursToSunrise = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));
-}
+// If sunrise has already passed, default to a small number to avoid division by zero.
+// Math.max ensures we don't get negative numbers if sunrise just happened.
+const hoursToSunrise = Math.max(0.5, (sunrise - now) / (1000 * 60 * 60));
 
 // 3. CALCULATION
 const usableWh = Math.max(0, availableWh);
@@ -73,13 +88,18 @@ const forcedRate = Math.round(usableWh / hoursToUsableSolar);
 msg.derived = msg.derived || {};
 msg.derived.forecast = msg.derived.forecast || {};
 msg.derived.forecast.nextHourWh = totalNextHourWh;
-msg.derived.forecast.hoursToUsableSolar = Math.round(hoursToUsableSolar);
+msg.derived.forecast.hoursToUsableSolar = Number(hoursToUsableSolar.toFixed(1));
 msg.derived.forecast.hoursToSunrise = hoursToSunrise.toFixed(1);
+msg.derived.forecast.budgetWindowReason = budgetWindowReason;
 msg.action = msg.action || {};
 msg.action.battery = msg.action.battery || {};
 msg.action.battery.discharge = msg.action.battery.discharge || {};
 msg.action.battery.discharge.forcedRate = forcedRate;
 
-node.status({ fill: "blue", shape: "ring", text: `Budget: forced ${forcedRate}W until sunrise` });
+node.status({
+    fill: "blue",
+    shape: "ring",
+    text: `Budget: forced ${forcedRate}W over ${hoursToUsableSolar.toFixed(1)}h (${budgetWindowReason})`
+});
 
 return msg;
