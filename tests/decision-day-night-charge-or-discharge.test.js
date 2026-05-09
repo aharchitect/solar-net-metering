@@ -436,3 +436,24 @@ test("routes nowhere during the day when no solar power is available", () => {
         }
     ]);
 });
+
+test("does not require the removed adjustment bucket", () => {
+    const { toCharge, toDischarge, statuses, msg } = executeDecision({
+        derived: {
+            demand: {
+                current: 180
+            }
+        }
+    });
+
+    assert.equal(msg.adjustment, undefined);
+    assert.equal(toCharge, null);
+    assert.equal(toDischarge, null);
+    assert.deepEqual(statuses, [
+        {
+            fill: "red",
+            shape: "dot",
+            text: "Empty Battery, no solar power: 0W, solar forecast 1000Wh, battery soc: 64"
+        }
+    ]);
+});
