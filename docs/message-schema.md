@@ -355,6 +355,13 @@ Its `msg.payload` is a flat log record intended for CSV export and replay datase
 - target and final charge command
 - SoC and minimum SoC
 - history sample count and standard deviations
+- snapshot-reliability flags, sensor-confidence reasons, and the selected control mode
+- the previous command, low-confidence steering base, demand delta, and import/export corrections
+- smoothing alpha and solar switch-guard values
+
+The record also includes `decisionRule`: the rule selected before final clamping. This deliberately
+remains distinct from `ruleApplied`, because a `Floor (0W)` clamp can otherwise hide that the
+low-confidence grid-steering path made the decision.
 
 ## Normalize Telemetry Output
 
@@ -367,6 +374,13 @@ Its `msg.payload` is a flat log record intended for CSV export of the raw normal
 - whether a sensor reading was valid or a recent last-valid value was reused
 - the raw demand calculation, the zero-fallback comparison, and whether negative demand was clamped
 - which demand inputs were invalid or reused at the time of calculation
+
+## Discharge Controller Telemetry Output
+
+`gentle-controller-discharge-filter.js` has a second output for CSV telemetry. It records both
+commanding and no-command decisions, including the raw and EMA commands, demand and solar inputs,
+active sustain/import-hold/zero-export guards, grid-trend correction, forced-rate limiting, and the
+final command. This keeps a replay trail even when the hardware output is deliberately suppressed.
 
 ## Guidance
 

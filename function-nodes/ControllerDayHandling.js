@@ -96,6 +96,7 @@ const solarIsUnstable =
     stability.mode === "unstable_unstable";
 let lastCommand = context.get("lastCommand") || 0;
 const lastDemandEstimate = context.get("lastDemandEstimate");
+let controlMode = "Grid Anchor";
 
 const demandSnapshotReliable =
     (!Number.isFinite(demandConfidence) || demandConfidence >= reliableDemandConfidence) &&
@@ -106,6 +107,7 @@ const gridSnapshotReliable =
 const shouldFreezeCommand = !gridSnapshotReliable || !Number.isFinite(gridPower);
 
 if (shouldFreezeCommand) {
+    controlMode = "Grid Stale Hold";
     const lastSolarSecondaryPower = context.get("lastSolarSecondaryPower");
     const solarSecondaryIncrease = Number.isFinite(lastSolarSecondaryPower)
         ? solarSecondaryPower - lastSolarSecondaryPower
@@ -215,7 +217,14 @@ function limitChargeSlew(command) {
     return limitLowSocMildImportDrop(limitUnstableSolarSlew(command));
 }
 
-function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, statusText }) {
+function emitCommand({
+    command,
+    targetCharge,
+    theoreticalSurplus,
+    statusFill,
+    statusText,
+    diagnostics = {}
+}) {
     const roundedCommand = Math.round(command);
     const roundedTarget = Math.round(targetCharge);
     const roundedSurplus = Math.round(theoreticalSurplus);
@@ -240,32 +249,87 @@ function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, st
         getFirstFinite([demandTiming?.currentEstimate, msg.derived?.demand?.current], 0)
     );
 
-    const insights = {
-        payload: {
-            timestamp: new Date().toISOString(),
-            efficiency: {
-                gridExport: gridPower < 0 ? Math.abs(gridPower) : 0,
-                isLeaking: isExporting
-            },
-            calculation: {
-                theoreticalSurplus: roundedSurplus,
-                targetCharge: roundedTarget,
-                finalCommand: roundedCommand
-            },
-            constraints: {
-                clamp: clampReason,
-                rule: ruleApplied,
-                delta: Math.round(delta)
-            },
-            sensors: {
-                solarLive: liveSolarPower,
-                solarStable: stableSolarPower,
-                solarEffective: Math.round(effectiveSolarPower),
-                demand: calculatedDemand,
-                grid: gridPower,
-                soc: soc
-            }
+    const timestamp = new Date().toISOString();
+    const telemetry = {
+        // Keep these fields flat: the Node-RED CSV node maps its template to
+        // direct payload properties and otherwise writes an empty row.
+        time: timestamp,
+        source: "ControllerDayHandling",
+        mode: stability.mode || "unknown",
+        controlMode,
+        ruleApplied,
+        decisionRule: diagnostics.decisionRule || ruleApplied,
+        clampReason,
+        gridPower,
+        batteryInflow,
+        currentSetInflow,
+        maxChargePower,
+        calculatedDemand,
+        currentDemand: getFirstFinite(
+            [demandTiming?.currentEstimate, msg.derived?.demand?.current],
+            0
+        ),
+        medianDemand: getFirstFinite([msg.derived?.demand?.median], 0),
+        liveSolarPower,
+        stableSolarPower,
+        effectiveSolarPower: Math.round(effectiveSolarPower),
+        theoreticalSurplus: roundedSurplus,
+        targetCharge: roundedTarget,
+        finalCommand: roundedCommand,
+        delta: Math.round(delta),
+        soc,
+        minSoc,
+        totalProduced,
+        isExporting,
+        historySamples: msg.meta?.history?.samples,
+        triggerIntervalSeconds: msg.meta?.history?.triggerIntervalSeconds,
+        demandStdDev: msg.derived?.demand?.stdDev,
+        solarStdDev: msg.derived?.solar?.stdDev,
+        demandSnapshotReliable,
+        gridSnapshotReliable,
+        shouldFreezeCommand,
+        demandConfidence,
+        reliableDemandConfidence,
+        gridTimingValid: gridTimingReading?.isValid !== false,
+        gridReadingLowConfidence: readingHasLowConfidence(gridNormalizationReading),
+        normalizationConsistent: normalization?.plausibility?.isConsistent !== false,
+        solarPrimaryLowConfidence: readingHasLowConfidence(normalizationReadings.solarPrimaryPower),
+        solarSecondaryLowConfidence: readingHasLowConfidence(
+            normalizationReadings.solarSecondaryPower
+        ),
+        solarIsUnstable,
+        lastCommand,
+        lastDemandEstimate,
+        ...diagnostics,
+        // Retain the structured view for the debug sidebar and any existing
+        // consumers; CSV ignores these properties because they are not in its template.
+        timestamp,
+        efficiency: {
+            gridExport: gridPower < 0 ? Math.abs(gridPower) : 0,
+            isLeaking: isExporting
+        },
+        calculation: {
+            theoreticalSurplus: roundedSurplus,
+            targetCharge: roundedTarget,
+            finalCommand: roundedCommand
+        },
+        constraints: {
+            clamp: clampReason,
+            rule: ruleApplied,
+            delta: Math.round(delta)
+        },
+        sensors: {
+            solarLive: liveSolarPower,
+            solarStable: stableSolarPower,
+            solarEffective: Math.round(effectiveSolarPower),
+            demand: calculatedDemand,
+            grid: gridPower,
+            soc
         }
+    };
+
+    const insights = {
+        payload: telemetry
     };
 
     node.status({
@@ -278,6 +342,7 @@ function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, st
 }
 
 if (!demandSnapshotReliable) {
+    controlMode = "Low-Confidence Grid Steering";
     ruleApplied = "Low-Confidence Grid Steering";
 
     const baseCommand = Math.max(lastCommand, currentSetInflow, 0);
@@ -289,9 +354,12 @@ if (!demandSnapshotReliable) {
         ? currentDemandEstimate - lastDemandEstimate
         : null;
     let targetCharge = baseCommand;
+    let importCorrection = 0;
+    let demandCorrection = 0;
+    let exportCorrection = 0;
 
     if (isExporting) {
-        const exportCorrection = Math.abs(gridPower) + targetBuffer;
+        exportCorrection = Math.abs(gridPower) + targetBuffer;
         const commandAlreadyAheadOfMeasuredInflow = currentSetInflow > batteryInflow + targetBuffer;
 
         if (commandAlreadyAheadOfMeasuredInflow && Math.abs(gridPower) <= targetBuffer) {
@@ -300,7 +368,7 @@ if (!demandSnapshotReliable) {
             targetCharge = baseCommand + exportCorrection;
         }
     } else if (gridPower > targetBuffer) {
-        const importCorrection = gridPower - targetBuffer;
+        importCorrection = gridPower - targetBuffer;
         const demandSpike = currentDemandEstimate - calculatedDemand;
         const isShortDemandPeak =
             demandDelta !== null &&
@@ -311,7 +379,7 @@ if (!demandSnapshotReliable) {
         if (isShortDemandPeak) {
             targetCharge = baseCommand;
         } else {
-            const demandCorrection =
+            demandCorrection =
                 demandDelta !== null && demandDelta > 0 ? demandDelta * 2 : importCorrection;
 
             targetCharge = baseCommand - Math.max(importCorrection, demandCorrection);
@@ -326,7 +394,17 @@ if (!demandSnapshotReliable) {
         statusFill: isExporting ? "yellow" : "green",
         statusText: `Cmd: ${Math.round(smoothedCommand)}W | Rule: ${ruleApplied} | Grid: ${Math.round(
             gridPower
-        )}W`
+        )}W`,
+        diagnostics: {
+            decisionRule: "Low-Confidence Grid Steering",
+            baseCommand,
+            currentDemandEstimate,
+            demandDelta,
+            importCorrection,
+            demandCorrection,
+            exportCorrection,
+            rawTargetCharge: targetCharge
+        }
     });
 }
 
@@ -441,5 +519,12 @@ return emitCommand({
     statusFill: isExporting ? "red" : "green",
     statusText: `Cmd: ${Math.round(smoothedCommand)}W | Clamp: ${clampReason} | Export: ${Math.round(
         gridPower
-    )}W`
+    )}W`,
+    diagnostics: {
+        decisionRule: ruleApplied,
+        rawTargetCharge: targetCharge,
+        finalAlpha,
+        chargingWasActive,
+        solarSwitchGuardFloor
+    }
 });
