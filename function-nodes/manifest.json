@@ -1,57 +1,52 @@
 [
     {
-        "id": "d8a1b8092fff858d",
+        "id": "a6fe5750510b4c67",
         "name": "Trigger Timer",
         "path": "function-nodes/trigger-timer.js"
     },
     {
-        "id": "76390ea1fd55bbf6",
-        "name": "Steuerlogik Drosselung HM-600",
-        "path": "function-nodes/steuerlogik-drosselung-hm-600.js"
-    },
-    {
-        "id": "01c28e62e8e71d26",
+        "id": "40160021d0df1ecd",
         "name": "Gentle Controller Day Handling Error & Filter",
         "path": "function-nodes/ControllerDayHandling.js",
         "skipExtract": true
     },
     {
-        "id": "d2cc6a95e01438a2",
+        "id": "211e4fadedad7b85",
         "name": "Decision: Day Night Charge or Discharge",
         "path": "function-nodes/decision-day-night-charge-or-discharge.js"
     },
     {
-        "id": "6fa7db7a576e6454",
+        "id": "17889212ed01f62c",
         "name": "Adjust Battery Charging",
         "path": "function-nodes/adjust-battery-charging.js"
     },
     {
-        "id": "72e478bd1e8b94ff",
+        "id": "0637039fcd900c26",
         "name": "Load Sequencer",
         "path": "function-nodes/load-sequencer.js"
     },
     {
-        "id": "d77667d76b9ada1f",
+        "id": "be560d8bef206d28",
         "name": "Adjust Battery Discharging",
         "path": "function-nodes/adjust-battery-discharging.js"
     },
     {
-        "id": "2d93f991ad520364",
+        "id": "803bc4c5360358d8",
         "name": "Statistical Averaging of House Load and Solar",
         "path": "function-nodes/statistical-averaging-of-house-load-and-solar.js"
     },
     {
-        "id": "0314b00055719434",
+        "id": "1d6e8f468f2e7def",
         "name": "Normalize Home Assistant Data",
         "path": "function-nodes/normalize-home-assistant-data.js"
     },
     {
-        "id": "ded2b5c390cb6d94",
+        "id": "607cbfa9973ede37",
         "name": "Battery Budget",
         "path": "function-nodes/battery-budget.js"
     },
     {
-        "id": "742044c9accd94c6",
+        "id": "2177a3636c240e35",
         "name": "Gentle Controller Discharge Filter",
         "path": "function-nodes/gentle-controller-discharge-filter.js"
     }

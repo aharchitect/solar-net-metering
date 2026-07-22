@@ -142,6 +142,23 @@ test("normalizes a daytime happy path with timestamp and age logging", () => {
     );
 });
 
+test("prefers the one-second live smart-meter reading and records its source", () => {
+    const payload = createPayload({
+        "sensor.smartmeter_live_leistung": entity(42, { last_updated: isoSecondsAgo(1) }),
+        "sensor.smartmeter_keller_sml_watt_summe": entity(120, { last_updated: isoSecondsAgo(10) })
+    });
+
+    const { normalizedMsg, telemetry } = executeNormalize({ payload });
+
+    assert.equal(normalizedMsg.data.grid.power, 42);
+    assert.equal(
+        normalizedMsg.meta.normalization.readings.gridPower.entityId,
+        "sensor.smartmeter_live_leistung"
+    );
+    assert.equal(telemetry.payload.gridEntityId, "sensor.smartmeter_live_leistung");
+    assert.equal(telemetry.payload.gridAgeMs, 1000);
+});
+
 test("normalizes a nighttime happy path without solar production", () => {
     const payload = createPayload({
         "sensor.smartmeter_keller_sml_watt_summe": entity(180, { last_updated: isoSecondsAgo(12) }),

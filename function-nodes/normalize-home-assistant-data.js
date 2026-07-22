@@ -208,8 +208,14 @@ function buildAgeStats(readings) {
     };
 }
 
+const preferredGridEntityId = "sensor.smartmeter_live_leistung";
+const fallbackGridEntityId = "sensor.smartmeter_keller_sml_watt_summe";
+const preferredGridValue = parseFloat(getEntity(preferredGridEntityId)?.state);
+const gridEntityId = Number.isFinite(preferredGridValue)
+    ? preferredGridEntityId
+    : fallbackGridEntityId;
 const gridPowerReading = addStaleness(
-    readNumber("sensor.smartmeter_keller_sml_watt_summe", 0, {
+    readNumber(gridEntityId, 0, {
         remember: true
     })
 );
@@ -478,6 +484,7 @@ const telemetry = {
     payload: {
         time: new Date().toISOString(),
         source: "normalize_home_assistant_data",
+        gridEntityId,
         triggerIntervalSeconds: triggerIntervalSeconds,
         retainedReadingMs: retainedReadingMs,
         gridState: gridPowerReading.rawState,

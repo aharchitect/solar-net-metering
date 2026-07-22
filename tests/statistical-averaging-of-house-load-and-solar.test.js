@@ -55,18 +55,80 @@ function createPayload({
 }
 
 function executeStats({ payload, contextState, now, flowState, msg } = {}) {
+    const suppliedMsg = msg || {};
+    const normalizedReading = (entityId) => {
+        const entityState = payload?.[entityId];
+        const value = parseFloat(entityState?.state);
+        const timestamp = entityState?.last_updated || null;
+        const timestampMs = timestamp ? Date.parse(timestamp) : null;
+
+        return {
+            entityId,
+            rawState: entityState?.state ?? null,
+            value: Number.isFinite(value) ? value : 0,
+            isValid: Number.isFinite(value),
+            sourceTimestamp: timestamp,
+            sourceTimestampMs: timestampMs,
+            sourceAgeMs: Number.isFinite(timestampMs) ? Date.parse(now) - timestampMs : null,
+            sourceTimestampField: "last_updated",
+            isStale: false,
+            usedLastValid: false,
+            usedFallback: false
+        };
+    };
+    const gridReading = normalizedReading("sensor.smartmeter_keller_sml_watt_summe");
+    const solarPrimaryReading = normalizedReading("sensor.wechselrichter_ac_leistung");
+    const solarSecondaryReading = normalizedReading("sensor.hoymiles600_power");
+    const batteryChargeReading = normalizedReading("sensor.solarflow_800_pro_grid_input_power");
+    const batteryDischargeReading = normalizedReading("sensor.solarflow_800_pro_output_home_power");
     const execution = runFunctionNode(statsScriptPath, {
         now,
         contextState,
         flowState,
         msg: {
+            ...suppliedMsg,
             payload,
-            meta: {
-                trigger: {
-                    intervalSeconds: 10
+            data: {
+                ...suppliedMsg.data,
+                grid: suppliedMsg.data?.grid || { power: gridReading.value },
+                solar: suppliedMsg.data?.solar || {
+                    primaryPower: solarPrimaryReading.value,
+                    secondaryPower: solarSecondaryReading.value
+                },
+                battery: suppliedMsg.data?.battery || {
+                    chargePower: batteryChargeReading.value,
+                    dischargePower: batteryDischargeReading.value
+                },
+                sun: suppliedMsg.data?.sun || {
+                    aboveHorizon: payload?.["sun.sun"]?.state === "above_horizon"
                 }
             },
-            ...msg
+            meta: {
+                ...suppliedMsg.meta,
+                trigger: {
+                    intervalSeconds: suppliedMsg.meta?.trigger?.intervalSeconds || 10
+                },
+                normalization: {
+                    ...suppliedMsg.meta?.normalization,
+                    readings: {
+                        ...suppliedMsg.meta?.normalization?.readings,
+                        gridPower:
+                            suppliedMsg.meta?.normalization?.readings?.gridPower || gridReading,
+                        solarPrimaryPower:
+                            suppliedMsg.meta?.normalization?.readings?.solarPrimaryPower ||
+                            solarPrimaryReading,
+                        solarSecondaryPower:
+                            suppliedMsg.meta?.normalization?.readings?.solarSecondaryPower ||
+                            solarSecondaryReading,
+                        batteryChargePower:
+                            suppliedMsg.meta?.normalization?.readings?.batteryChargePower ||
+                            batteryChargeReading,
+                        batteryDischargePower:
+                            suppliedMsg.meta?.normalization?.readings?.batteryDischargePower ||
+                            batteryDischargeReading
+                    }
+                }
+            }
         }
     });
 
@@ -135,6 +197,54 @@ test("uses live values directly when all sensor timestamps are aligned", () => {
             text: "Solar: 1249W | Demand: 260W | sync 100%"
         }
     ]);
+});
+
+test("uses normalized grid power instead of reading a smart-meter entity again", () => {
+    const now = "2026-04-06T13:30:21.142Z";
+    const payload = createPayload({
+        now,
+        gridPower: 999,
+        solarPrimaryPower: 100,
+        solarSecondaryPower: 0,
+        batteryChargePower: 0
+    });
+
+    const { outputMsg } = executeStats({
+        payload,
+        now,
+        msg: {
+            data: {
+                grid: {
+                    power: 42
+                }
+            },
+            meta: {
+                normalization: {
+                    readings: {
+                        gridPower: {
+                            entityId: "sensor.smartmeter_live_leistung",
+                            rawState: "42",
+                            value: 42,
+                            isValid: true,
+                            sourceTimestamp: now,
+                            sourceTimestampMs: Date.parse(now),
+                            sourceAgeMs: 0,
+                            sourceTimestampField: "last_updated",
+                            isStale: false,
+                            usedLastValid: false,
+                            usedFallback: false
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    assert.equal(
+        outputMsg.meta.sensorTiming.demand.sensors.grid.entityId,
+        "sensor.smartmeter_live_leistung"
+    );
+    assert.equal(outputMsg.derived.demand.raw, 142);
 });
 
 test("detects stale solar-primary timestamps from the April 6 sample rows and falls back to the last reliable demand", () => {
