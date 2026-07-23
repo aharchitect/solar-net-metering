@@ -91,7 +91,12 @@ function executeLowConfidenceControllerRow(row, lastCommand) {
                     readings: {
                         gridPower: { isValid: true },
                         solarPrimaryPower: { isValid: true },
-                        solarSecondaryPower: { isValid: true }
+                        solarSecondaryPower: { isValid: true },
+                        batteryChargePower: {
+                            isValid: true,
+                            value: number(row.batteryInflow),
+                            isStale: false
+                        }
                     },
                     plausibility: { isConsistent: false }
                 }
@@ -147,18 +152,18 @@ test("controller logs show no actuator readback after 1000W requests in either w
     );
 });
 
-test("a real modest-export row stays latched at 1000W after a missing actuator readback", () => {
+test("a real modest-export row restarts correction from the reported zero setpoint", () => {
     const [row] = rows.filter((sample) => sample.time === "2026-07-23T14:16:38.861Z");
 
     const afterMaximumRequest = executeLowConfidenceControllerRow(row, 1000);
     const afterControllerRestart = executeLowConfidenceControllerRow(row, 0);
 
     assert.equal(row.gridPower, "-62.33");
-    assert.equal(afterMaximumRequest.baseCommand, 1000);
+    assert.equal(afterMaximumRequest.baseCommand, 0);
     assert.equal(afterMaximumRequest.exportCorrection, 92.33);
-    assert.equal(afterMaximumRequest.rawTargetCharge, 1092.33);
-    assert.equal(afterMaximumRequest.finalCommand, 1000);
-    assert.equal(afterMaximumRequest.clampReason, "Battery Max");
+    assert.equal(afterMaximumRequest.rawTargetCharge, 92.33);
+    assert.equal(afterMaximumRequest.finalCommand, 92);
+    assert.equal(afterMaximumRequest.clampReason, "None");
 
     assert.equal(afterControllerRestart.baseCommand, 0);
     assert.equal(afterControllerRestart.rawTargetCharge, 92.33);
@@ -166,7 +171,7 @@ test("a real modest-export row stays latched at 1000W after a missing actuator r
     assert.equal(afterControllerRestart.clampReason, "None");
 });
 
-test("the 14:14 export row proves low-confidence steering ignores the solar-surplus target", () => {
+test("the 14:14 export row applies export correction without stale-command windup", () => {
     const [row] = rows.filter((sample) => sample.time === "2026-07-23T14:14:48.820Z");
     const controllerOutput = executeLowConfidenceControllerRow(row, 1000);
 
@@ -176,12 +181,29 @@ test("the 14:14 export row proves low-confidence steering ignores the solar-surp
     assert.equal(row.calculatedDemand, "436");
     assert.equal(controllerOutput.theoreticalSurplus, 262);
 
-    assert.equal(controllerOutput.baseCommand, 1000);
+    assert.equal(controllerOutput.baseCommand, 0);
     assert.equal(controllerOutput.exportCorrection, 590.21);
-    assert.equal(controllerOutput.rawTargetCharge, 1590.21);
-    assert.equal(controllerOutput.targetCharge, 1590);
-    assert.equal(controllerOutput.finalCommand, 1000);
-    assert.equal(controllerOutput.clampReason, "Battery Max");
+    assert.equal(controllerOutput.rawTargetCharge, 590.21);
+    assert.equal(controllerOutput.targetCharge, 590);
+    assert.equal(controllerOutput.finalCommand, 590);
+    assert.equal(controllerOutput.clampReason, "None");
+});
+
+test("low-confidence export correction includes fresh measured battery inflow", () => {
+    const [row] = rows.filter((sample) => sample.time === "2026-07-23T14:14:48.820Z");
+    const controllerOutput = executeLowConfidenceControllerRow(
+        { ...row, batteryInflow: "104", currentSetInflow: "1000" },
+        1000
+    );
+
+    assert.equal(controllerOutput.baseCommand, 104);
+    assert.equal(controllerOutput.exportCorrection, 590.21);
+    assert.equal(controllerOutput.rawTargetCharge, 694.21);
+    assert.equal(controllerOutput.finalCommand, 354);
+    assert.equal(
+        controllerOutput.ruleApplied,
+        "Low-Confidence Grid Steering + Solar-Unstable Slew Limit"
+    );
 });
 
 test("real sensor data makes both windows low-confidence through stale battery-power readings", () => {

@@ -1107,9 +1107,9 @@ test("exports the intermediate low-confidence import correction when it floors a
             decisionRule: "Low-Confidence Grid Steering",
             demandSnapshotReliable: false,
             solarPrimaryLowConfidence: true,
-            baseCommand: 109,
+            baseCommand: 0,
             importCorrection: 246.88,
-            targetCharge: -138,
+            targetCharge: -247,
             finalCommand: 0
         }
     );
@@ -1553,7 +1553,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             lastDemandEstimate: 160
         },
         now: "2026-04-05T13:00:23.491Z",
-        expectedCommand: 896
+        expectedCommand: 897
     },
     {
         title: "wait for further increase in charge on low confidence when the valid grid signal still shows export but Inflow already increased",
@@ -1584,7 +1584,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             lastCommand: 800
         },
         now: "2026-04-05T13:05:00.000Z",
-        expectedCommand: 800
+        expectedCommand: 660
     },
     {
         title: "increases charge on low confidence when the valid grid signal still shows export and more charge power is available",
@@ -1677,7 +1677,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             lastCommand: 800
         },
         now: "2026-04-05T13:07:00.000Z",
-        expectedCommand: 790
+        expectedCommand: 490
     },
     {
         title: "nudges charge upward on low confidence when grid import dropped below the target buffer",

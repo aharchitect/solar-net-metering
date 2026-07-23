@@ -175,12 +175,14 @@ function appendRule(ruleName) {
     ruleApplied = ruleApplied === "None" ? ruleName : `${ruleApplied} + ${ruleName}`;
 }
 
-function limitUnstableSolarSlew(command) {
+function limitUnstableSolarSlew(
+    command,
+    activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0)
+) {
     if (!solarIsUnstable) {
         return command;
     }
 
-    const activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0);
     if (activeReference <= 0) {
         return command;
     }
@@ -199,8 +201,10 @@ function limitUnstableSolarSlew(command) {
     return limitedCommand;
 }
 
-function limitLowSocMildImportDrop(command) {
-    const activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0);
+function limitLowSocMildImportDrop(
+    command,
+    activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0)
+) {
     const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
     const hasPositiveSurplus = theoreticalSurplus > targetBuffer;
     const lowSocImportShouldBeTreatedGently =
@@ -226,8 +230,11 @@ function limitLowSocMildImportDrop(command) {
     return commandFloor;
 }
 
-function limitChargeSlew(command) {
-    return limitLowSocMildImportDrop(limitUnstableSolarSlew(command));
+function limitChargeSlew(command, activeReference) {
+    return limitLowSocMildImportDrop(
+        limitUnstableSolarSlew(command, activeReference),
+        activeReference
+    );
 }
 
 function emitCommand({
@@ -358,7 +365,16 @@ if (!demandSnapshotReliable) {
     controlMode = "Low-Confidence Grid Steering";
     ruleApplied = "Low-Confidence Grid Steering";
 
-    const baseCommand = Math.max(lastCommand, currentSetInflow, 0);
+    // Battery charge power is the authoritative actual-charge reference. Do
+    // not wind up an old request or let a higher requested setpoint override
+    // what the battery is actually taking.
+    const hasReportedBatteryInflow = Number.isFinite(msg.data?.battery?.chargePower);
+    const hasReportedChargeSetpoint = Number.isFinite(msg.data?.battery?.chargeSetpoint);
+    const baseCommand = hasReportedBatteryInflow
+        ? Math.max(batteryInflow, 0)
+        : hasReportedChargeSetpoint
+          ? Math.max(currentSetInflow, 0)
+          : Math.max(lastCommand, 0);
     const currentDemandEstimate = getFirstFinite(
         [demandTiming?.currentEstimate, msg.derived?.demand?.current],
         0
@@ -399,7 +415,7 @@ if (!demandSnapshotReliable) {
         }
     }
 
-    const smoothedCommand = clampChargeCommand(limitChargeSlew(targetCharge));
+    const smoothedCommand = clampChargeCommand(limitChargeSlew(targetCharge, baseCommand));
     return emitCommand({
         command: smoothedCommand,
         targetCharge,
