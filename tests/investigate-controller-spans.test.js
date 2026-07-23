@@ -6,6 +6,11 @@ const test = require("node:test");
 const { runFunctionNode } = require("./helpers/run-function-node");
 
 const controllerLogPath = path.join(__dirname, "..", "logFileMsg_ControllerDayHandling.csv");
+const normalizationLogPath = path.join(
+    __dirname,
+    "..",
+    "logFileMsg_NormalizeHomeAssistantData.csv"
+);
 const controllerScriptPath = path.join(
     __dirname,
     "..",
@@ -13,17 +18,18 @@ const controllerScriptPath = path.join(
     "ControllerDayHandling.js"
 );
 
-function readControllerRows() {
-    const [header, ...lines] = fs
-        .readFileSync(controllerLogPath, "utf8")
-        .trim()
-        .split(/\r?\n/);
+function readRows(csvPath) {
+    const [header, ...lines] = fs.readFileSync(csvPath, "utf8").trim().split(/\r?\n/);
     const columns = header.split(";");
 
     return lines.map((line) => {
         const fields = line.split(";");
         return Object.fromEntries(columns.map((column, index) => [column, fields[index]]));
     });
+}
+
+function readControllerRows() {
+    return readRows(controllerLogPath);
 }
 
 function rowsDuring(rows, start, end) {
@@ -97,13 +103,10 @@ function executeLowConfidenceControllerRow(row, lastCommand) {
 }
 
 const rows = readControllerRows();
+const normalizationRows = readRows(normalizationLogPath);
 
 test("midday export window never commands the observed 0W alternation", () => {
-    const samples = rowsDuring(
-        rows,
-        "2026-07-23T12:22:48.151Z",
-        "2026-07-23T12:31:09.426Z"
-    );
+    const samples = rowsDuring(rows, "2026-07-23T12:22:48.151Z", "2026-07-23T12:31:09.426Z");
 
     assert.equal(samples.length, 50);
     assert.equal(samples[0].finalCommand, "750");
@@ -114,11 +117,7 @@ test("midday export window never commands the observed 0W alternation", () => {
 });
 
 test("afternoon transition window never commands the observed 0W alternation", () => {
-    const samples = rowsDuring(
-        rows,
-        "2026-07-23T14:12:08.755Z",
-        "2026-07-23T14:18:18.925Z"
-    );
+    const samples = rowsDuring(rows, "2026-07-23T14:12:08.755Z", "2026-07-23T14:18:18.925Z");
 
     assert.equal(samples.length, 37);
     assert.equal(samples[0].finalCommand, "98");
@@ -142,7 +141,8 @@ test("controller logs show no actuator readback after 1000W requests in either w
 
     assert.equal(maximumRequestsWithoutReadback.length, 74);
     assert.equal(
-        maximumRequestsWithoutReadback.filter((sample) => sample.clampReason === "Battery Max").length,
+        maximumRequestsWithoutReadback.filter((sample) => sample.clampReason === "Battery Max")
+            .length,
         71
     );
 });
@@ -164,4 +164,44 @@ test("a real modest-export row stays latched at 1000W after a missing actuator r
     assert.equal(afterControllerRestart.rawTargetCharge, 92.33);
     assert.equal(afterControllerRestart.finalCommand, 92);
     assert.equal(afterControllerRestart.clampReason, "None");
+});
+
+test("the 14:14 export row proves low-confidence steering ignores the solar-surplus target", () => {
+    const [row] = rows.filter((sample) => sample.time === "2026-07-23T14:14:48.820Z");
+    const controllerOutput = executeLowConfidenceControllerRow(row, 1000);
+
+    assert.equal(row.gridPower, "-560.21");
+    assert.equal(row.liveSolarPower, "1043");
+    assert.equal(row.effectiveSolarPower, "698");
+    assert.equal(row.calculatedDemand, "436");
+    assert.equal(controllerOutput.theoreticalSurplus, 262);
+
+    assert.equal(controllerOutput.baseCommand, 1000);
+    assert.equal(controllerOutput.exportCorrection, 590.21);
+    assert.equal(controllerOutput.rawTargetCharge, 1590.21);
+    assert.equal(controllerOutput.targetCharge, 1590);
+    assert.equal(controllerOutput.finalCommand, 1000);
+    assert.equal(controllerOutput.clampReason, "Battery Max");
+});
+
+test("real sensor data makes both windows low-confidence through stale battery-power readings", () => {
+    const windows = [
+        ["2026-07-23T12:22:48.151Z", "2026-07-23T12:31:09.426Z", 51],
+        ["2026-07-23T14:12:08.755Z", "2026-07-23T14:18:18.925Z", 38]
+    ];
+
+    for (const [start, end, expectedSamples] of windows) {
+        const samples = rowsDuring(normalizationRows, start, end);
+
+        assert.equal(samples.length, expectedSamples);
+        assert.ok(samples.every((sample) => sample.demandPlausible === "false"));
+        assert.ok(samples.every((sample) => sample.batteryChargeStale === "true"));
+        assert.ok(samples.every((sample) => sample.batteryDischargeStale === "true"));
+        assert.ok(
+            samples.every((sample) => sample.demandPlausibilityIssues.includes("stale_inputs"))
+        );
+        assert.ok(
+            samples.every((sample) => sample.demandPlausibilityIssues.includes("timing_spread"))
+        );
+    }
 });
