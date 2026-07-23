@@ -1160,6 +1160,48 @@ test("uses low-confidence grid steering when normalized secondary solar is retai
     assert.equal(Math.round(contextState.lastCommand), 510);
 });
 
+test("keeps grid-anchor control when an inactive secondary solar sensor is unavailable", () => {
+    const payload = createPayload({
+        gridPower: -100,
+        solarPrimaryPower: 700,
+        solarSecondaryPower: 0,
+        batteryInflow: 400,
+        maxChargePower: 1000,
+        currentSetInflow: 400
+    });
+
+    const { outputMsg, insights } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 700,
+            solarAveragePower: 700
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                solarPrimaryPower: { value: 700 },
+                solarSecondaryPower: {
+                    value: 0,
+                    isValid: false,
+                    parsedValue: null,
+                    usedFallback: true
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 400,
+            lastDemandEstimate: 300
+        },
+        now: "2026-07-23T19:39:31.000Z"
+    });
+
+    assert.equal(insights.payload.demandSnapshotReliable, true);
+    assert.equal(insights.payload.controlMode, "Grid Anchor");
+    assert.equal(outputMsg.action.charge.ruleApplied, "Anti-Export");
+    assert.equal(outputMsg.action.charge.commandPower, 525);
+});
+
 test("uses low-confidence grid steering when normalized demand plausibility is inconsistent", () => {
     const payload = createPayload({
         gridPower: 100,

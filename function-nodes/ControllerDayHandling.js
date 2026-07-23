@@ -44,10 +44,6 @@ const gridTimingReading = demandTiming?.sensors?.grid;
 const normalization = msg.meta?.normalization;
 const normalizationReadings = normalization?.readings || {};
 const gridNormalizationReading = normalizationReadings.gridPower;
-const solarNormalizationReadings = [
-    normalizationReadings.solarPrimaryPower,
-    normalizationReadings.solarSecondaryPower
-];
 const stability = msg.meta?.stability || {};
 
 function readingHasLowConfidence(reading) {
@@ -62,6 +58,23 @@ function readingHasLowConfidence(reading) {
         reading.usedFallback === true
     );
 }
+
+function isInactiveSecondarySolarReading(reading) {
+    return (
+        Math.abs(getFirstFinite([reading?.value], 0)) <= 5 &&
+        (reading?.isValid === false ||
+            reading?.isStale === true ||
+            reading?.usedLastValid === true ||
+            reading?.usedFallback === true)
+    );
+}
+
+const solarNormalizationReadings = [
+    normalizationReadings.solarPrimaryPower,
+    ...(isInactiveSecondarySolarReading(normalizationReadings.solarSecondaryPower)
+        ? []
+        : [normalizationReadings.solarSecondaryPower])
+];
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:

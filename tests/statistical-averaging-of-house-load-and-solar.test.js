@@ -399,6 +399,32 @@ test("ignores stale zero battery-power timestamps even when battery setpoints ar
     assert.equal(outputMsg.meta.sensorTiming.demand.spreadMs, 0);
 });
 
+test("ignores an unavailable zero secondary solar sensor during daytime timing checks", () => {
+    const now = "2026-07-23T19:39:31.000Z";
+    const staleTimestamp = secondsBefore(now, 20 * 60);
+    const payload = createPayload({
+        now,
+        gridPower: 410,
+        solarPrimaryPower: 500,
+        solarSecondaryPower: "unavailable",
+        batteryChargePower: 104,
+        batteryDischargePower: 0,
+        solarSecondaryTimestamp: staleTimestamp,
+        batteryDischargeTimestamp: staleTimestamp
+    });
+
+    const { outputMsg } = executeStats({
+        payload,
+        now,
+        msg: { data: { sun: { aboveHorizon: true } } }
+    });
+
+    assert.equal(outputMsg.meta.sensorTiming.demand.confidence, 1);
+    assert.equal(outputMsg.meta.sensorTiming.demand.maxAgeMs, 0);
+    assert.equal(outputMsg.meta.sensorTiming.solar.confidence, 1);
+    assert.equal(outputMsg.meta.sensorTiming.solar.maxAgeMs, 0);
+});
+
 [
     {
         title: "keeps a stable night demand estimate when secondary solar is unavailable but discharge covers the load",

@@ -55,6 +55,10 @@ function hasActivePower(reading, threshold = 5) {
     return Math.abs(reading.value) > threshold;
 }
 
+function hasRelevantSolarReading(reading, sunAboveHorizon) {
+    return hasActivePower(reading) || (sunAboveHorizon && reading.isValid);
+}
+
 function buildDemandTimingReadings({
     grid,
     batteryDischarge,
@@ -66,8 +70,8 @@ function buildDemandTimingReadings({
     return [
         grid,
         ...(hasActivePower(batteryDischarge) ? [batteryDischarge] : []),
-        ...(sunAboveHorizon || hasActivePower(solarPrimary) ? [solarPrimary] : []),
-        ...(sunAboveHorizon || hasActivePower(solarSecondary) ? [solarSecondary] : []),
+        ...(hasRelevantSolarReading(solarPrimary, sunAboveHorizon) ? [solarPrimary] : []),
+        ...(hasRelevantSolarReading(solarSecondary, sunAboveHorizon) ? [solarSecondary] : []),
         ...(hasActivePower(batteryCharge) ? [batteryCharge] : [])
     ];
 }
@@ -201,10 +205,9 @@ const demandTimingReadings = buildDemandTimingReadings({
     batteryCharge: batteryChargeReading,
     sunAboveHorizon
 });
-const solarTimingReadings =
-    sunAboveHorizon || hasActivePower(solarPrimaryReading) || hasActivePower(solarSecondaryReading)
-        ? [solarPrimaryReading, solarSecondaryReading]
-        : [];
+const solarTimingReadings = [solarPrimaryReading, solarSecondaryReading].filter((reading) =>
+    hasRelevantSolarReading(reading, sunAboveHorizon)
+);
 const demandAgeStats = buildAgeStats(demandTimingReadings);
 const solarAgeStats = buildAgeStats(solarTimingReadings);
 
