@@ -49,7 +49,11 @@ const nextHourWh = data.forecast.nextHourWh;
 // 2. HARDWARE OUTPUT
 let hardwareCmd = null;
 if (Math.abs(targetDischarge - currentSetLimit) > 5) {
-    hardwareCmd = { payload: Math.round(targetDischarge) };
+    // Keep the normalized controller context for downstream actuator guards.
+    hardwareCmd = {
+        ...msg,
+        payload: Math.round(targetDischarge)
+    };
 }
 
 node.status({

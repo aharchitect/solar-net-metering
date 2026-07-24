@@ -58,14 +58,6 @@ function executeAdjustDischarging({
     };
 }
 
-function toPlain(value) {
-    if (value === null || value === undefined) {
-        return value;
-    }
-
-    return JSON.parse(JSON.stringify(value));
-}
-
 test("emits a hardware discharge command from msg.action.battery.discharge.commandPower", () => {
     const { hardwareCmd, statuses } = executeAdjustDischarging({
         actionDischarge: createActionDischarge({
@@ -73,7 +65,8 @@ test("emits a hardware discharge command from msg.action.battery.discharge.comma
         })
     });
 
-    assert.deepEqual(toPlain(hardwareCmd), { payload: 120 });
+    assert.equal(hardwareCmd.payload, 120);
+    assert.equal(hardwareCmd.data.battery.dischargeSetpoint, 80);
     assert.deepEqual(statuses, [
         {
             fill: "blue",
@@ -117,7 +110,7 @@ test("emits a stop command when target discharge is zero and current setpoint is
         })
     });
 
-    assert.deepEqual(toPlain(hardwareCmd), { payload: 0 });
+    assert.equal(hardwareCmd.payload, 0);
     assert.deepEqual(statuses, [
         {
             fill: "blue",
@@ -139,7 +132,7 @@ test("uses a ring status while next-hour solar is expected", () => {
         })
     });
 
-    assert.deepEqual(toPlain(hardwareCmd), { payload: 140 });
+    assert.equal(hardwareCmd.payload, 140);
     assert.deepEqual(statuses, [
         {
             fill: "blue",
@@ -156,7 +149,7 @@ test("rounds fractional discharge commands before sending hardware output", () =
         })
     });
 
-    assert.deepEqual(toPlain(hardwareCmd), { payload: 124 });
+    assert.equal(hardwareCmd.payload, 124);
     assert.deepEqual(statuses, [
         {
             fill: "blue",

@@ -10,14 +10,8 @@ function getFirstFinite(values, fallback = 0) {
 
 const desiredCharge = Math.max(0, Math.round(getFirstFinite([msg.payload], 0)));
 const currentMode = String(msg.data?.inverter?.acMode || "").toLowerCase();
-const currentOutputLimit = Math.max(
-    0,
-    getFirstFinite([msg.data?.battery?.dischargeSetpoint], 0)
-);
-const currentInputLimit = Math.max(
-    0,
-    getFirstFinite([msg.data?.battery?.chargeSetpoint], 0)
-);
+const currentOutputLimit = Math.max(0, getFirstFinite([msg.data?.battery?.dischargeSetpoint], 0));
+const currentInputLimit = Math.max(0, getFirstFinite([msg.data?.battery?.chargeSetpoint], 0));
 
 // The Zendure integration can reset limits while changing AC mode.  Check
 // every actuator independently: a previous discharge may have left either

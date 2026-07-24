@@ -1,58 +1,63 @@
 [
     {
-        "id": "a6fe5750510b4c67",
+        "id": "b61678cc41be1360",
         "name": "Trigger Timer",
         "path": "function-nodes/trigger-timer.js"
     },
     {
-        "id": "40160021d0df1ecd",
+        "id": "336f5ef9b717a37a",
         "name": "Gentle Controller Day Handling Error & Filter",
         "path": "function-nodes/ControllerDayHandling.js",
         "skipExtract": true
     },
     {
-        "id": "211e4fadedad7b85",
+        "id": "5423f6a58754aeb3",
         "name": "Decision: Day Night Charge or Discharge",
         "path": "function-nodes/decision-day-night-charge-or-discharge.js"
     },
     {
-        "id": "17889212ed01f62c",
+        "id": "b16873db9e3ae7c3",
         "name": "Adjust Battery Charging",
         "path": "function-nodes/adjust-battery-charging.js"
     },
     {
-        "id": "0637039fcd900c26",
+        "id": "9bb4afeb01799c15",
         "name": "Load Sequencer",
         "path": "function-nodes/load-sequencer.js"
     },
     {
-        "id": "be560d8bef206d28",
+        "id": "ad1ff35175aa4f9e",
         "name": "Adjust Battery Discharging",
         "path": "function-nodes/adjust-battery-discharging.js"
     },
     {
-        "id": "803bc4c5360358d8",
+        "id": "5e7d338cd3920ec5",
         "name": "Statistical Averaging of House Load and Solar",
         "path": "function-nodes/statistical-averaging-of-house-load-and-solar.js"
     },
     {
-        "id": "1d6e8f468f2e7def",
+        "id": "ef22eb2e6641050e",
         "name": "Normalize Home Assistant Data",
         "path": "function-nodes/normalize-home-assistant-data.js"
     },
     {
-        "id": "607cbfa9973ede37",
+        "id": "730901f234250478",
         "name": "Battery Budget",
         "path": "function-nodes/battery-budget.js"
     },
     {
-        "id": "2177a3636c240e35",
+        "id": "325a78ed007c06b5",
         "name": "Gentle Controller Discharge Filter",
         "path": "function-nodes/gentle-controller-discharge-filter.js"
     },
     {
-        "id": "4f1c3a8d7e2b9c60",
+        "id": "eaa877d5e9ece132",
         "name": "Ensure Charge Actuator State",
         "path": "function-nodes/ensure-charge-actuator-state.js"
+    },
+    {
+        "id": "1e14e944db077334",
+        "name": "Ensure Discharge Actuator State",
+        "path": "function-nodes/ensure-discharge-actuator-state.js"
     }
 ]

@@ -4,12 +4,7 @@ const test = require("node:test");
 
 const { runFunctionNode } = require("./helpers/run-function-node");
 
-const scriptPath = path.join(
-    __dirname,
-    "..",
-    "function-nodes",
-    "ensure-charge-actuator-state.js"
-);
+const scriptPath = path.join(__dirname, "..", "function-nodes", "ensure-charge-actuator-state.js");
 
 function execute({ mode = "input", inputLimit = 700, outputLimit = 0, payload = 740 } = {}) {
     const execution = runFunctionNode(scriptPath, {
@@ -29,10 +24,7 @@ function execute({ mode = "input", inputLimit = 700, outputLimit = 0, payload = 
 
     return {
         ...execution,
-        result:
-            execution.result === null
-                ? null
-                : JSON.parse(JSON.stringify(execution.result))
+        result: execution.result === null ? null : JSON.parse(JSON.stringify(execution.result))
     };
 }
 
