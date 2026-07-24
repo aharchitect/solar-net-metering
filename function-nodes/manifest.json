@@ -49,5 +49,10 @@
         "id": "2177a3636c240e35",
         "name": "Gentle Controller Discharge Filter",
         "path": "function-nodes/gentle-controller-discharge-filter.js"
+    },
+    {
+        "id": "4f1c3a8d7e2b9c60",
+        "name": "Ensure Charge Actuator State",
+        "path": "function-nodes/ensure-charge-actuator-state.js"
     }
 ]
