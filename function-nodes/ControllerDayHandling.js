@@ -81,6 +81,7 @@ const solarNormalizationReadings = [
 const targetBuffer = 30; // Aim for 30W import
 const maxInverterPower = 1200; // the Inverter limit
 const minSustain = 50; // Keep charging circuit active
+const productionThreshold = 150; // Solar power that keeps the charging circuit warm
 const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
 const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting
 const solarSwitchGuardFactor = 0.5; // Avoid charge relay cycling while solar is still available
@@ -235,6 +236,56 @@ function limitChargeSlew(command, activeReference) {
         limitUnstableSolarSlew(command, activeReference),
         activeReference
     );
+}
+
+function applyChargeAdjustmentThrottle(targetCharge) {
+    let adjustedTargetCharge = Math.max(0, targetCharge);
+    const chargingWasActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 0;
+    const solarSwitchGuardFloor = totalProduced * solarSwitchGuardFactor;
+
+    if (
+        chargingWasActive &&
+        totalProduced > productionThreshold &&
+        adjustedTargetCharge < solarSwitchGuardFloor
+    ) {
+        adjustedTargetCharge = solarSwitchGuardFloor;
+        ruleApplied = "Solar Floor (Switch Guard)";
+    }
+
+    let finalAlpha;
+    if (isExporting) {
+        finalAlpha = 1.0;
+    } else if (adjustedTargetCharge > lastCommand) {
+        finalAlpha = 0.9;
+    } else {
+        finalAlpha = 0.2;
+    }
+    let command = adjustedTargetCharge * finalAlpha + lastCommand * (1 - finalAlpha);
+
+    if (soc <= minSoc && totalProduced >= productionThreshold) {
+        const recoveryCharge = totalProduced / 2;
+        if (command < recoveryCharge) {
+            command = recoveryCharge;
+            ruleApplied = "SoC Recovery";
+        }
+    }
+
+    if (
+        chargingWasActive &&
+        totalProduced > productionThreshold &&
+        command < solarSwitchGuardFloor
+    ) {
+        command = solarSwitchGuardFloor;
+        ruleApplied = "Solar Floor (Switch Guard)";
+    }
+
+    return {
+        adjustedTargetCharge,
+        command: clampChargeCommand(limitChargeSlew(command)),
+        finalAlpha,
+        chargingWasActive,
+        solarSwitchGuardFloor
+    };
 }
 
 function emitCommand({
@@ -415,7 +466,29 @@ if (!demandSnapshotReliable) {
         }
     }
 
-    const smoothedCommand = clampChargeCommand(limitChargeSlew(targetCharge, baseCommand));
+    let smoothedCommand;
+    let throttlingDiagnostics = {};
+
+    // A low-confidence import correction may legitimately ask for less than
+    // zero, but do not let one delayed actual-charge readback turn that into a
+    // relay-off command while solar is still available. Reuse the normal
+    // adjustment throttle instead of maintaining a second floor/slew policy.
+    if (targetCharge < 0) {
+        const decisionRule = ruleApplied;
+        const throttled = applyChargeAdjustmentThrottle(targetCharge);
+        smoothedCommand = throttled.command;
+        if (ruleApplied !== decisionRule) {
+            ruleApplied = `${decisionRule} + ${ruleApplied}`;
+        }
+        throttlingDiagnostics = {
+            finalAlpha: throttled.finalAlpha,
+            chargingWasActive: throttled.chargingWasActive,
+            solarSwitchGuardFloor: throttled.solarSwitchGuardFloor,
+            adjustmentTargetCharge: throttled.adjustedTargetCharge
+        };
+    } else {
+        smoothedCommand = clampChargeCommand(limitChargeSlew(targetCharge, baseCommand));
+    }
     return emitCommand({
         command: smoothedCommand,
         targetCharge,
@@ -432,7 +505,8 @@ if (!demandSnapshotReliable) {
             importCorrection,
             demandCorrection,
             exportCorrection,
-            rawTargetCharge: targetCharge
+            rawTargetCharge: targetCharge,
+            ...throttlingDiagnostics
         }
     });
 }
@@ -453,8 +527,6 @@ if (isExporting) {
 // 4. SANITY CHECKS & SUSTAIN
 // If solar production is > 150W, we keep the charging circuit 'warm' at 50W,
 // even if the house is currently importing from the grid.
-const productionThreshold = 150; // Adjust this based on your 'sunny enough' preference
-
 if (totalProduced > productionThreshold && targetCharge < minSustain) {
     targetCharge = minSustain;
     ruleApplied = "Sustain (Production)";
@@ -483,54 +555,10 @@ if (theoreticalSurplus > 10 && targetCharge < minSustain) {
     targetCharge = minSustain;
 }
 
-// Hard floor
-if (targetCharge < 0) targetCharge = 0;
-
-const chargingWasActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 0;
-const solarSwitchGuardFloor = totalProduced * solarSwitchGuardFactor;
-if (
-    chargingWasActive &&
-    totalProduced > productionThreshold &&
-    targetCharge < solarSwitchGuardFloor
-) {
-    targetCharge = solarSwitchGuardFloor;
-    ruleApplied = "Solar Floor (Switch Guard)";
-}
-
-// 5. DYNAMIC SMOOTHING (Slew Rate)
-// Instead of a fixed Alpha, we use a "Fast-Up, Slow-Down" approach.
-let finalAlpha;
-if (isExporting) {
-    // CRITICAL: If we are exporting, we jump to the target IMMEDIATELY
-    finalAlpha = 1.0;
-} else if (targetCharge > lastCommand) {
-    // If we are increasing charge (but not leaking), move fast
-    finalAlpha = 0.9;
-} else {
-    // If we are decreasing charge, move slowly to stay "warm"
-    finalAlpha = 0.2;
-}
-let smoothedCommand = targetCharge * finalAlpha + lastCommand * (1 - finalAlpha);
-
-// Rule: Minimum SoC Recovery
-if (soc <= minSoc && totalProduced >= 150) {
-    const recoveryCharge = totalProduced / 2;
-    if (smoothedCommand < recoveryCharge) {
-        smoothedCommand = recoveryCharge;
-        ruleApplied = "SoC Recovery";
-    }
-}
-
-if (
-    chargingWasActive &&
-    totalProduced > productionThreshold &&
-    smoothedCommand < solarSwitchGuardFloor
-) {
-    smoothedCommand = solarSwitchGuardFloor;
-    ruleApplied = "Solar Floor (Switch Guard)";
-}
-
-smoothedCommand = clampChargeCommand(limitChargeSlew(smoothedCommand));
+const throttled = applyChargeAdjustmentThrottle(targetCharge);
+targetCharge = throttled.adjustedTargetCharge;
+const smoothedCommand = throttled.command;
+const { finalAlpha, chargingWasActive, solarSwitchGuardFloor } = throttled;
 
 // 7. CYCLE GUARD (Deadband)
 // If we are stable and not exporting, don't update if change is tiny

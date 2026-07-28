@@ -684,18 +684,18 @@ test("does not stop charging at minimum SoC when import conflicts with positive 
         now: "2026-05-09T11:27:36.059Z"
     });
 
-    assert.equal(outputMsg.action.charge.commandPower, 450);
+    assert.equal(outputMsg.action.charge.commandPower, 616);
     assert.equal(
         outputMsg.action.charge.ruleApplied,
-        "Low-Confidence Grid Steering + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
     assert.equal(insights.payload.calculation.theoreticalSurplus, 400);
     assert.equal(insights.payload.calculation.targetCharge, -18);
     assert.equal(
         insights.payload.constraints.rule,
-        "Low-Confidence Grid Steering + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
-    assert.equal(Math.round(contextState.lastCommand), 450);
+    assert.equal(Math.round(contextState.lastCommand), 616);
 });
 
 test("does not ratchet near-minimum SoC recovery to zero while positive surplus remains", () => {
@@ -741,18 +741,18 @@ test("does not ratchet near-minimum SoC recovery to zero while positive surplus 
         now: "2026-05-09T11:34:20.073Z"
     });
 
-    assert.equal(outputMsg.action.charge.commandPower, 157);
+    assert.equal(outputMsg.action.charge.commandPower, 339);
     assert.equal(
         outputMsg.action.charge.ruleApplied,
-        "Low-Confidence Grid Steering + Solar-Unstable Slew Limit + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
     assert.equal(insights.payload.calculation.theoreticalSurplus, 323);
     assert.equal(insights.payload.calculation.targetCharge, -539);
     assert.equal(
         insights.payload.constraints.rule,
-        "Low-Confidence Grid Steering + Solar-Unstable Slew Limit + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
-    assert.equal(Math.round(contextState.lastCommand), 157);
+    assert.equal(Math.round(contextState.lastCommand), 339);
 });
 
 test("holds the current charge command when the smartmeter is unavailable and only a retained grid value exists", () => {
@@ -1053,7 +1053,7 @@ test("uses low-confidence grid steering when normalized primary solar is stale",
     assert.equal(Math.round(contextState.lastCommand), 450);
 });
 
-test("exports the intermediate low-confidence import correction when it floors a charge command", () => {
+test("applies the existing adjustment throttle when a low-confidence import correction would floor a charge command", () => {
     const payload = createPayload({
         gridPower: 276.88,
         solarPrimaryPower: 180,
@@ -1088,7 +1088,7 @@ test("exports the intermediate low-confidence import correction when it floors a
         now: "2026-07-22T16:45:25.066Z"
     });
 
-    assert.equal(outputMsg.action.charge.commandPower, 0);
+    assert.equal(outputMsg.action.charge.commandPower, 105);
     assert.deepEqual(
         {
             controlMode: insights.payload.controlMode,
@@ -1103,14 +1103,14 @@ test("exports the intermediate low-confidence import correction when it floors a
         },
         {
             controlMode: "Low-Confidence Grid Steering",
-            ruleApplied: "Floor (0W)",
+            ruleApplied: "Low-Confidence Grid Steering + Solar Floor (Switch Guard)",
             decisionRule: "Low-Confidence Grid Steering",
             demandSnapshotReliable: false,
             solarPrimaryLowConfidence: true,
             baseCommand: 0,
             importCorrection: 246.88,
             targetCharge: -247,
-            finalCommand: 0
+            finalCommand: 105
         }
     );
 });
