@@ -140,3 +140,5 @@ vite.config.ts.timestamp-*
 .codex
 normalize.data
 test.data
+logFileMsg_NormalizeHomeAssistantData.csv
+logFileMsg_ControllerDayHandling.csv
