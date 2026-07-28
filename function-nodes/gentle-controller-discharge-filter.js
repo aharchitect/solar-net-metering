@@ -13,6 +13,16 @@ function hasMessageValue(root, path) {
     return current !== undefined;
 }
 
+function getPositiveFinite(values, fallback) {
+    for (const value of values) {
+        if (Number.isFinite(value) && value > 0) {
+            return value;
+        }
+    }
+
+    return fallback;
+}
+
 function abortForMissing(requiredPaths) {
     const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
     if (missing.length === 0) {
@@ -50,6 +60,7 @@ const demandLowerBound = derived.demand.lowerBound;
 const demandLongTermMinimum = derived.demand.longTermMinimum;
 const solarPower = derived.solar.livePower;
 const forcedDischarge = action.battery.discharge.forcedRate;
+const dischargeHardwareMaxPower = getPositiveFinite([data.inverter?.inverseMaxPower], 1000);
 const stopRequested = action.battery.discharge.stopRequested === true;
 const blockedByLowSoc = action.battery.discharge.blockedByLowSoc === true;
 const stability = msg.meta?.stability || {};
@@ -245,6 +256,9 @@ if (zeroExportDefenseActive) {
 const commandBeforeForcedRateLimit = smoothedCommand;
 smoothedCommand = Math.min(smoothedCommand, forcedDischarge * 2.5);
 const forcedRateLimitActive = smoothedCommand < commandBeforeForcedRateLimit;
+const commandBeforeHardwareMaxClamp = smoothedCommand;
+smoothedCommand = Math.min(smoothedCommand, dischargeHardwareMaxPower);
+const hardwareMaxClampActive = smoothedCommand < commandBeforeHardwareMaxClamp;
 
 // Only output if the command actually changed significantly (e.g., > 5W)
 if (Math.abs(smoothedCommand - lastCommand) < 5 && gridPower > 0 && currentBatteryOut == 0) {
@@ -280,6 +294,8 @@ msg.action.battery.discharge.sustainFloor = Math.round(dischargeSustainFloor);
 msg.action.battery.discharge.sustainActive = sustainDischargeActive;
 msg.action.battery.discharge.importHoldActive = importHoldActive;
 msg.action.battery.discharge.targetImportBuffer = targetImportBuffer;
+msg.action.battery.discharge.hardwareMaxPower = Math.round(dischargeHardwareMaxPower);
+msg.action.battery.discharge.hardwareMaxClampActive = hardwareMaxClampActive;
 
 node.status({
     fill: "green",
@@ -336,6 +352,9 @@ return [
             zeroExportDefenseActive,
             commandBeforeForcedRateLimit,
             forcedRateLimitActive,
+            dischargeHardwareMaxPower,
+            commandBeforeHardwareMaxClamp,
+            hardwareMaxClampActive,
             finalCommand: Math.round(smoothedCommand)
         }
     }

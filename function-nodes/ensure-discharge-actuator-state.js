@@ -8,7 +8,21 @@ function getFirstFinite(values, fallback = 0) {
     return fallback;
 }
 
-const desiredDischarge = Math.max(0, Math.round(getFirstFinite([msg.payload], 0)));
+function getPositiveFinite(values, fallback) {
+    for (const value of values) {
+        if (Number.isFinite(value) && value > 0) {
+            return value;
+        }
+    }
+
+    return fallback;
+}
+
+const dischargeHardwareMaxPower = getPositiveFinite([msg.data?.inverter?.inverseMaxPower], 1000);
+const desiredDischarge = Math.min(
+    dischargeHardwareMaxPower,
+    Math.max(0, Math.round(getFirstFinite([msg.payload], 0)))
+);
 const currentMode = String(msg.data?.inverter?.acMode || "").toLowerCase();
 const currentOutputLimit = Math.max(0, getFirstFinite([msg.data?.battery?.dischargeSetpoint], 0));
 const currentInputLimit = Math.max(0, getFirstFinite([msg.data?.battery?.chargeSetpoint], 0));
@@ -19,6 +33,8 @@ const currentInputLimit = Math.max(0, getFirstFinite([msg.data?.battery?.chargeS
 const dischargeChangeRequired = Math.abs(desiredDischarge - currentOutputLimit) > 5;
 const modeChangeRequired = currentMode !== "output";
 const inputLimitChangeRequired = currentInputLimit > 5;
+const boundedMessage =
+    desiredDischarge === msg.payload ? msg : { ...msg, payload: desiredDischarge };
 
 if (!dischargeChangeRequired && !modeChangeRequired && !inputLimitChangeRequired) {
     node.status({
@@ -41,7 +57,7 @@ node.status({
 });
 
 return [
-    dischargeChangeRequired ? msg : null,
-    modeChangeRequired ? msg : null,
-    inputLimitChangeRequired ? msg : null
+    dischargeChangeRequired ? boundedMessage : null,
+    modeChangeRequired ? boundedMessage : null,
+    inputLimitChangeRequired ? boundedMessage : null
 ];

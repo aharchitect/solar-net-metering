@@ -11,12 +11,18 @@ const scriptPath = path.join(
     "ensure-discharge-actuator-state.js"
 );
 
-function execute({ mode = "output", inputLimit = 0, outputLimit = 320, payload = 360 } = {}) {
+function execute({
+    mode = "output",
+    inputLimit = 0,
+    outputLimit = 320,
+    payload = 360,
+    hardwareMax = 1000
+} = {}) {
     const execution = runFunctionNode(scriptPath, {
         msg: {
             payload,
             data: {
-                inverter: { acMode: mode },
+                inverter: { acMode: mode, inverseMaxPower: hardwareMax },
                 battery: {
                     chargeSetpoint: inputLimit,
                     dischargeSetpoint: outputLimit
@@ -74,4 +80,12 @@ test("does not call an actuator when every desired discharge state is already pr
             text: "discharge 360W, output mode, input off"
         }
     ]);
+});
+
+test("caps an out-of-range payload before the output-limit service receives it", () => {
+    const { result } = execute({ payload: 1105, outputLimit: 900, hardwareMax: 1000 });
+
+    assert.equal(result[0].payload, 1000);
+    assert.equal(result[1], null);
+    assert.equal(result[2], null);
 });

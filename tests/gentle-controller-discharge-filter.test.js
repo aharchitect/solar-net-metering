@@ -124,6 +124,54 @@ test("does not reduce active discharge while grid import is above the target buf
     ]);
 });
 
+test("caps the controller command to the retrieved inverter maximum", () => {
+    const { outputMsg, telemetry, contextState } = executeDischargeFilter({
+        msg: createMsg({
+            data: {
+                grid: {
+                    power: 1200
+                },
+                battery: {
+                    dischargePower: 900
+                },
+                inverter: {
+                    inverseMaxPower: 1000
+                }
+            },
+            derived: {
+                demand: {
+                    defensiveTarget: 1500,
+                    lowerBound: 90,
+                    longTermMinimum: 90
+                },
+                solar: {
+                    livePower: 0
+                }
+            },
+            action: {
+                battery: {
+                    discharge: {
+                        forcedRate: 1000,
+                        stopRequested: false,
+                        blockedByLowSoc: false
+                    }
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 1000
+        }
+    });
+
+    assert.equal(outputMsg.action.battery.discharge.commandPower, 1000);
+    assert.equal(outputMsg.action.battery.discharge.hardwareMaxPower, 1000);
+    assert.equal(outputMsg.action.battery.discharge.hardwareMaxClampActive, true);
+    assert.equal(telemetry.payload.commandBeforeHardwareMaxClamp, 1135);
+    assert.equal(telemetry.payload.hardwareMaxClampActive, true);
+    assert.equal(telemetry.payload.finalCommand, 1000);
+    assert.equal(Math.round(contextState.lastCommand), 1000);
+});
+
 test("allows active discharge to ease down when grid import stays below the target buffer", () => {
     const { outputMsg, contextState } = executeDischargeFilter({
         msg: createMsg({

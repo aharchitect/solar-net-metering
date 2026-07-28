@@ -159,6 +159,28 @@ test("rounds fractional discharge commands before sending hardware output", () =
     ]);
 });
 
+test("caps a discharge command to the retrieved inverter maximum", () => {
+    const { hardwareCmd, statuses } = executeAdjustDischarging({
+        data: createData({
+            inverter: {
+                inverseMaxPower: 1000
+            }
+        }),
+        actionDischarge: createActionDischarge({
+            commandPower: 1105
+        })
+    });
+
+    assert.equal(hardwareCmd.payload, 1000);
+    assert.deepEqual(statuses, [
+        {
+            fill: "blue",
+            shape: "dot",
+            text: "target: 1000W"
+        }
+    ]);
+});
+
 test("returns null and reports missing fields when mandatory contract data is absent", () => {
     const execution = runFunctionNode(adjustDischargingScriptPath, {
         now: "2026-04-06T22:00:00.000Z",

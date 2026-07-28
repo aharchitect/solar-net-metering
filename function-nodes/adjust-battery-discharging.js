@@ -13,6 +13,16 @@ function hasMessageValue(root, path) {
     return current !== undefined;
 }
 
+function getPositiveFinite(values, fallback) {
+    for (const value of values) {
+        if (Number.isFinite(value) && value > 0) {
+            return value;
+        }
+    }
+
+    return fallback;
+}
+
 function abortForMissing(requiredPaths) {
     const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
     if (missing.length === 0) {
@@ -43,7 +53,8 @@ const currentSetLimit = data.battery.dischargeSetpoint;
 // 1. CHOOSE THE TARGET
 // We want to reach the 'forcedRate' (to empty the battery),
 // OR follow the 'defensiveTarget' (5-min average) if the house is active.
-let targetDischarge = action.battery.discharge.commandPower;
+const dischargeHardwareMaxPower = getPositiveFinite([data.inverter?.inverseMaxPower], 1000);
+let targetDischarge = Math.min(action.battery.discharge.commandPower, dischargeHardwareMaxPower);
 const nextHourWh = data.forecast.nextHourWh;
 
 // 2. HARDWARE OUTPUT
