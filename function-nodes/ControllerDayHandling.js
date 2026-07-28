@@ -44,10 +44,6 @@ const gridTimingReading = demandTiming?.sensors?.grid;
 const normalization = msg.meta?.normalization;
 const normalizationReadings = normalization?.readings || {};
 const gridNormalizationReading = normalizationReadings.gridPower;
-const solarNormalizationReadings = [
-    normalizationReadings.solarPrimaryPower,
-    normalizationReadings.solarSecondaryPower
-];
 const stability = msg.meta?.stability || {};
 
 function readingHasLowConfidence(reading) {
@@ -63,11 +59,29 @@ function readingHasLowConfidence(reading) {
     );
 }
 
+function isInactiveSecondarySolarReading(reading) {
+    return (
+        Math.abs(getFirstFinite([reading?.value], 0)) <= 5 &&
+        (reading?.isValid === false ||
+            reading?.isStale === true ||
+            reading?.usedLastValid === true ||
+            reading?.usedFallback === true)
+    );
+}
+
+const solarNormalizationReadings = [
+    normalizationReadings.solarPrimaryPower,
+    ...(isInactiveSecondarySolarReading(normalizationReadings.solarSecondaryPower)
+        ? []
+        : [normalizationReadings.solarSecondaryPower])
+];
+
 // 2. CONFIGURATION (Based on safety buffer strategy)
 // this addresses the "Moving Target" problem with huge latencies of smart meter and battery chargine changes:
 const targetBuffer = 30; // Aim for 30W import
 const maxInverterPower = 1200; // the Inverter limit
 const minSustain = 50; // Keep charging circuit active
+const productionThreshold = 150; // Solar power that keeps the charging circuit warm
 const exportTolerance = 5; // Ignore tiny meter jitter, react to real export quickly
 const exportBoostFactor = 1.25; // Compensate for meter/inverter latency when exporting
 const solarSwitchGuardFactor = 0.5; // Avoid charge relay cycling while solar is still available
@@ -96,6 +110,7 @@ const solarIsUnstable =
     stability.mode === "unstable_unstable";
 let lastCommand = context.get("lastCommand") || 0;
 const lastDemandEstimate = context.get("lastDemandEstimate");
+let controlMode = "Grid Anchor";
 
 const demandSnapshotReliable =
     (!Number.isFinite(demandConfidence) || demandConfidence >= reliableDemandConfidence) &&
@@ -106,6 +121,7 @@ const gridSnapshotReliable =
 const shouldFreezeCommand = !gridSnapshotReliable || !Number.isFinite(gridPower);
 
 if (shouldFreezeCommand) {
+    controlMode = "Grid Stale Hold";
     const lastSolarSecondaryPower = context.get("lastSolarSecondaryPower");
     const solarSecondaryIncrease = Number.isFinite(lastSolarSecondaryPower)
         ? solarSecondaryPower - lastSolarSecondaryPower
@@ -160,12 +176,14 @@ function appendRule(ruleName) {
     ruleApplied = ruleApplied === "None" ? ruleName : `${ruleApplied} + ${ruleName}`;
 }
 
-function limitUnstableSolarSlew(command) {
+function limitUnstableSolarSlew(
+    command,
+    activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0)
+) {
     if (!solarIsUnstable) {
         return command;
     }
 
-    const activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0);
     if (activeReference <= 0) {
         return command;
     }
@@ -184,8 +202,10 @@ function limitUnstableSolarSlew(command) {
     return limitedCommand;
 }
 
-function limitLowSocMildImportDrop(command) {
-    const activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0);
+function limitLowSocMildImportDrop(
+    command,
+    activeReference = Math.max(lastCommand, currentSetInflow, batteryInflow, 0)
+) {
     const theoreticalSurplus = effectiveSolarPower - calculatedDemand;
     const hasPositiveSurplus = theoreticalSurplus > targetBuffer;
     const lowSocImportShouldBeTreatedGently =
@@ -211,11 +231,71 @@ function limitLowSocMildImportDrop(command) {
     return commandFloor;
 }
 
-function limitChargeSlew(command) {
-    return limitLowSocMildImportDrop(limitUnstableSolarSlew(command));
+function limitChargeSlew(command, activeReference) {
+    return limitLowSocMildImportDrop(
+        limitUnstableSolarSlew(command, activeReference),
+        activeReference
+    );
 }
 
-function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, statusText }) {
+function applyChargeAdjustmentThrottle(targetCharge) {
+    let adjustedTargetCharge = Math.max(0, targetCharge);
+    const chargingWasActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 0;
+    const solarSwitchGuardFloor = totalProduced * solarSwitchGuardFactor;
+
+    if (
+        chargingWasActive &&
+        totalProduced > productionThreshold &&
+        adjustedTargetCharge < solarSwitchGuardFloor
+    ) {
+        adjustedTargetCharge = solarSwitchGuardFloor;
+        ruleApplied = "Solar Floor (Switch Guard)";
+    }
+
+    let finalAlpha;
+    if (isExporting) {
+        finalAlpha = 1.0;
+    } else if (adjustedTargetCharge > lastCommand) {
+        finalAlpha = 0.9;
+    } else {
+        finalAlpha = 0.2;
+    }
+    let command = adjustedTargetCharge * finalAlpha + lastCommand * (1 - finalAlpha);
+
+    if (soc <= minSoc && totalProduced >= productionThreshold) {
+        const recoveryCharge = totalProduced / 2;
+        if (command < recoveryCharge) {
+            command = recoveryCharge;
+            ruleApplied = "SoC Recovery";
+        }
+    }
+
+    if (
+        chargingWasActive &&
+        totalProduced > productionThreshold &&
+        command < solarSwitchGuardFloor
+    ) {
+        command = solarSwitchGuardFloor;
+        ruleApplied = "Solar Floor (Switch Guard)";
+    }
+
+    return {
+        adjustedTargetCharge,
+        command: clampChargeCommand(limitChargeSlew(command)),
+        finalAlpha,
+        chargingWasActive,
+        solarSwitchGuardFloor
+    };
+}
+
+function emitCommand({
+    command,
+    targetCharge,
+    theoreticalSurplus,
+    statusFill,
+    statusText,
+    diagnostics = {}
+}) {
     const roundedCommand = Math.round(command);
     const roundedTarget = Math.round(targetCharge);
     const roundedSurplus = Math.round(theoreticalSurplus);
@@ -240,32 +320,87 @@ function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, st
         getFirstFinite([demandTiming?.currentEstimate, msg.derived?.demand?.current], 0)
     );
 
-    const insights = {
-        payload: {
-            timestamp: new Date().toISOString(),
-            efficiency: {
-                gridExport: gridPower < 0 ? Math.abs(gridPower) : 0,
-                isLeaking: isExporting
-            },
-            calculation: {
-                theoreticalSurplus: roundedSurplus,
-                targetCharge: roundedTarget,
-                finalCommand: roundedCommand
-            },
-            constraints: {
-                clamp: clampReason,
-                rule: ruleApplied,
-                delta: Math.round(delta)
-            },
-            sensors: {
-                solarLive: liveSolarPower,
-                solarStable: stableSolarPower,
-                solarEffective: Math.round(effectiveSolarPower),
-                demand: calculatedDemand,
-                grid: gridPower,
-                soc: soc
-            }
+    const timestamp = new Date().toISOString();
+    const telemetry = {
+        // Keep these fields flat: the Node-RED CSV node maps its template to
+        // direct payload properties and otherwise writes an empty row.
+        time: timestamp,
+        source: "ControllerDayHandling",
+        mode: stability.mode || "unknown",
+        controlMode,
+        ruleApplied,
+        decisionRule: diagnostics.decisionRule || ruleApplied,
+        clampReason,
+        gridPower,
+        batteryInflow,
+        currentSetInflow,
+        maxChargePower,
+        calculatedDemand,
+        currentDemand: getFirstFinite(
+            [demandTiming?.currentEstimate, msg.derived?.demand?.current],
+            0
+        ),
+        medianDemand: getFirstFinite([msg.derived?.demand?.median], 0),
+        liveSolarPower,
+        stableSolarPower,
+        effectiveSolarPower: Math.round(effectiveSolarPower),
+        theoreticalSurplus: roundedSurplus,
+        targetCharge: roundedTarget,
+        finalCommand: roundedCommand,
+        delta: Math.round(delta),
+        soc,
+        minSoc,
+        totalProduced,
+        isExporting,
+        historySamples: msg.meta?.history?.samples,
+        triggerIntervalSeconds: msg.meta?.history?.triggerIntervalSeconds,
+        demandStdDev: msg.derived?.demand?.stdDev,
+        solarStdDev: msg.derived?.solar?.stdDev,
+        demandSnapshotReliable,
+        gridSnapshotReliable,
+        shouldFreezeCommand,
+        demandConfidence,
+        reliableDemandConfidence,
+        gridTimingValid: gridTimingReading?.isValid !== false,
+        gridReadingLowConfidence: readingHasLowConfidence(gridNormalizationReading),
+        normalizationConsistent: normalization?.plausibility?.isConsistent !== false,
+        solarPrimaryLowConfidence: readingHasLowConfidence(normalizationReadings.solarPrimaryPower),
+        solarSecondaryLowConfidence: readingHasLowConfidence(
+            normalizationReadings.solarSecondaryPower
+        ),
+        solarIsUnstable,
+        lastCommand,
+        lastDemandEstimate,
+        ...diagnostics,
+        // Retain the structured view for the debug sidebar and any existing
+        // consumers; CSV ignores these properties because they are not in its template.
+        timestamp,
+        efficiency: {
+            gridExport: gridPower < 0 ? Math.abs(gridPower) : 0,
+            isLeaking: isExporting
+        },
+        calculation: {
+            theoreticalSurplus: roundedSurplus,
+            targetCharge: roundedTarget,
+            finalCommand: roundedCommand
+        },
+        constraints: {
+            clamp: clampReason,
+            rule: ruleApplied,
+            delta: Math.round(delta)
+        },
+        sensors: {
+            solarLive: liveSolarPower,
+            solarStable: stableSolarPower,
+            solarEffective: Math.round(effectiveSolarPower),
+            demand: calculatedDemand,
+            grid: gridPower,
+            soc
         }
+    };
+
+    const insights = {
+        payload: telemetry
     };
 
     node.status({
@@ -278,9 +413,19 @@ function emitCommand({ command, targetCharge, theoreticalSurplus, statusFill, st
 }
 
 if (!demandSnapshotReliable) {
+    controlMode = "Low-Confidence Grid Steering";
     ruleApplied = "Low-Confidence Grid Steering";
 
-    const baseCommand = Math.max(lastCommand, currentSetInflow, 0);
+    // Battery charge power is the authoritative actual-charge reference. Do
+    // not wind up an old request or let a higher requested setpoint override
+    // what the battery is actually taking.
+    const hasReportedBatteryInflow = Number.isFinite(msg.data?.battery?.chargePower);
+    const hasReportedChargeSetpoint = Number.isFinite(msg.data?.battery?.chargeSetpoint);
+    const baseCommand = hasReportedBatteryInflow
+        ? Math.max(batteryInflow, 0)
+        : hasReportedChargeSetpoint
+          ? Math.max(currentSetInflow, 0)
+          : Math.max(lastCommand, 0);
     const currentDemandEstimate = getFirstFinite(
         [demandTiming?.currentEstimate, msg.derived?.demand?.current],
         0
@@ -289,9 +434,12 @@ if (!demandSnapshotReliable) {
         ? currentDemandEstimate - lastDemandEstimate
         : null;
     let targetCharge = baseCommand;
+    let importCorrection = 0;
+    let demandCorrection = 0;
+    let exportCorrection = 0;
 
     if (isExporting) {
-        const exportCorrection = Math.abs(gridPower) + targetBuffer;
+        exportCorrection = Math.abs(gridPower) + targetBuffer;
         const commandAlreadyAheadOfMeasuredInflow = currentSetInflow > batteryInflow + targetBuffer;
 
         if (commandAlreadyAheadOfMeasuredInflow && Math.abs(gridPower) <= targetBuffer) {
@@ -300,7 +448,7 @@ if (!demandSnapshotReliable) {
             targetCharge = baseCommand + exportCorrection;
         }
     } else if (gridPower > targetBuffer) {
-        const importCorrection = gridPower - targetBuffer;
+        importCorrection = gridPower - targetBuffer;
         const demandSpike = currentDemandEstimate - calculatedDemand;
         const isShortDemandPeak =
             demandDelta !== null &&
@@ -311,14 +459,36 @@ if (!demandSnapshotReliable) {
         if (isShortDemandPeak) {
             targetCharge = baseCommand;
         } else {
-            const demandCorrection =
+            demandCorrection =
                 demandDelta !== null && demandDelta > 0 ? demandDelta * 2 : importCorrection;
 
             targetCharge = baseCommand - Math.max(importCorrection, demandCorrection);
         }
     }
 
-    const smoothedCommand = clampChargeCommand(limitChargeSlew(targetCharge));
+    let smoothedCommand;
+    let throttlingDiagnostics = {};
+
+    // A low-confidence import correction may legitimately ask for less than
+    // zero, but do not let one delayed actual-charge readback turn that into a
+    // relay-off command while solar is still available. Reuse the normal
+    // adjustment throttle instead of maintaining a second floor/slew policy.
+    if (targetCharge < 0) {
+        const decisionRule = ruleApplied;
+        const throttled = applyChargeAdjustmentThrottle(targetCharge);
+        smoothedCommand = throttled.command;
+        if (ruleApplied !== decisionRule) {
+            ruleApplied = `${decisionRule} + ${ruleApplied}`;
+        }
+        throttlingDiagnostics = {
+            finalAlpha: throttled.finalAlpha,
+            chargingWasActive: throttled.chargingWasActive,
+            solarSwitchGuardFloor: throttled.solarSwitchGuardFloor,
+            adjustmentTargetCharge: throttled.adjustedTargetCharge
+        };
+    } else {
+        smoothedCommand = clampChargeCommand(limitChargeSlew(targetCharge, baseCommand));
+    }
     return emitCommand({
         command: smoothedCommand,
         targetCharge,
@@ -326,7 +496,18 @@ if (!demandSnapshotReliable) {
         statusFill: isExporting ? "yellow" : "green",
         statusText: `Cmd: ${Math.round(smoothedCommand)}W | Rule: ${ruleApplied} | Grid: ${Math.round(
             gridPower
-        )}W`
+        )}W`,
+        diagnostics: {
+            decisionRule: "Low-Confidence Grid Steering",
+            baseCommand,
+            currentDemandEstimate,
+            demandDelta,
+            importCorrection,
+            demandCorrection,
+            exportCorrection,
+            rawTargetCharge: targetCharge,
+            ...throttlingDiagnostics
+        }
     });
 }
 
@@ -346,8 +527,6 @@ if (isExporting) {
 // 4. SANITY CHECKS & SUSTAIN
 // If solar production is > 150W, we keep the charging circuit 'warm' at 50W,
 // even if the house is currently importing from the grid.
-const productionThreshold = 150; // Adjust this based on your 'sunny enough' preference
-
 if (totalProduced > productionThreshold && targetCharge < minSustain) {
     targetCharge = minSustain;
     ruleApplied = "Sustain (Production)";
@@ -376,54 +555,10 @@ if (theoreticalSurplus > 10 && targetCharge < minSustain) {
     targetCharge = minSustain;
 }
 
-// Hard floor
-if (targetCharge < 0) targetCharge = 0;
-
-const chargingWasActive = Math.max(lastCommand, currentSetInflow, batteryInflow) > 0;
-const solarSwitchGuardFloor = totalProduced * solarSwitchGuardFactor;
-if (
-    chargingWasActive &&
-    totalProduced > productionThreshold &&
-    targetCharge < solarSwitchGuardFloor
-) {
-    targetCharge = solarSwitchGuardFloor;
-    ruleApplied = "Solar Floor (Switch Guard)";
-}
-
-// 5. DYNAMIC SMOOTHING (Slew Rate)
-// Instead of a fixed Alpha, we use a "Fast-Up, Slow-Down" approach.
-let finalAlpha;
-if (isExporting) {
-    // CRITICAL: If we are exporting, we jump to the target IMMEDIATELY
-    finalAlpha = 1.0;
-} else if (targetCharge > lastCommand) {
-    // If we are increasing charge (but not leaking), move fast
-    finalAlpha = 0.9;
-} else {
-    // If we are decreasing charge, move slowly to stay "warm"
-    finalAlpha = 0.2;
-}
-let smoothedCommand = targetCharge * finalAlpha + lastCommand * (1 - finalAlpha);
-
-// Rule: Minimum SoC Recovery
-if (soc <= minSoc && totalProduced >= 150) {
-    const recoveryCharge = totalProduced / 2;
-    if (smoothedCommand < recoveryCharge) {
-        smoothedCommand = recoveryCharge;
-        ruleApplied = "SoC Recovery";
-    }
-}
-
-if (
-    chargingWasActive &&
-    totalProduced > productionThreshold &&
-    smoothedCommand < solarSwitchGuardFloor
-) {
-    smoothedCommand = solarSwitchGuardFloor;
-    ruleApplied = "Solar Floor (Switch Guard)";
-}
-
-smoothedCommand = clampChargeCommand(limitChargeSlew(smoothedCommand));
+const throttled = applyChargeAdjustmentThrottle(targetCharge);
+targetCharge = throttled.adjustedTargetCharge;
+const smoothedCommand = throttled.command;
+const { finalAlpha, chargingWasActive, solarSwitchGuardFloor } = throttled;
 
 // 7. CYCLE GUARD (Deadband)
 // If we are stable and not exporting, don't update if change is tiny
@@ -441,5 +576,12 @@ return emitCommand({
     statusFill: isExporting ? "red" : "green",
     statusText: `Cmd: ${Math.round(smoothedCommand)}W | Clamp: ${clampReason} | Export: ${Math.round(
         gridPower
-    )}W`
+    )}W`,
+    diagnostics: {
+        decisionRule: ruleApplied,
+        rawTargetCharge: targetCharge,
+        finalAlpha,
+        chargingWasActive,
+        solarSwitchGuardFloor
+    }
 });

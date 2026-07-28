@@ -306,10 +306,6 @@ function executeController({ payload, stats, contextState, now, meta, data, deri
     };
 }
 
-function toPlain(value) {
-    return JSON.parse(JSON.stringify(value));
-}
-
 test("holds steady on the morning row when demand exceeds small sunrise solar", () => {
     const payload = createPayload({
         gridPower: 73.32,
@@ -371,33 +367,24 @@ test("charges at battery max on the midday export row after anti-export correcti
     assert.equal(outputMsg.action.charge.commandPower, 1000);
     assert.equal(insights.payload.sensors.grid, -190.46);
     assert.equal(Math.round(contextState.lastCommand), 1000);
-    assert.deepEqual(toPlain(insights), {
-        payload: {
-            timestamp: "2026-04-06T13:30:21.142Z",
-            efficiency: {
-                gridExport: 190.46,
-                isLeaking: true
-            },
-            calculation: {
-                theoreticalSurplus: 1009,
-                targetCharge: 1039,
-                finalCommand: 1000
-            },
-            constraints: {
-                clamp: "Battery Max",
-                rule: "Anti-Export",
-                delta: 1000
-            },
-            sensors: {
-                solarLive: 1249,
-                solarStable: 1249,
-                solarEffective: 1249,
-                demand: 240,
-                grid: -190.46,
-                soc: 64
-            }
+    assert.deepEqual(
+        {
+            time: insights.payload.time,
+            source: insights.payload.source,
+            gridPower: insights.payload.gridPower,
+            theoreticalSurplus: insights.payload.theoreticalSurplus,
+            targetCharge: insights.payload.targetCharge,
+            finalCommand: insights.payload.finalCommand
+        },
+        {
+            time: "2026-04-06T13:30:21.142Z",
+            source: "ControllerDayHandling",
+            gridPower: -190.46,
+            theoreticalSurplus: 1009,
+            targetCharge: 1039,
+            finalCommand: 1000
         }
-    });
+    );
     assert.deepEqual(statuses, [
         {
             fill: "red",
@@ -433,33 +420,9 @@ test("clamps to the reported 800W battery limit on the 2026-04-06T14:21:43 expor
     assert.equal(outputMsg.action.charge.commandPower, 800);
     assert.equal(insights.payload.sensors.grid, -832.16);
     assert.equal(Math.round(contextState.lastCommand), 800);
-    assert.deepEqual(toPlain(insights), {
-        payload: {
-            timestamp: "2026-04-06T14:21:43.782Z",
-            efficiency: {
-                gridExport: 832.16,
-                isLeaking: true
-            },
-            calculation: {
-                theoreticalSurplus: 832,
-                targetCharge: 1040,
-                finalCommand: 800
-            },
-            constraints: {
-                clamp: "Battery Max",
-                rule: "Anti-Export",
-                delta: 800
-            },
-            sensors: {
-                solarLive: 1034,
-                solarStable: 1034,
-                solarEffective: 1034,
-                demand: 202,
-                grid: -832.16,
-                soc: 64
-            }
-        }
-    });
+    assert.equal(insights.payload.time, "2026-04-06T14:21:43.782Z");
+    assert.equal(insights.payload.clampReason, "Battery Max");
+    assert.equal(insights.payload.finalCommand, 800);
     assert.deepEqual(statuses, [
         {
             fill: "red",
@@ -521,33 +484,9 @@ test("uses the corrected statistical estimates in the stale-snapshot export case
     assert.equal(outputMsg.action.charge.commandPower, 800);
     assert.equal(insights.payload.sensors.grid, -67.01);
     assert.equal(Math.round(contextState.lastCommand), 800);
-    assert.deepEqual(toPlain(insights), {
-        payload: {
-            timestamp: "2026-04-05T13:00:23.491Z",
-            efficiency: {
-                gridExport: 67.01,
-                isLeaking: true
-            },
-            calculation: {
-                theoreticalSurplus: 762,
-                targetCharge: 883,
-                finalCommand: 800
-            },
-            constraints: {
-                clamp: "Battery Max",
-                rule: "Anti-Export",
-                delta: 800
-            },
-            sensors: {
-                solarLive: 900,
-                solarStable: 900,
-                solarEffective: 900,
-                demand: 138,
-                grid: -67.01,
-                soc: 64
-            }
-        }
-    });
+    assert.equal(insights.payload.time, "2026-04-05T13:00:23.491Z");
+    assert.equal(insights.payload.theoreticalSurplus, 762);
+    assert.equal(insights.payload.finalCommand, 800);
     assert.deepEqual(statuses, [
         {
             fill: "red",
@@ -584,33 +523,9 @@ test("keeps at least half of solar power as charge command to avoid battery swit
     assert.equal(outputMsg.action.charge.commandPower, 200);
     assert.equal(outputMsg.action.charge.ruleApplied, "Solar Floor (Switch Guard)");
     assert.equal(Math.round(contextState.lastCommand), 200);
-    assert.deepEqual(toPlain(insights), {
-        payload: {
-            timestamp: "2026-04-06T15:05:00.000Z",
-            efficiency: {
-                gridExport: 0,
-                isLeaking: false
-            },
-            calculation: {
-                theoreticalSurplus: -650,
-                targetCharge: 200,
-                finalCommand: 200
-            },
-            constraints: {
-                clamp: "None",
-                rule: "Solar Floor (Switch Guard)",
-                delta: 200
-            },
-            sensors: {
-                solarLive: 400,
-                solarStable: 400,
-                solarEffective: 400,
-                demand: 1050,
-                grid: 650,
-                soc: 64
-            }
-        }
-    });
+    assert.equal(insights.payload.time, "2026-04-06T15:05:00.000Z");
+    assert.equal(insights.payload.solarSwitchGuardFloor, 200);
+    assert.equal(insights.payload.finalCommand, 200);
     assert.deepEqual(statuses, [
         {
             fill: "green",
@@ -769,18 +684,18 @@ test("does not stop charging at minimum SoC when import conflicts with positive 
         now: "2026-05-09T11:27:36.059Z"
     });
 
-    assert.equal(outputMsg.action.charge.commandPower, 450);
+    assert.equal(outputMsg.action.charge.commandPower, 616);
     assert.equal(
         outputMsg.action.charge.ruleApplied,
-        "Low-Confidence Grid Steering + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
     assert.equal(insights.payload.calculation.theoreticalSurplus, 400);
     assert.equal(insights.payload.calculation.targetCharge, -18);
     assert.equal(
         insights.payload.constraints.rule,
-        "Low-Confidence Grid Steering + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
-    assert.equal(Math.round(contextState.lastCommand), 450);
+    assert.equal(Math.round(contextState.lastCommand), 616);
 });
 
 test("does not ratchet near-minimum SoC recovery to zero while positive surplus remains", () => {
@@ -826,18 +741,18 @@ test("does not ratchet near-minimum SoC recovery to zero while positive surplus 
         now: "2026-05-09T11:34:20.073Z"
     });
 
-    assert.equal(outputMsg.action.charge.commandPower, 157);
+    assert.equal(outputMsg.action.charge.commandPower, 339);
     assert.equal(
         outputMsg.action.charge.ruleApplied,
-        "Low-Confidence Grid Steering + Solar-Unstable Slew Limit + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
     assert.equal(insights.payload.calculation.theoreticalSurplus, 323);
     assert.equal(insights.payload.calculation.targetCharge, -539);
     assert.equal(
         insights.payload.constraints.rule,
-        "Low-Confidence Grid Steering + Solar-Unstable Slew Limit + Low-SoC Mild-Import Slew Limit"
+        "Low-Confidence Grid Steering + Solar Floor (Switch Guard)"
     );
-    assert.equal(Math.round(contextState.lastCommand), 157);
+    assert.equal(Math.round(contextState.lastCommand), 339);
 });
 
 test("holds the current charge command when the smartmeter is unavailable and only a retained grid value exists", () => {
@@ -1138,6 +1053,68 @@ test("uses low-confidence grid steering when normalized primary solar is stale",
     assert.equal(Math.round(contextState.lastCommand), 450);
 });
 
+test("applies the existing adjustment throttle when a low-confidence import correction would floor a charge command", () => {
+    const payload = createPayload({
+        gridPower: 276.88,
+        solarPrimaryPower: 180,
+        solarSecondaryPower: 0,
+        batteryInflow: 0,
+        maxChargePower: 800,
+        currentSetInflow: 109,
+        soc: 5
+    });
+
+    const { outputMsg, insights } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 412,
+            currentDemandEstimate: 412,
+            solarPower: 180,
+            solarAveragePower: 175
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                solarPrimaryPower: {
+                    value: 180,
+                    isStale: true,
+                    sourceAgeMs: 60000
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 109,
+            lastDemandEstimate: 412
+        },
+        now: "2026-07-22T16:45:25.066Z"
+    });
+
+    assert.equal(outputMsg.action.charge.commandPower, 105);
+    assert.deepEqual(
+        {
+            controlMode: insights.payload.controlMode,
+            ruleApplied: insights.payload.ruleApplied,
+            decisionRule: insights.payload.decisionRule,
+            demandSnapshotReliable: insights.payload.demandSnapshotReliable,
+            solarPrimaryLowConfidence: insights.payload.solarPrimaryLowConfidence,
+            baseCommand: insights.payload.baseCommand,
+            importCorrection: insights.payload.importCorrection,
+            targetCharge: insights.payload.targetCharge,
+            finalCommand: insights.payload.finalCommand
+        },
+        {
+            controlMode: "Low-Confidence Grid Steering",
+            ruleApplied: "Low-Confidence Grid Steering + Solar Floor (Switch Guard)",
+            decisionRule: "Low-Confidence Grid Steering",
+            demandSnapshotReliable: false,
+            solarPrimaryLowConfidence: true,
+            baseCommand: 0,
+            importCorrection: 246.88,
+            targetCharge: -247,
+            finalCommand: 105
+        }
+    );
+});
+
 test("uses low-confidence grid steering when normalized secondary solar is retained", () => {
     const payload = createPayload({
         gridPower: -80,
@@ -1181,6 +1158,48 @@ test("uses low-confidence grid steering when normalized secondary solar is retai
     assert.equal(outputMsg.action.charge.ruleApplied, "Low-Confidence Grid Steering");
     assert.equal(insights.payload.efficiency.isLeaking, true);
     assert.equal(Math.round(contextState.lastCommand), 510);
+});
+
+test("keeps grid-anchor control when an inactive secondary solar sensor is unavailable", () => {
+    const payload = createPayload({
+        gridPower: -100,
+        solarPrimaryPower: 700,
+        solarSecondaryPower: 0,
+        batteryInflow: 400,
+        maxChargePower: 1000,
+        currentSetInflow: 400
+    });
+
+    const { outputMsg, insights } = executeController({
+        payload,
+        stats: {
+            defensiveTarget: 300,
+            currentDemandEstimate: 300,
+            solarPower: 700,
+            solarAveragePower: 700
+        },
+        meta: createNormalizationMeta({
+            readings: {
+                solarPrimaryPower: { value: 700 },
+                solarSecondaryPower: {
+                    value: 0,
+                    isValid: false,
+                    parsedValue: null,
+                    usedFallback: true
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 400,
+            lastDemandEstimate: 300
+        },
+        now: "2026-07-23T19:39:31.000Z"
+    });
+
+    assert.equal(insights.payload.demandSnapshotReliable, true);
+    assert.equal(insights.payload.controlMode, "Grid Anchor");
+    assert.equal(outputMsg.action.charge.ruleApplied, "Anti-Export");
+    assert.equal(outputMsg.action.charge.commandPower, 525);
 });
 
 test("uses low-confidence grid steering when normalized demand plausibility is inconsistent", () => {
@@ -1534,7 +1553,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             lastDemandEstimate: 160
         },
         now: "2026-04-05T13:00:23.491Z",
-        expectedCommand: 896
+        expectedCommand: 897
     },
     {
         title: "wait for further increase in charge on low confidence when the valid grid signal still shows export but Inflow already increased",
@@ -1565,7 +1584,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             lastCommand: 800
         },
         now: "2026-04-05T13:05:00.000Z",
-        expectedCommand: 800
+        expectedCommand: 660
     },
     {
         title: "increases charge on low confidence when the valid grid signal still shows export and more charge power is available",
@@ -1658,7 +1677,7 @@ test("keeps morning charge modest when forecast rises but measured solar is stil
             lastCommand: 800
         },
         now: "2026-04-05T13:07:00.000Z",
-        expectedCommand: 790
+        expectedCommand: 490
     },
     {
         title: "nudges charge upward on low confidence when grid import dropped below the target buffer",

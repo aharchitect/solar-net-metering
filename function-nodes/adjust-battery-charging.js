@@ -46,7 +46,13 @@ const logMsg = {
 
 let hardwareCmd = null;
 if (Math.abs(targetCharge - currentSetInflow) > 10) {
-    hardwareCmd = { payload: Math.round(targetCharge) };
+    // Keep the normalized controller context for downstream actuator guards.
+    // They need the current AC mode and both hardware limits, while the
+    // service-call node still receives the rounded command in msg.payload.
+    hardwareCmd = {
+        ...msg,
+        payload: Math.round(targetCharge)
+    };
 } else {
     reason = "No change - no need to adjust";
 }

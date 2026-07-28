@@ -1,6 +1,4 @@
-// 1. Calculate current real house demand
-const map = msg.payload || {};
-const now = Date.now();
+// 1. Calculate current real house demand from normalized inputs only.
 
 if (!msg.meta) {
     msg.meta = {};
@@ -11,89 +9,23 @@ if (!msg.derived) {
 msg.derived.demand = msg.derived.demand || {};
 msg.derived.solar = msg.derived.solar || {};
 
-function getEntity(entityId) {
-    return map[entityId];
-}
-
-function getEntityTimeInfo(entity) {
-    const candidates = [
-        ["last_reported", entity?.last_reported],
-        ["last_updated", entity?.last_updated],
-        ["last_changed", entity?.last_changed],
-        ["attributes.last_reported", entity?.attributes?.last_reported],
-        ["attributes.last_updated", entity?.attributes?.last_updated],
-        ["attributes.last_changed", entity?.attributes?.last_changed]
-    ];
-
-    for (const [source, rawTimestamp] of candidates) {
-        if (!rawTimestamp) {
-            continue;
-        }
-
-        const timestampMs = new Date(rawTimestamp).getTime();
-        if (Number.isFinite(timestampMs)) {
-            return {
-                timestamp: String(rawTimestamp),
-                timestampMs,
-                ageMs: Math.max(0, now - timestampMs),
-                source
-            };
-        }
-    }
-
-    return {
-        timestamp: null,
-        timestampMs: null,
-        ageMs: null,
-        source: null
-    };
-}
-
-function readSensor(entityId) {
-    const entity = getEntity(entityId);
-    const parsedValue = parseFloat(entity?.state);
-    const timeInfo = getEntityTimeInfo(entity);
-
-    return {
-        entityId,
-        rawState: entity?.state ?? null,
-        value: Number.isFinite(parsedValue) ? parsedValue : 0,
-        isValid: Number.isFinite(parsedValue),
-        timestamp: timeInfo.timestamp,
-        timestampMs: timeInfo.timestampMs,
-        ageMs: timeInfo.ageMs,
-        timestampSource: timeInfo.source
-    };
-}
-
-function readingFromNormalization(key, entityId) {
+function readNormalizedInput(key, semanticPath, value) {
     const reading = msg.meta?.normalization?.readings?.[key];
-    if (!reading) {
-        return null;
-    }
+    const isValid = Number.isFinite(value) && reading?.isValid !== false;
 
     return {
-        entityId,
-        rawState: reading.rawState ?? null,
-        value: Number.isFinite(reading.value) ? reading.value : 0,
-        isValid: reading.isValid !== false && Number.isFinite(reading.value),
-        timestamp: reading.sourceTimestamp ?? null,
-        timestampMs: reading.sourceTimestampMs ?? null,
-        ageMs: reading.sourceAgeMs ?? null,
-        timestampSource: reading.sourceTimestampField ?? null,
+        entityId: reading?.entityId || semanticPath,
+        rawState: reading?.rawState ?? null,
+        value: isValid ? value : 0,
+        isValid,
+        timestamp: reading?.sourceTimestamp ?? null,
+        timestampMs: reading?.sourceTimestampMs ?? null,
+        ageMs: reading?.sourceAgeMs ?? null,
+        timestampSource: reading?.sourceTimestampField ?? null,
         isStale: reading.isStale === true,
         usedLastValid: reading.usedLastValid === true,
         usedFallback: reading.usedFallback === true
     };
-}
-
-function readInput(key, entityId) {
-    return readingFromNormalization(key, entityId) || readSensor(entityId);
-}
-
-function readString(entityId, fallback = "") {
-    const value = getEntity(entityId)?.state;
-    return value !== undefined && value !== null ? String(value) : fallback;
 }
 
 function buildAgeStats(readings) {
@@ -123,6 +55,10 @@ function hasActivePower(reading, threshold = 5) {
     return Math.abs(reading.value) > threshold;
 }
 
+function hasRelevantSolarReading(reading, sunAboveHorizon) {
+    return hasActivePower(reading) || (sunAboveHorizon && reading.isValid);
+}
+
 function buildDemandTimingReadings({
     grid,
     batteryDischarge,
@@ -134,8 +70,8 @@ function buildDemandTimingReadings({
     return [
         grid,
         ...(hasActivePower(batteryDischarge) ? [batteryDischarge] : []),
-        ...(sunAboveHorizon || hasActivePower(solarPrimary) ? [solarPrimary] : []),
-        ...(sunAboveHorizon || hasActivePower(solarSecondary) ? [solarSecondary] : []),
+        ...(hasRelevantSolarReading(solarPrimary, sunAboveHorizon) ? [solarPrimary] : []),
+        ...(hasRelevantSolarReading(solarSecondary, sunAboveHorizon) ? [solarSecondary] : []),
         ...(hasActivePower(batteryCharge) ? [batteryCharge] : [])
     ];
 }
@@ -238,18 +174,28 @@ const timingThresholds = {
     reliableConfidence: 0.7
 };
 
-const gridReading = readInput("gridPower", "sensor.smartmeter_keller_sml_watt_summe");
-const batteryDischargeReading = readInput(
+const gridReading = readNormalizedInput("gridPower", "msg.data.grid.power", msg.data?.grid?.power);
+const batteryDischargeReading = readNormalizedInput(
     "batteryDischargePower",
-    "sensor.solarflow_800_pro_output_home_power"
+    "msg.data.battery.dischargePower",
+    msg.data?.battery?.dischargePower
 );
-const solarPrimaryReading = readInput("solarPrimaryPower", "sensor.wechselrichter_ac_leistung");
-const solarSecondaryReading = readInput("solarSecondaryPower", "sensor.hoymiles600_power");
-const batteryChargeReading = readInput(
+const solarPrimaryReading = readNormalizedInput(
+    "solarPrimaryPower",
+    "msg.data.solar.primaryPower",
+    msg.data?.solar?.primaryPower
+);
+const solarSecondaryReading = readNormalizedInput(
+    "solarSecondaryPower",
+    "msg.data.solar.secondaryPower",
+    msg.data?.solar?.secondaryPower
+);
+const batteryChargeReading = readNormalizedInput(
     "batteryChargePower",
-    "sensor.solarflow_800_pro_grid_input_power"
+    "msg.data.battery.chargePower",
+    msg.data?.battery?.chargePower
 );
-const sunAboveHorizon = msg.data?.sun?.aboveHorizon ?? readString("sun.sun") === "above_horizon";
+const sunAboveHorizon = msg.data?.sun?.aboveHorizon === true;
 
 const demandTimingReadings = buildDemandTimingReadings({
     grid: gridReading,
@@ -259,10 +205,9 @@ const demandTimingReadings = buildDemandTimingReadings({
     batteryCharge: batteryChargeReading,
     sunAboveHorizon
 });
-const solarTimingReadings =
-    sunAboveHorizon || hasActivePower(solarPrimaryReading) || hasActivePower(solarSecondaryReading)
-        ? [solarPrimaryReading, solarSecondaryReading]
-        : [];
+const solarTimingReadings = [solarPrimaryReading, solarSecondaryReading].filter((reading) =>
+    hasRelevantSolarReading(reading, sunAboveHorizon)
+);
 const demandAgeStats = buildAgeStats(demandTimingReadings);
 const solarAgeStats = buildAgeStats(solarTimingReadings);
 

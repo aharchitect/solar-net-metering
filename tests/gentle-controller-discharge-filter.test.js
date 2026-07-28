@@ -58,14 +58,19 @@ function executeDischargeFilter({ msg = createMsg(), contextState, now } = {}) {
         msg
     });
 
+    const [outputMsg, telemetry] = Array.isArray(execution.result)
+        ? execution.result
+        : [execution.result, null];
+
     return {
         ...execution,
-        outputMsg: execution.result
+        outputMsg,
+        telemetry
     };
 }
 
 test("does not reduce active discharge while grid import is above the target buffer", () => {
-    const { outputMsg, contextState, statuses } = executeDischargeFilter({
+    const { outputMsg, telemetry, contextState, statuses } = executeDischargeFilter({
         msg: createMsg({
             data: {
                 grid: {
@@ -93,6 +98,22 @@ test("does not reduce active discharge while grid import is above the target buf
 
     assert.equal(outputMsg.action.battery.discharge.commandPower, 120);
     assert.equal(outputMsg.action.battery.discharge.importHoldActive, true);
+    assert.deepEqual(
+        {
+            decision: telemetry.payload.decision,
+            gridPower: telemetry.payload.gridPower,
+            rawCommand: telemetry.payload.rawCommand,
+            importHoldActive: telemetry.payload.importHoldActive,
+            finalCommand: telemetry.payload.finalCommand
+        },
+        {
+            decision: "Import Hold",
+            gridPower: 60,
+            rawCommand: 40,
+            importHoldActive: true,
+            finalCommand: 120
+        }
+    );
     assert.equal(Math.round(contextState.lastCommand), 120);
     assert.deepEqual(statuses, [
         {
@@ -101,6 +122,54 @@ test("does not reduce active discharge while grid import is above the target buf
             text: "Discharge import hold @ 120W"
         }
     ]);
+});
+
+test("caps the controller command to the retrieved inverter maximum", () => {
+    const { outputMsg, telemetry, contextState } = executeDischargeFilter({
+        msg: createMsg({
+            data: {
+                grid: {
+                    power: 1200
+                },
+                battery: {
+                    dischargePower: 900
+                },
+                inverter: {
+                    inverseMaxPower: 1000
+                }
+            },
+            derived: {
+                demand: {
+                    defensiveTarget: 1500,
+                    lowerBound: 90,
+                    longTermMinimum: 90
+                },
+                solar: {
+                    livePower: 0
+                }
+            },
+            action: {
+                battery: {
+                    discharge: {
+                        forcedRate: 1000,
+                        stopRequested: false,
+                        blockedByLowSoc: false
+                    }
+                }
+            }
+        }),
+        contextState: {
+            lastCommand: 1000
+        }
+    });
+
+    assert.equal(outputMsg.action.battery.discharge.commandPower, 1000);
+    assert.equal(outputMsg.action.battery.discharge.hardwareMaxPower, 1000);
+    assert.equal(outputMsg.action.battery.discharge.hardwareMaxClampActive, true);
+    assert.equal(telemetry.payload.commandBeforeHardwareMaxClamp, 1135);
+    assert.equal(telemetry.payload.hardwareMaxClampActive, true);
+    assert.equal(telemetry.payload.finalCommand, 1000);
+    assert.equal(Math.round(contextState.lastCommand), 1000);
 });
 
 test("allows active discharge to ease down when grid import stays below the target buffer", () => {
@@ -299,8 +368,8 @@ test("limits discharge command to the forced discharge budget", () => {
     assert.equal(Math.round(contextState.lastCommand), 100);
 });
 
-test("emits no command when an idle system is inside the demand deadband", () => {
-    const { outputMsg, result, contextState, statuses } = executeDischargeFilter({
+test("emits telemetry but no command when an idle system is inside the demand deadband", () => {
+    const { outputMsg, telemetry, contextState, statuses } = executeDischargeFilter({
         msg: createMsg({
             data: {
                 grid: {
@@ -326,8 +395,10 @@ test("emits no command when an idle system is inside the demand deadband", () =>
         }
     });
 
-    assert.equal(result, null);
     assert.equal(outputMsg, null);
+    assert.equal(telemetry.payload.decision, "Deadband No Command");
+    assert.equal(telemetry.payload.requiredChange, -40);
+    assert.equal(telemetry.payload.finalCommand, null);
     assert.equal(contextState.lastCommand, 0);
     assert.deepEqual(statuses, [
         {

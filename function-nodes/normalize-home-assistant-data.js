@@ -208,8 +208,14 @@ function buildAgeStats(readings) {
     };
 }
 
+const preferredGridEntityId = "sensor.smartmeter_live_leistung";
+const fallbackGridEntityId = "sensor.smartmeter_keller_sml_watt_summe";
+const preferredGridValue = parseFloat(getEntity(preferredGridEntityId)?.state);
+const gridEntityId = Number.isFinite(preferredGridValue)
+    ? preferredGridEntityId
+    : fallbackGridEntityId;
 const gridPowerReading = addStaleness(
-    readNumber("sensor.smartmeter_keller_sml_watt_summe", 0, {
+    readNumber(gridEntityId, 0, {
         remember: true
     })
 );
@@ -233,6 +239,21 @@ const batteryDischargePowerReading = addStaleness(
         remember: true
     })
 );
+const batteryChargeSetpoint = getNumber("number.solarflow_800_pro_input_limit", 0, {
+    remember: true
+});
+const batteryDischargeSetpoint = getNumber("number.solarflow_800_pro_output_limit", 0, {
+    remember: true
+});
+const sunAboveHorizon = getString("sun.sun") === "above_horizon";
+const sunNextRising = getEntity("sun.sun")?.attributes?.next_rising || null;
+
+function isInactiveZeroReading(reading) {
+    return (
+        Math.abs(reading.value) <= 5 &&
+        (reading.isValid === false || reading.isStale === true || reading.usedLastValid === true)
+    );
+}
 
 const demandComponentReadings = [
     { key: "grid", label: "gridPower", reading: gridPowerReading, sign: 1 },
@@ -265,20 +286,43 @@ const demandPowerZeroFallback = demandComponentReadings.reduce((sum, component) 
     const readingValue = component.reading.isValid ? component.reading.parsedValue : 0;
     return sum + readingValue * component.sign;
 }, 0);
-const demandInvalidInputs = demandComponentReadings
-    .filter((component) => !component.reading.isValid)
-    .map((component) => component.label);
-const sunAboveHorizon = getString("sun.sun") === "above_horizon";
-const sunNextRising = getEntity("sun.sun")?.attributes?.next_rising || null;
 const demandPlausibilityComponents = demandComponentReadings.filter((component) => {
     const isIdleNightSolar =
         !sunAboveHorizon &&
         (component.key === "solarPrimary" || component.key === "solarSecondary") &&
         component.reading.value === 0;
+    const isInactiveDaytimeDischarge =
+        sunAboveHorizon &&
+        component.key === "batteryDischarge" &&
+        batteryDischargeSetpoint <= 5 &&
+        isInactiveZeroReading(component.reading);
+    const isUnavailableSecondarySolar =
+        sunAboveHorizon &&
+        component.key === "solarSecondary" &&
+        isInactiveZeroReading(component.reading);
 
-    return !isIdleNightSolar;
+    return !isIdleNightSolar && !isInactiveDaytimeDischarge && !isUnavailableSecondarySolar;
 });
-const demandRetainedInputs = demandComponentReadings
+const demandInactiveDaytimeComponents = demandComponentReadings.filter((component) => {
+    const isInactiveDaytimeDischarge =
+        sunAboveHorizon &&
+        component.key === "batteryDischarge" &&
+        batteryDischargeSetpoint <= 5 &&
+        isInactiveZeroReading(component.reading);
+    const isUnavailableSecondarySolar =
+        sunAboveHorizon &&
+        component.key === "solarSecondary" &&
+        isInactiveZeroReading(component.reading);
+
+    return isInactiveDaytimeDischarge || isUnavailableSecondarySolar;
+});
+const demandActiveComponents = demandComponentReadings.filter(
+    (component) => !demandInactiveDaytimeComponents.includes(component)
+);
+const demandInvalidInputs = demandActiveComponents
+    .filter((component) => !component.reading.isValid)
+    .map((component) => component.label);
+const demandRetainedInputs = demandActiveComponents
     .filter((component) => component.reading.usedLastValid)
     .map((component) => component.label);
 const demandStaleInputs = demandPlausibilityComponents
@@ -308,12 +352,6 @@ const solarRemainingWhSecondaryReading = readWh("sensor.energy_production_today_
 });
 const nextHourPrimaryReading = readWh("sensor.energy_next_hour", 0, { remember: true });
 const nextHourSecondaryReading = readWh("sensor.energy_next_hour_2", 0, { remember: true });
-const batteryChargeSetpoint = getNumber("number.solarflow_800_pro_input_limit", 0, {
-    remember: true
-});
-const batteryDischargeSetpoint = getNumber("number.solarflow_800_pro_output_limit", 0, {
-    remember: true
-});
 const batteryChargeMaxPower = getNumber("sensor.solarflow_800_pro_charge_max_limit", 800, {
     remember: true
 });
@@ -478,6 +516,7 @@ const telemetry = {
     payload: {
         time: new Date().toISOString(),
         source: "normalize_home_assistant_data",
+        gridEntityId,
         triggerIntervalSeconds: triggerIntervalSeconds,
         retainedReadingMs: retainedReadingMs,
         gridState: gridPowerReading.rawState,

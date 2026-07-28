@@ -13,6 +13,16 @@ function hasMessageValue(root, path) {
     return current !== undefined;
 }
 
+function getPositiveFinite(values, fallback) {
+    for (const value of values) {
+        if (Number.isFinite(value) && value > 0) {
+            return value;
+        }
+    }
+
+    return fallback;
+}
+
 function abortForMissing(requiredPaths) {
     const missing = requiredPaths.filter((path) => !hasMessageValue(msg, path));
     if (missing.length === 0) {
@@ -50,6 +60,7 @@ const demandLowerBound = derived.demand.lowerBound;
 const demandLongTermMinimum = derived.demand.longTermMinimum;
 const solarPower = derived.solar.livePower;
 const forcedDischarge = action.battery.discharge.forcedRate;
+const dischargeHardwareMaxPower = getPositiveFinite([data.inverter?.inverseMaxPower], 1000);
 const stopRequested = action.battery.discharge.stopRequested === true;
 const blockedByLowSoc = action.battery.discharge.blockedByLowSoc === true;
 const stability = msg.meta?.stability || {};
@@ -71,7 +82,25 @@ if (stopRequested || blockedByLowSoc) {
         shape: "ring",
         text: blockedByLowSoc ? "Discharge blocked by low SoC" : "Discharge stop requested"
     });
-    return msg;
+    return [
+        msg,
+        {
+            payload: {
+                time: new Date().toISOString(),
+                source: "GentleControllerDischargeFilter",
+                mode: stability.mode || "unknown",
+                decision: blockedByLowSoc ? "Blocked by Low SoC" : "Discharge Stop Requested",
+                gridPower,
+                currentBatteryOut,
+                calculatedDemand,
+                solarPower,
+                forcedDischarge,
+                stopRequested,
+                blockedByLowSoc,
+                finalCommand: 0
+            }
+        }
+    ];
 }
 
 // 2. CONFIGURATION (Based on safety buffer strategy)
@@ -101,6 +130,31 @@ const alpha = 0.3; // EMA Smoothing factor (0.1 = very slow, 0.9 = very fast)
 const sustainTolerance = 30; // Treat demand near the lower bound as baseline night load
 const importHoldThreshold = targetImportBuffer; // Do not reduce active discharge while import is above target
 
+function noCommandTelemetry(decision, diagnostics = {}) {
+    return {
+        payload: {
+            time: new Date().toISOString(),
+            source: "GentleControllerDischargeFilter",
+            mode: stability.mode || "unknown",
+            decision,
+            gridPower,
+            currentBatteryOut,
+            calculatedDemand,
+            demandLowerBound,
+            demandLongTermMinimum,
+            solarPower,
+            forcedDischarge,
+            stableStableMode,
+            demandTrend,
+            targetImportBuffer,
+            targetBuffer,
+            deadband,
+            alpha,
+            ...diagnostics
+        }
+    };
+}
+
 // 3. CALCULATION
 // calculated Demand is the brutto demand of power, solar power the generated and usable power.
 // default expects, that there is more solar power than demand,
@@ -120,7 +174,14 @@ if (Math.abs(requiredChange) < deadband && gridPower > 0 && currentBatteryOut ==
         shape: "dot",
         text: `Done (deadband) - Stable power - finish (calculated change is ${Math.round(requiredChange)}W, grid power: ${Math.round(gridPower)}W)`
     });
-    return null; // Stop the message here; no command sent to inverter
+    return [
+        null,
+        noCommandTelemetry("Deadband No Command", {
+            requiredChange,
+            lastCommand: context.get("lastCommand") || 0,
+            finalCommand: null
+        })
+    ];
 }
 
 // 5. EMA SMOOTHING (The "Lag Compensator")
@@ -134,6 +195,7 @@ if (rawCommand < 0 && currentBatteryOut > 0) {
 
 // Apply Exponential Moving Average
 let smoothedCommand = rawCommand * alpha + lastCommand * (1 - alpha);
+const emaCommand = smoothedCommand;
 
 const activeDischargeReference = Math.max(currentBatteryOut, lastCommand);
 const isDischargingActive = activeDischargeReference > 5;
@@ -156,10 +218,13 @@ if (sustainDischargeActive && smoothedCommand < dischargeSustainFloor) {
     smoothedCommand = dischargeSustainFloor;
 }
 
+let gridError = null;
+let gridTrendCorrection = null;
+let gridTrendCommand = null;
 if (stableStableMode && isDischargingActive && gridPower >= 0) {
-    const gridError = gridPower - targetImportBuffer;
-    const gridTrendCorrection = gridError + demandTrend;
-    const gridTrendCommand = activeDischargeReference + gridTrendCorrection * alpha;
+    gridError = gridPower - targetImportBuffer;
+    gridTrendCorrection = gridError + demandTrend;
+    gridTrendCommand = activeDischargeReference + gridTrendCorrection * alpha;
 
     if (gridTrendCorrection > 0) {
         smoothedCommand = Math.max(smoothedCommand, gridTrendCommand);
@@ -183,11 +248,17 @@ if (importHoldActive) {
 
 // 5. THE ZERO-EXPORT DEFENSE (The "No-Penalty" Guard)
 // --> EMERGENCY BRAKE
-if (gridPower < 0) {
+const zeroExportDefenseActive = gridPower < 0;
+if (zeroExportDefenseActive) {
     smoothedCommand = Math.max(0, currentBatteryOut + gridPower + targetBuffer);
 }
 
+const commandBeforeForcedRateLimit = smoothedCommand;
 smoothedCommand = Math.min(smoothedCommand, forcedDischarge * 2.5);
+const forcedRateLimitActive = smoothedCommand < commandBeforeForcedRateLimit;
+const commandBeforeHardwareMaxClamp = smoothedCommand;
+smoothedCommand = Math.min(smoothedCommand, dischargeHardwareMaxPower);
+const hardwareMaxClampActive = smoothedCommand < commandBeforeHardwareMaxClamp;
 
 // Only output if the command actually changed significantly (e.g., > 5W)
 if (Math.abs(smoothedCommand - lastCommand) < 5 && gridPower > 0 && currentBatteryOut == 0) {
@@ -196,7 +267,16 @@ if (Math.abs(smoothedCommand - lastCommand) < 5 && gridPower > 0 && currentBatte
         shape: "dot",
         text: `Idle (deadband) - Hardly changed power - finish: ${Math.round(smoothedCommand)}W, grid Power ${gridPower}W`
     });
-    return null;
+    return [
+        null,
+        noCommandTelemetry("Idle No Command", {
+            requiredChange,
+            lastCommand,
+            rawCommand,
+            emaCommand,
+            finalCommand: Math.round(smoothedCommand)
+        })
+    ];
 }
 
 // 6. FINAL OUTPUT & PERSISTENCE
@@ -214,6 +294,8 @@ msg.action.battery.discharge.sustainFloor = Math.round(dischargeSustainFloor);
 msg.action.battery.discharge.sustainActive = sustainDischargeActive;
 msg.action.battery.discharge.importHoldActive = importHoldActive;
 msg.action.battery.discharge.targetImportBuffer = targetImportBuffer;
+msg.action.battery.discharge.hardwareMaxPower = Math.round(dischargeHardwareMaxPower);
+msg.action.battery.discharge.hardwareMaxClampActive = hardwareMaxClampActive;
 
 node.status({
     fill: "green",
@@ -224,4 +306,56 @@ node.status({
           ? `Discharge sustain @ ${Math.round(smoothedCommand)}W`
           : `Calculated Power (smoothed): ${Math.round(smoothedCommand)}W`
 });
-return msg;
+return [
+    msg,
+    {
+        payload: {
+            time: new Date().toISOString(),
+            source: "GentleControllerDischargeFilter",
+            mode: stability.mode || "unknown",
+            decision: importHoldActive
+                ? "Import Hold"
+                : sustainDischargeActive
+                  ? "Discharge Sustain"
+                  : zeroExportDefenseActive
+                    ? "Zero-Export Defense"
+                    : "EMA Command",
+            gridPower,
+            currentBatteryOut,
+            calculatedDemand,
+            demandLowerBound,
+            demandLongTermMinimum,
+            solarPower,
+            forcedDischarge,
+            stopRequested,
+            blockedByLowSoc,
+            stableStableMode,
+            demandTrend,
+            targetImportBuffer,
+            targetBuffer,
+            deadband,
+            alpha,
+            requiredChange,
+            lastCommand,
+            rawCommand,
+            emaCommand,
+            activeDischargeReference,
+            baselineDemandFloor,
+            isAtDemandFloor,
+            lowerBoundDischargeFloor,
+            dischargeSustainFloor,
+            sustainDischargeActive,
+            gridError,
+            gridTrendCorrection,
+            gridTrendCommand,
+            importHoldActive,
+            zeroExportDefenseActive,
+            commandBeforeForcedRateLimit,
+            forcedRateLimitActive,
+            dischargeHardwareMaxPower,
+            commandBeforeHardwareMaxClamp,
+            hardwareMaxClampActive,
+            finalCommand: Math.round(smoothedCommand)
+        }
+    }
+];
